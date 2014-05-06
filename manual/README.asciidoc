@@ -54,7 +54,7 @@ The hostnames of the pcs should be:
 * Head pc:
 ** cob4-X-h1
 
-==== Install basic tools
+==== Install basic toolsInstall ROS and driver software
 
 In the case of the NUC pcs it is necessary install the Ethernet driver http://sourceforge.net/projects/e1000[e1000e]
 
@@ -87,7 +87,7 @@ To facilitate the further setup we created a setup repository with some helpful 
 ----
 mkdir ~/git
 cd ~/git
-git clone git://github.com/ipa320/setup.git
+git clone git://github.com/ipa320/setup_cob4.git
 ----
 
 Allow robot user to execute sudo command without password. Add robot +ALL=(ALL) NOPASSWD: ALL+ to /etc/sudoers on all robot pcs
@@ -292,18 +292,46 @@ server 10.4.X.11
 
 For general instructions see http://wiki.ros.org/hydro/Installation/Ubuntu[Ubuntu install of ROS Hydro]
 
+==== Install additional tools
+
+----
+sudo apt-get install openjdk-6-jdk zsh terminator python-ros-*
+----
+
+==== Setup your source.list
+
+===== Ubuntu 12.04 (Precise)
+
+----
+sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu precise main" > /etc/apt/sources.list.d/ros-latest.list'
+----
+
+==== Set up your keys
+
+----
+wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+----
+
+==== Install ROS
+
+----
+sudo apt-get update 
+sudo apt-get install ros-hydro-rosbash
+sudo apt-get install ros-hydro-care-o-bot-robot 
+----
+
 ==== Setup bash environment
 
 We setup a special bash environment to be used on the Care-O-bot pcs. The environments differ on each pc. Copy the +cob.bash.bashrc.pcY+ to +/etc/cob.bash.bashrc+ on each pc, where Y is b, t, s or h depending of the component, b for base pc, t for torso pcs, s for sensorring pc and h for head pc.
 
 ----
-sudo cp ~/git/setup/cob4-pcs/cob.bash.bashrc.pcY /etc/cob.bash.bashrc
+sudo cp ~/git/setup_cob4/cob-pcs/cob.bash.bashrc.pcY /etc/cob.bash.bashrc
 ---- 
 
 All users have a pre-configured bash environment too, therefore copy +user.bashrc+ to +∼/.bashrc+
 
 ----
-cp ~/git/setup/cob4-pcs/user.bashrc ~/.bashrc
+cp ~/git/setup_cob4/cob-pcs/user.bashrc ~/.bashrc
 ----
 
 The .bashrc file is preconfigured for +cob4-1+ and +ipa-apartment+, please change
@@ -317,6 +345,41 @@ ROBOT=cob4-X
 ROBOT_ENV=YOUR_ENVIRONMENT
 ----
 
+=== Create overlays for stacks
+
+It is recommended use the following folders structure, in order to use the default scripts and tools, a main folder +git+ on the home robot directory. Inside this folder should be the setup_cob4 repository and the catkin workspace +care-o-bot+ 
+
+----
+mkdir /u/robot/git/care-o-bot
+mkdir /u/robot/git/care-o-bot/src
+cd /u/robot/git/care-o-bot/src
+source /opt/ros/hydro/setup.bash
+catkin_init_workspace
+cd /u/robot/git/care-o-bot
+catkin_make
+----
+
+If the release version of the stacks are not working for you, you can install overlays for individuals stacks on the robot user account. It should typically only be necessary to create an overlay fot two stacks, tha cob_robots and the cob_calibration_data stack. All other atacks should be used from their release version. If you need to modify a stack to work for you please send us a pull request to ipa320 on  http://www.github.com[Github].
+
+----
+cd /u/robot/git/care-o-bot/src
+git clone https://github.com/ipa320/cob_robots
+git clone https://github.com/ipa320/cob_calibration_data
+----
+
+=== [[Setup hardware components]] Setup hardware components
+
+==== Base
+
+==== Torso
+
+==== Arms
+
+==== Hands
+
+==== Sensorring
+
+==== Head
 
 
 
