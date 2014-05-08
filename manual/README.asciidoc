@@ -369,17 +369,70 @@ git clone https://github.com/ipa320/cob_calibration_data
 
 === [[Setup hardware components]] Setup hardware components
 
-==== Base
+==== Previous installation
 
-==== Torso
+udev, pcan
 
-==== Arms
+==== Installation per module
 
-==== Hands
+* Base
 
-==== Sensorring
+[width="80%",cols="^3,^3,^3",options="header"]
+|=========================================================
+| Component | PC | Driver
 
-==== Head
+| Laser scanner | cob4-X-b1 | <<sick_s300 , sick_s300>>
+
+| Flexisoft | cob4-X-b1 | <<sick_flexisoft , sick_flexisoft>>
+
+| Base | cob4-X-b1 | <<base , base>>
+
+| Touchscreen | cob4-X-b1 | <<Touchscreen , Touchscreen>>
+
+|=========================================================
+
+* Torso
+
+* Arms
+
+* Hands
+
+* Sensorring
+
+* Head
+
+
+==== Installation per drivers
+
+. [[sick_s300]]sick_s300
+
+. [[sick_flexisoft]]sick_flexisoft
+
+. [[Touchscreen]] Touchscreen
+
+It is necessary download the driver, you can find it in the following link: http://www.cartft.com/support/drivers/TFT/tftdrivers/eGTouch_v2.5.2107.L-x.tar.gz[CarTFT]
+
+The instructions to install the driver are:
+
+----
+
+tar -xf eGTouch_v2.5.2107.L-x.tar.gz
+cd eGTouch_v2.5.2107.L-x
+sudo ./setup.sh
+sudo reboot
+
+----
+
+If is it necessary you can reconfigurate and calibrate the touch screen using the following scripts:
+
+----
+
+chmod +x eGTouch_v2.5.2107.L-x/eGTouch64/ eGTouch64withX/*
+cd eGTouch_v2.5.2107.L-x/eGTouch64/ eGTouch64withX
+./eCalib
+./eGTouchU
+
+----
 
 
 
