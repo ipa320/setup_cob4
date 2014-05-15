@@ -107,7 +107,7 @@ fi
 source /etc/cob.bash.bashrc
 
 # provide setup scripts for all users
-export PATH=/u/robot/git/setup:$PATH
+export PATH=/u/robot/git/setup_cob4:$PATH
 
 
 # ROS specific settings
@@ -133,7 +133,7 @@ case '$ROS_PACKAGE_PATH' in
     */u/robot/git/care-o-bot/install*);;
     *)
     if [ -e /u/robot/git/care-o-bot/install/setup.bash ]; then
-        echo -e "***************************\nYour robot admin created an overlay for the robot user\nYour catkin workspace is not linke"
+        echo -e "***************************\nYour robot admin created an overlay for the robot user\n"
     fi
     ;;
 esac
