@@ -56,16 +56,24 @@ The hostnames of the pcs should be:
 
 ==== Install basic toolsInstall ROS and driver software
 
-In the case of the NUC pcs it is necessary install the Ethernet driver http://sourceforge.net/projects/e1000[e1000e]
+In the case of the NUC pcs it is necessary install the Ethernet driver http://sourceforge.net/projects/e1000[e1000e] and activate on the BIOS that the NUc powers on by swichting on the robot. On the Bios setup 
+
+image:doc/screenshot_biosNUC.jpg[Bios menu]
 
 Next we have to install some basic tools for the further setup of the pcs. In order to install the packages a internet connection is needed.
-
 
 ----
 sudo apt-get update
 sudo apt-get install vim tree gitg meld curl openjdk-6-jdk zsh terminator language-pack-de language-pack-en ipython
 ----
 
+It is recommended to force Ubuntu to boot on a stuck boot menu modifiying the file +/etc/default/grub+, to override the recordfail timeout:
+
+----
+GRUB_TIMEOUT=10
+GRUB_RECORDFAIL_TIMEOUT=$GRUB_TIMEOUT
+----
+ 
 ==== Setup ssh server
 
 Install openssh server on all robot pcs
@@ -90,7 +98,7 @@ cd ~/git
 git clone git://github.com/ipa320/setup_cob4.git
 ----
 
-Allow robot user to execute sudo command without password. Add robot +ALL=(ALL) NOPASSWD: ALL+ to /etc/sudoers on all robot pcs
+Allow robot user to execute sudo command without password. Add +robot ALL=(ALL) NOPASSWD: ALL+ to /etc/sudoers on all robot pcs
 
 ----
 sudo visudo -f /etc/sudoers
@@ -139,6 +147,7 @@ iface eth0 inet dhcp
 ----
 
 Be sure that you are using the eth0 network port, you can rename your port modifying the udev rules (/etc/udev/rules.d/70-persistent-net.rules).
+
 
 === [[Install NFS]] Install NFS
 
@@ -295,7 +304,7 @@ For general instructions see http://wiki.ros.org/hydro/Installation/Ubuntu[Ubunt
 ==== Install additional tools
 
 ----
-sudo apt-get install openjdk-6-jdk zsh terminator python-ros-*
+sudo apt-get install openjdk-6-jdk zsh terminator 
 ----
 
 ==== Setup your source.list
@@ -316,7 +325,7 @@ wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
 
 ----
 sudo apt-get update 
-sudo apt-get install ros-hydro-rosbash
+sudo apt-get install ros-hydro-rosbash python-ros-*
 sudo apt-get install ros-hydro-care-o-bot-robot 
 ----
 
@@ -373,38 +382,42 @@ git clone https://github.com/ipa320/cob_calibration_data
 
 udev, pcan
 
-==== Installation per module
+==== Installation per component
 
-* Base
 
-[width="80%",cols="^3,^3,^3",options="header"]
+[width="80%",cols="^3,^3,^3,^3",options="header"]
 |=========================================================
-| Component | PC | Driver
+| Component | PC | Driver | Required
 
-| Laser scanner | cob4-X-b1 | <<sick_s300 , sick_s300>>
+| Laser scanner | cob4-X-b1 | <<sick_s300 , sick_s300>> | udev rules
 
-| Flexisoft | cob4-X-b1 | <<sick_flexisoft , sick_flexisoft>>
+| Flexisoft | cob4-X-b1 | <<sick_flexisoft , sick_flexisoft>> | -
 
-| Base | cob4-X-b1 | <<base , base>>
+| Base | cob4-X-b1 | <<base , base>> | Pcan driver
 
-| Touchscreen | cob4-X-b1 | <<Touchscreen , Touchscreen>>
+| Joystick | cob4-X-b1 | <<Joystick, Joystick>> | udev rules
+
+| Touchscreen | cob4-X-b1 | <<Touchscreen , Touchscreen>> | -
+
+| Softkinetic | cob4-X-t3, cob4-X-s1 | <<sofkinetic_camera, sofkinetic_camera>> | -
+
+| Asus Xtion | cob4-X-t3, cob4-X-s1 | <<openni2, openni2>> | -
+
+| Arms | cob4-X-t1 | <<ipa_canopen,ipa_canopen>> | Pcan driver
+
+| Torso | cob4-X-t1 | <<ipa_canopen,ipa_canopen>> | Pcan driver
+
+| Head | cob4-X-t1 | <<ipa_canopen,ipa_canopen>> | Pcan driver
 
 |=========================================================
 
-* Torso
-
-* Arms
-
-* Hands
-
-* Sensorring
-
-* Head
 
 
 ==== Installation per drivers
 
 . [[sick_s300]]sick_s300
+
+
 
 . [[sick_flexisoft]]sick_flexisoft
 
@@ -423,7 +436,7 @@ sudo reboot
 
 ----
 
-If is it necessary you can reconfigurate and calibrate the touch screen using the following scripts:
+You can reconfigurate and calibrate the touch screen using the following scripts:
 
 ----
 
