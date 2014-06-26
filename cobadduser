@@ -19,6 +19,8 @@ sudo adduser $1 audio
 sudo adduser $1 video
 sudo adduser $1 plugdev
 sudo adduser $1 users 
+sudo adduser $1 shutdown
+sudo adduser $1 upstart
 
 echo "Syncing passwd file to other cob-pcs"
 sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$ROBOT-t1:/etc/
