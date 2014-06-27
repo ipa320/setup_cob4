@@ -11,10 +11,10 @@
 .. <<Install ROS and driver software,Install ROS and driver software>>
 .. <<Setup hardware components, Setup hardware components>>
 .. <<Create new users accounts, Create new users accounts>>
+.. <<Install upstart job, Install upstart job>>
 .. <<Network infrastructure for external access to the robot,Network infrastructure for external access to the robot>>
 .. <<Calibration,Calibration>>
 .. <<Backup and restore, Backup and restore>>
-. <<UserManual, User Manual>>
 
 
 == [[AdminManual]] Administrator Manual
@@ -368,7 +368,7 @@ cd /u/robot/git/care-o-bot
 catkin_make
 ----
 
-If the release version of the stacks are not working for you, you can install overlays for individuals stacks on the robot user account. It should typically only be necessary to create an overlay fot two stacks, tha cob_robots and the cob_calibration_data stack. All other atacks should be used from their release version. If you need to modify a stack to work for you please send us a pull request to ipa320 on  http://www.github.com[Github].
+If the release version of the stacks are not working for you, you can install overlays for individuals stacks on the robot user account. It should typically only be necessary for two stacks, the cob_robots and the cob_calibration_data stacks. All other stacks should be used from their release version. If you need to modify a stack to work for you please send us a pull request to ipa320 on  http://www.github.com[Github].
 
 ----
 cd /u/robot/git/care-o-bot/src
@@ -387,7 +387,7 @@ udev, pcan
 
 [width="80%",cols="^3,^3,^3,^3",options="header"]
 |=========================================================
-| Component | PC | Driver | Required
+| Component | PC | Driver | Required |
 
 | Laser scanner | cob4-X-b1 | <<sick_s300 , sick_s300>> | udev rules
 
@@ -415,11 +415,6 @@ udev, pcan
 
 ==== Installation per drivers
 
-. [[sick_s300]]sick_s300
-
-
-
-. [[sick_flexisoft]]sick_flexisoft
 
 . [[Touchscreen]] Touchscreen
 
@@ -446,6 +441,138 @@ cd eGTouch_v2.5.2107.L-x/eGTouch64/ eGTouch64withX
 ./eGTouchU
 
 ----
+
+=== [[Create new users accounts]] Create new users accounts
+
+After finishing the preparation step you can add new users. On cob4-X-b1 and with administration rights you can use the following instruction:
+
+----
+
+cobadduser +newUserName+
+
+----
+
+=== [[Install upstart job]] Install upstart job
+
+It is recommended install robot.launch as Linux upstart job, the drivers will be launched automatically on startup base pc.
+
+On cob4-X-b1 ,copy the job configuration file to +/etc/init/+
+
+----
+
+sudo cp /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
+
+----
+
+Create the start and the stop services:
+
+----
+
+sudo cp /u/robot/git/setup_cob4/upstart/cob-start /usr/sbin/cob-start
+sudo cp /u/robot/git/setup_cob4/upstart/cob-stop /usr/sbin/cob-stop
+
+----
+
+Edit the line 29 on cob-start script, you have to specify your cob number +ROBOT=cob4-X+
+
+Add the launch and bash setup directory
+
+----
+
+sudo cp -r /u/robot/git/setup_cob4/upstart/cob.d /etc/ros/hydro/cob.d
+
+----
+
+=== [[Network infrastructure for external access to the robot]] Network infrastructure for external access to the robot
+
+For the robot internal network setup please refer to section  <<Setup internal robot network,Setup internal robot network>>
+
+Make sure you have name resolution and access to the robot pcs from your external pc. To satisfy the ROS communication you need a full DNS and reverse DNS name lockup for all machines. Check it from your remote pc with
+
+----
+ping 10.4.X.1
+ping cob4-X-b1
+----
+
+and the other way round try to ping your remote pc from one of the robot pcs
+
+----
+
+ping your_ip_address
+ping your_hostname
+
+----
+
+If ping and DNS is not setup correctly, there are multiple ways to enable access and name resolution.
+
+==== Setting up your building network (recommended)
+
+Setting up you building network to enable dns and port forwarding to the internal network.
+
+==== Manual setup for each remote pc
+
+You can setup a route to the internal network addresses. Please change the robot name and your network device to fit your settings. E.g. for connecting to cob4-X on eth0
+
+----
+
+sudo route add -net 10.4.X.0 netmask 255.255.255.0 gw cob4−X dev eth0
+
+----
+
+For connecting to cob4-X on wlan0
+
+----
+
+sudo route add -net 10.4.X.0 netmask 255.255.255.0 gw cob4−X dev eth0
+
+----
+
+For name resolution you will probably have to edit the file /etc/hosts on the robot pcs as well as on the remote pc. Therefore add the following addresses to the /etc/hosts of your remote pc.
+
+----
+
+10.4.X.11 cob4-X-b1
+10.4.X.21 cob4-X-t1
+10.4.X.22 cob4-X-t2
+10.4.X.23 cob4-X-t3
+10.4.X.31 cob4-X-s1
+10.4.X.41 cob4-X-h1
+
+----
+
+Add your ip adress and hostname to the /etc/hosts of all robot pcs.
+
+=== [[Calibration]] Calibration
+tbd
+
+=== [[Backup and restore]] Backup and restore
+
+==== Backup the entire system
+
+We recommended to backup your system when you have a stable software version, e.g. all hardware drivers setup and running. You can backup the whole disks of your robot to an external hard disk using the tool dd.
+Be sure hat the external device hat enough free space as an ext4 partition, you can format it using gparted. With the new partition mounted in your system execute the following command:
+
+----
+
+sudo dd i f =/dev /sdaX o f =/dev /sdbY
+
+----
+
+where /dev/sdaX is the local partition where ubuntu is installed and /dev/sdbY is the partition where your external device is mounted. With this command you copy the whole partition, this step will take several hours depending on the disk size.
+
+
+==== Restore the entire system
+
+With the following instructions you can restore your system to a previous backed up version. However you should be aware of that if backing up and restoring fails you will need to setup your system from scratch. So we only reccomend to restore your system if nothing else helps to get the system up and running again.
+If you have a backup on an external hard disk you can use a CD or USB stick with live linux to restore the system with the following command:
+
+----
+
+sudo dd i f =/dev /sdbY o f =/dev /sdaX
+
+----
+
+where /dev/sdbY is the partition where your external device is mounted and /dev/sdaX is the local partition where you want to restore ubuntu to.
 
 
 

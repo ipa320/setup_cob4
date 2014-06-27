@@ -56,7 +56,7 @@ function log() {
 log info "robot.launch: Using workspace setup file /etc/ros/hydro/cob.d/setup.bash"
 source /etc/ros/hydro/cob.d/setup.bash
 JOB_FOLDER=/etc/ros/hydro/cob.d 
-log info "Provided the following robot:=cob4-1"
+log info "Provided the following robot:=$ROBOT"
 
 export ROS_IP=`rosrun robot_upstart getifip eth0`
 export ROS_MASTER_URI=http://$ROS_IP:11311
@@ -83,7 +83,7 @@ fi
 
 # Assemble amalgamated launchfile.
 LAUNCH_FILENAME=/tmp/robot.launch.launch
-rosrun robot_upstart mklaunch $JOB_FOLDER robot:=cob4-1 > $LAUNCH_FILENAME
+rosrun robot_upstart mklaunch $JOB_FOLDER robot:=$ROBOT > $LAUNCH_FILENAME
 if [[ "$?" != "0" ]]; then
   log err "robot.launch: Unable to generate amalgamated launchfile."
   exit 1
@@ -100,7 +100,7 @@ fi
 # Punch it.
 export ROS_HOME=$(echo ~robot)/.ros
 export ROS_LOG_DIR=/tmp
-setuidgid robot roslaunch $LAUNCH_FILENAME robot:=cob4-1 &
+setuidgid robot roslaunch $LAUNCH_FILENAME robot:=$ROBOT &
 PID=$!
 
 log info "robot.launch: Started roslaunch as background process, PID $PID"
