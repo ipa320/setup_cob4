@@ -483,6 +483,26 @@ sudo cp -r /u/robot/git/setup_cob4/upstart/cob.d /etc/ros/hydro/cob.d
 
 ----
 
+In order to allow the non-root users execute the cob-start and cob-stop commands, it is posible create a +upstart+ group which  will be set to execute the commands. 
+
+Create the group
+
+----
+
+sudo addgroup upstart
+
+----
+
+Modify the sudo rights adding the following lines to +/etc/sudoers+(to edit this file use the command +sudo visudo+) on all robot pcs:
+
+----
+
+%upstart ALL=NOPASSWD:/usr/sbin/cob-start
+%upstart ALL=NOPASSWD:/usr/sbin/cob-stop
+
+----
+
+
 === [[Network infrastructure for external access to the robot]] Network infrastructure for external access to the robot
 
 For the robot internal network setup please refer to section  <<Setup internal robot network,Setup internal robot network>>
