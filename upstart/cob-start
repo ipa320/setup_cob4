@@ -46,7 +46,7 @@ for i in $pcs; do
         echo $i alive
         break
       fi
-      #More code.
+      sleep 1
     done
 done
 function log() {
