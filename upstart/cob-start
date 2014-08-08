@@ -34,19 +34,22 @@ $ROBOT-t2
 $ROBOT-t3"
 
 for i in $pcs; do 
+    Crono=0
     Alive=False
-    while [ $Alive=False ]
-      do
-      ping -c 1 -w 3 $i
-      if [ $? -ne 0 ] ; then
-        Alive=False
-        echo $i not found
-      else
-        Alive=True
-        echo $i alive
-        break
-      fi
-      #More code.
+    while [[ $Alive=False && $Crono -le 50 ]]
+    do
+        ping -c 1 -w 3 $i
+        if [ $? -ne 0 ] ; then
+          Crono=$((Crono+1))
+          Alive=False
+          echo $i not found
+          echo $Crono
+        else
+          Alive=True
+          echo $i alive
+          break
+        fi
+        sleep 1
     done
 done
 function log() {
