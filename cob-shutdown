@@ -3,7 +3,7 @@
 # Script for executing commands on all cob-pc's.
 
 if [ "$HOSTNAME" != "$ROBOT-b1" ]; then 
-	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC(b1)"
+	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC($ROBOT-b1), current host is $HOSTNAME"
 	exit
 fi
 
