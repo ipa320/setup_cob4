@@ -26,7 +26,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # 
 # Please send comments, questions, or patches to code@clearpathrobotics.com 
-ROBOT=cob4-1
+ROBOT=cob4-2
 pcs="
 $ROBOT-b1
 $ROBOT-t1
@@ -36,6 +36,7 @@ $ROBOT-t3"
 for i in $pcs; do 
     Alive=False
     Crono=0
+    Timeout=False
     while [[ $Alive=False && $Crono -le 50 ]]
     do
         ping -c 1 -w 3 $i
@@ -50,6 +51,13 @@ for i in $pcs; do
         fi
         sleep 1
     done
+    if [ $Crono -ge 50 ] ; then
+      Timeout=True
+      echo $i timeout
+      break
+    else
+      Timeout=False
+    fi  
 done
 function log() {
   logger -s -p user.$1 ${@:2}
@@ -57,7 +65,13 @@ function log() {
 
 log info "robot.launch: Using workspace setup file /etc/ros/hydro/cob.d/setup.bash"
 source /etc/ros/hydro/cob.d/setup.bash
-JOB_FOLDER=/etc/ros/hydro/cob.d 
+
+if [ $Timeout ] ; then
+  JOB_FOLDER=/etc/ros/hydro/cob.d/base_solo
+  echo base_solo
+else
+  JOB_FOLDER=/etc/ros/hydro/cob.d/robot
+fi
 log info "Provided the following robot:=$ROBOT"
 
 export ROS_IP=`rosrun robot_upstart getifip eth0`
