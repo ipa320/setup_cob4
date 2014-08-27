@@ -30,12 +30,11 @@ for client in $client_list; do
 	ret=${PIPESTATUS[0]}
 	if [ $ret != 0 ] ; then
 		echo "command return an error (error code: $ret), aborting..."
-		exit 1
 	fi
 	echo ""
 done
 
-sudo cp -r /u/robot/git/setup_cob4/upstart/cob.d/launch /etc/ros/hydro/cob.d/launch
-sudo sed -i "s/myrobot/$ROBOT/g" /etc/ros/hydro/cob.d/robot/robot.launch
+sudo cp -r /u/robot/git/setup_cob4/upstart/cob.d/launch /etc/ros/hydro/cob.d/
+sudo sed -i "s/myrobot/$ROBOT/g" /etc/ros/hydro/cob.d/launch/robot/robot.launch
 
 
