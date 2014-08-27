@@ -64,13 +64,13 @@ function log() {
 }
 
 log info "robot.launch: Using workspace setup file /etc/ros/hydro/cob.d/setup.bash"
-source /etc/ros/hydro/cob.d/setup.bash
+source /etc/ros/hydro/cob.d/setup/setup.bash
 
 if [ $Timeout ] ; then
-  JOB_FOLDER=/etc/ros/hydro/cob.d/base_solo
+  JOB_FOLDER=/etc/ros/hydro/cob.d/launch/base_solo
   echo base_solo
 else
-  JOB_FOLDER=/etc/ros/hydro/cob.d/robot
+  JOB_FOLDER=/etc/ros/hydro/cob.d/launch/robot
 fi
 
 log info "Provided the following robot:=$ROBOT"
