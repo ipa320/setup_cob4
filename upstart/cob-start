@@ -29,13 +29,15 @@
 ROBOT=myrobot
 pcs="
 $ROBOT-b1
-"
+$ROBOT-t1
+$ROBOT-t2
+$ROBOT-t3"
 
 for i in $pcs; do 
     Alive=False
     Crono=0
     Timeout=False
-    while [[ $Alive=False && $Crono -le 5 ]]
+    while [[ $Alive=False && $Crono -le 50 ]]
     do
         ping -c 1 -w 3 $i
         if [ $? -ne 0 ] ; then
@@ -49,9 +51,10 @@ for i in $pcs; do
         fi
         sleep 1
     done
-    if [ $Crono -ge 5 ] ; then
+    if [ $Crono -ge 50 ] ; then
       Timeout=True
       echo $i timeout
+      break
     else
       Timeout=False
     fi  
@@ -63,7 +66,7 @@ function log() {
 log info "robot.launch: Using workspace setup file /etc/ros/hydro/cob.d/setup.bash"
 source /etc/ros/hydro/cob.d/setup.bash
 
-if [ $Timeout ] : then
+if [ $Timeout ] ; then
   JOB_FOLDER=/etc/ros/hydro/cob.d/base_solo
   echo base_solo
 else

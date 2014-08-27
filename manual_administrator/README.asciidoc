@@ -460,7 +460,7 @@ On cob4-X-b1 ,copy the job configuration file to +/etc/init/+
 
 ----
 
-sudo cp /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
+sudo ln -s /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
 
 ----
 
@@ -479,26 +479,16 @@ Add the launch and bash setup directory
 
 ----
 
-sudo cp -r /u/robot/git/setup_cob4/upstart/cob.d /etc/ros/hydro/cob.d
+sudo ln -s /u/robot/git/setup_cob4/upstart/cob.d /etc/ros/hydro/cob.d
 
 ----
 
-In order to allow the non-root users execute the cob-start and cob-stop commands, it is posible create a +upstart+ group which  will be set to execute the commands. 
-
-Create the group
+In order to allow the non-root users execute the cob-start and cob-stop commands, modify the sudo rights adding the following lines to +/etc/sudoers+(to edit this file use the command +sudo visudo+) on all robot pcs:
 
 ----
 
-sudo addgroup upstart
-
-----
-
-Modify the sudo rights adding the following lines to +/etc/sudoers+(to edit this file use the command +sudo visudo+) on all robot pcs:
-
-----
-
-%upstart ALL=NOPASSWD:/usr/sbin/cob-start
-%upstart ALL=NOPASSWD:/usr/sbin/cob-stop
+%users ALL=NOPASSWD:/usr/sbin/cob-start
+%users ALL=NOPASSWD:/usr/sbin/cob-stop
 
 ----
 
