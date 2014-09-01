@@ -26,7 +26,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # 
 # Please send comments, questions, or patches to code@clearpathrobotics.com 
-ROBOT=cob4-1
+ROBOT=myrobot
 pcs="
 $ROBOT-b1
 $ROBOT-t1
@@ -35,27 +35,44 @@ $ROBOT-t3"
 
 for i in $pcs; do 
     Alive=False
-    while [ $Alive=False ]
-      do
-      ping -c 1 -w 3 $i
-      if [ $? -ne 0 ] ; then
-        Alive=False
-        echo $i not found
-      else
-        Alive=True
-        echo $i alive
-        break
-      fi
-      sleep 1
+    Crono=0
+    Timeout=False
+    while [[ $Alive=False && $Crono -le 50 ]]
+    do
+        ping -c 1 -w 3 $i
+        if [ $? -ne 0 ] ; then
+          Crono=$((Crono+1))
+          Alive=False
+          echo $i not found
+        else
+          Alive=True
+          echo $i alive
+          break
+        fi
+        sleep 1
     done
+    if [ $Crono -ge 50 ] ; then
+      Timeout=True
+      echo $i timeout
+      break
+    else
+      Timeout=False
+    fi  
 done
 function log() {
   logger -s -p user.$1 ${@:2}
 }
 
 log info "robot.launch: Using workspace setup file /etc/ros/hydro/cob.d/setup.bash"
-source /etc/ros/hydro/cob.d/setup.bash
-JOB_FOLDER=/etc/ros/hydro/cob.d 
+source /etc/ros/hydro/cob.d/setup/setup.bash
+
+if [ $Timeout ] ; then
+  JOB_FOLDER=/etc/ros/hydro/cob.d/launch/base_solo
+  echo base_solo
+else
+  JOB_FOLDER=/etc/ros/hydro/cob.d/launch/robot
+fi
+
 log info "Provided the following robot:=$ROBOT"
 
 export ROS_IP=`rosrun robot_upstart getifip eth0`
@@ -66,20 +83,6 @@ if [ "$ROS_IP" = "" ]; then
 fi
 log info "robot.launch: Launching on interface eth0, ROS_IP=$ROS_IP, ROS_MASTER_URI=$ROS_MASTER_URI"
 
-# If xacro files are present in job folder, generate and expand an amalgamated urdf.
-XACRO_FILENAME=/tmp/robot.launch.xacro
-XACRO_ROBOT_NAME=$(echo "robot.launch" | cut -d- -f1)
-rosrun robot_upstart mkxacro $JOB_FOLDER $XACRO_ROBOT_NAME > $XACRO_FILENAME
-if [[ "$?" == "0" ]]; then
-  URDF_FILENAME=/tmp/robot.launch.urdf
-  rosrun xacro xacro $XACRO_FILENAME -o $URDF_FILENAME
-  if [[ "$?" == "0" ]]; then
-    log info "robot.launch: Generated URDF: $URDF_FILENAME"
-  else
-    log warn "robot.launch: URDF macro expansion failure. Robot description will not function."
-  fi
-  export ROBOT_URDF_FILENAME=$URDF_FILENAME
-fi
 
 # Assemble amalgamated launchfile.
 LAUNCH_FILENAME=/tmp/robot.launch.launch
