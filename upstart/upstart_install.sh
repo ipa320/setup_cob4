@@ -9,6 +9,7 @@ fi
 sudo cp /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
 sudo cp /u/robot/git/setup_cob4/upstart/cob-start /usr/sbin/cob-start
 sudo sed -i "s/myrobot/$ROBOT/g" /usr/sbin/cob-start
+sudo sed -i "s/mydistro/$ROS_DISTRO/g" /usr/sbin/cob-start
 sudo cp /u/robot/git/setup_cob4/upstart/cob-stop /usr/sbin/cob-stop
 	
 
@@ -25,8 +26,8 @@ for client in $client_list; do
 	echo "Executing on $client"
 	echo "-------------------------------------------"
 	echo ""
-	ssh $client "sudo mkdir -p /etc/ros/hydro/cob.d"
-	ssh $client "sudo ln -s /u/robot/git/setup_cob4/upstart/cob.d/setup /etc/ros/hydro/cob.d/setup"
+	ssh $client "sudo mkdir -p /etc/ros/$ROS_DISTRO/cob.d"
+	ssh $client "sudo ln -s /u/robot/git/setup_cob4/upstart/cob.d/setup /etc/ros/$ROS_DISTRO/cob.d/setup"
 	ret=${PIPESTATUS[0]}
 	if [ $ret != 0 ] ; then
 		echo "command return an error (error code: $ret), aborting..."
@@ -34,7 +35,7 @@ for client in $client_list; do
 	echo ""
 done
 
-sudo cp -r /u/robot/git/setup_cob4/upstart/cob.d/launch /etc/ros/hydro/cob.d/
-sudo sed -i "s/myrobot/$ROBOT/g" /etc/ros/hydro/cob.d/launch/robot/robot.launch
+sudo cp -r /u/robot/git/setup_cob4/upstart/cob.d/launch /etc/ros/$ROS_DISTRO/cob.d/
+sudo sed -i "s/myrobot/$ROBOT/g" /etc/ros/$ROS_DISTRO/cob.d/launch/robot/robot.launch
 
 

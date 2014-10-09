@@ -128,7 +128,7 @@ if [ -e $MY_CATKIN_WORKSPACE/devel/setup.bash ]; then
 elif [ -e /u/robot/git/care-o-bot/install/setup.bash ]; then
     source /u/robot/git/care-o-bot/install/setup.bash
 else
-    source /opt/ros/hydro/setup.bash
+    source /opt/ros/mydistro/setup.bash
 fi
 
 case '$ROS_PACKAGE_PATH' in
