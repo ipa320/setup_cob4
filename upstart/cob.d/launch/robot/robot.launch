@@ -6,8 +6,9 @@
 	<arg name="robot_env" default="ipa-apartment"/>
 	<!--arg name="pkg_env_config" default="cob_default_env_config"/-->
 
-	<include file="$(find cob_bringup)/robots/robot.launch" >
-		<!--arg name="pkg_env_config" value="$(arg pkg_env_config)" /-->
+	<include file="$(find cob_bringup)/robot.launch" >
+                <arg name="robot" value="$(arg robot)" />
+                <arg name="robot_env" value="$(arg robot_env)" />
 	</include>
 
 </launch>

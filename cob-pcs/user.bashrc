@@ -81,10 +81,12 @@ fi
 alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
-alias b1='ssh -X robot@cob4-1-base-pc1'
-alias t1='ssh -X robot@cob4-1-torso-pc1'
-alias t2='ssh -X robot@cob4-1-torso-pc2'
-alias t3='ssh -X robot@cob4-1-torso-pc3'
+alias b1='ssh -X robot@myrobot-b1'
+alias t1='ssh -X robot@myrobot-t1'
+alias t2='ssh -X robot@myrobot-t2'
+alias t3='ssh -X robot@myrobot-t3'
+alias s1='ssh -X robot@myrobot-s1'
+alias h1='ssh -X robot@myrobot-h1'
 
 
 # Alias definitions.
@@ -114,10 +116,10 @@ export PATH=/u/robot/git/setup_cob4:$PATH
 
 export MY_CATKIN_WORKSPACE=~/git/care-o-bot
 
-export ROBOT=cob4-1
+export ROBOT=myrobot
 export ROBOT_ENV=ipa-apartment
 export ROSLAUNCH_SSH_UNKNOWN=1
-export ROS_MASTER_URI=http://cob4-1-b1:11311
+export ROS_MASTER_URI=http://myrobot-b1:11311
 
 # DONT TOUCH THIS BELOW THE LINE !!!
 
@@ -126,7 +128,7 @@ if [ -e $MY_CATKIN_WORKSPACE/devel/setup.bash ]; then
 elif [ -e /u/robot/git/care-o-bot/install/setup.bash ]; then
     source /u/robot/git/care-o-bot/install/setup.bash
 else
-    source /opt/ros/hydro/setup.bash
+    source /opt/ros/mydistro/setup.bash
 fi
 
 case '$ROS_PACKAGE_PATH' in
