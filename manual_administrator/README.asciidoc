@@ -36,7 +36,7 @@ On all Care-O-bot 4 there are at least six pcs...
 
 ==== Install operating system 
 
-The first step is to install the operating system for each base, torso and sensorring pc. We are using Ubuntu as the main operating system for the robot. We recommend to install the Ubuntu 12.4 LTS (long term stable) 64-bit version because this version is well tested to work with the hardware. First please install Ubuntu (English version) creating a normal swap partition. Please choose robot as an admin account with a really safe password which should only be known to the local robot administrator. 
+The first step is to install the operating system for each base, torso and sensorring pc. We are using Ubuntu as the main operating system for the robot. We recommend to install the Ubuntu 14.04 LTS (long term stable) 64-bit version because this version is well tested to work with the hardware. First please install Ubuntu (English version) creating a normal swap partition. Please choose robot as an admin account with a really safe password which should only be known to the local robot administrator. 
 
 The hostnames of the pcs should be:
 
@@ -299,7 +299,7 @@ server 10.4.X.11
 
 === [[Install ROS and driver software]] Install ROS and driver software
 
-For general instructions see http://wiki.ros.org/hydro/Installation/Ubuntu[Ubuntu install of ROS Hydro]
+For general instructions see http://wiki.ros.org/indigo/Installation/Ubuntu[Ubuntu install of ROS Indigo]
 
 ==== Install additional tools
 
@@ -309,10 +309,10 @@ sudo apt-get install openjdk-6-jdk zsh terminator
 
 ==== Setup your source.list
 
-===== Ubuntu 12.04 (Precise)
+===== Ubuntu 14.04 (Trusty)
 
 ----
-sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu precise main" > /etc/apt/sources.list.d/ros-latest.list'
+sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu trusty main" > /etc/apt/sources.list.d/ros-latest.list'
 ----
 
 ==== Set up your keys
@@ -325,8 +325,8 @@ wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
 
 ----
 sudo apt-get update 
-sudo apt-get install ros-hydro-rosbash python-ros-*
-sudo apt-get install ros-hydro-care-o-bot-robot 
+sudo apt-get install ros-indigo-rosbash python-ros-*
+sudo apt-get install ros-indigo-care-o-bot-robot 
 ----
 
 ==== Setup bash environment
@@ -362,7 +362,7 @@ It is recommended use the following folders structure, in order to use the defau
 mkdir /u/robot/git/care-o-bot
 mkdir /u/robot/git/care-o-bot/src
 cd /u/robot/git/care-o-bot/src
-source /opt/ros/hydro/setup.bash
+source /opt/ros/indigo/setup.bash
 catkin_init_workspace
 cd /u/robot/git/care-o-bot
 catkin_make
@@ -456,30 +456,11 @@ cobadduser +newUserName+
 
 It is recommended install robot.launch as Linux upstart job, the drivers will be launched automatically on startup base pc.
 
-On cob4-X-b1 ,copy the job configuration file to +/etc/init/+
+On cob4-X-b1 , execute the following script:
 
 ----
 
-sudo ln -s /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
-
-----
-
-Create the start and the stop services:
-
-----
-
-sudo cp /u/robot/git/setup_cob4/upstart/cob-start /usr/sbin/cob-start
-sudo cp /u/robot/git/setup_cob4/upstart/cob-stop /usr/sbin/cob-stop
-
-----
-
-Edit the line 29 on cob-start script, you have to specify your cob number +ROBOT=cob4-X+
-
-Add the launch and bash setup directory
-
-----
-
-sudo ln -s /u/robot/git/setup_cob4/upstart/cob.d /etc/ros/hydro/cob.d
+/u/robot/git/setup_cob4/upstart/upstart_install.sh
 
 ----
 
@@ -489,6 +470,7 @@ In order to allow the non-root users execute the cob-start and cob-stop commands
 
 %users ALL=NOPASSWD:/usr/sbin/cob-start
 %users ALL=NOPASSWD:/usr/sbin/cob-stop
+%users ALL=NOPASSWD:/usr/sbin/cob-shutdown
 
 ----
 
