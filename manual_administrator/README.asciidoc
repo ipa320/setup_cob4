@@ -396,6 +396,8 @@ udev, pcan
 
 | Base | cob4-X-b1 | <<base , base>> | Pcan driver
 
+| Phidgets | cob4-X-b1 | <<cob_phidgets , cob_phidgets>> | http://wiki.ros.org/cob_phidgets[cob_phidgets]
+
 | Joystick | cob4-X-b1 | <<Joystick, Joystick>> | udev rules
 
 | Touchscreen | cob4-X-b1 | <<Touchscreen , Touchscreen>> | -
