@@ -73,7 +73,8 @@ It is recommended to force Ubuntu to boot on a stuck boot menu modifiying the fi
 GRUB_TIMEOUT=10
 GRUB_RECORDFAIL_TIMEOUT=$GRUB_TIMEOUT
 ----
- 
+
+Open a terminal and type +sudo update-grub+ to apply the changes you just made.
 ==== Setup ssh server
 
 Install openssh server on all robot pcs
@@ -258,8 +259,7 @@ ssh cob4-X-s1
 ssh cob4-X-h1
 ----
 
-And for root user it is necessary allow login as root over ssh session, open the file +/etc/ssh/sshd_config+ and set +PermitRootLogin yes+:
-
+For root user it is necessary previously allow login as root over ssh session, open the file +/etc/ssh/sshd_config+ and set +PermitRootLogin yes+ and then enable passwordless login:
 ----
 su root
 ssh-keygen
