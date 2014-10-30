@@ -388,11 +388,11 @@ udev, pcan
 
 [width="80%",cols="^3,^3,^3,^3",options="header"]
 |=========================================================
-| Component | PC | Driver | Required |
+| Component | PC | Driver | Required 
 
-| Laser scanner | cob4-X-b1 | <<sick_s300 , sick_s300>> | udev rules |
+| Laser scanner | cob4-X-b1 | <<sick_s300 , sick_s300>> | udev rules 
 
-| Flexisoft | cob4-X-b1 | <<sick_flexisoft , sick_flexisoft>> | - |
+| Flexisoft | cob4-X-b1 | <<sick_flexisoft , sick_flexisoft>> | - 
 
 | Base | cob4-X-b1 | <<base , base>> | Pcan driver
 
