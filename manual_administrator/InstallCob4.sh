@@ -74,6 +74,7 @@ function BasicInstallation {
   wget http://www.cartft.com/support/drivers/TFT/tftdrivers/eGTouch_v2.5.2107.L-x.tar.gz
   tar -xf eGTouch_v2.5.2107.L-x.tar.gz
   cd eGTouch_v2.5.2107.L-x
+  chmod +x setup.sh
   sudo ./setup.sh
 
   echo -e "\n${green}INFO: Setup bash environment${NC}\n"
