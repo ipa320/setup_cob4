@@ -81,19 +81,19 @@ function BasicInstallation {
   sleep 5
   if [[ "$HOSTNAME" == "$ROBOT-b1" ]]
     then
-      cp ~/git/setup_cob4/cob-pcs/cob.bash.bashrc.b /etc/cob.bash.bashrc
+      sudo cp ~/git/setup_cob4/cob-pcs/cob.bash.bashrc.b /etc/cob.bash.bashrc
   fi
   if [[ "$HOSTNAME" == "$ROBOT-t"* ]]
     then
-      cp ~/git/setup_cob4/cob-pcs/cob.bash.bashrc.t /etc/cob.bash.bashrc
+      sudo cp ~/git/setup_cob4/cob-pcs/cob.bash.bashrc.t /etc/cob.bash.bashrc
   fi
   if [[ "$HOSTNAME" == "$ROBOT-h"* ]]
     then
-      cp ~/git/setup_cob4/cob-pcs/cob.bash.bashrc.h /etc/cob.bash.bashrc
+      sudo cp ~/git/setup_cob4/cob-pcs/cob.bash.bashrc.h /etc/cob.bash.bashrc
   fi
   if [[ "$HOSTNAME" == "$ROBOT-s"* ]]
     then
-      cp ~/git/setup_cob4/cob-pcs/cob.bash.bashrc.s /etc/cob.bash.bashrc
+      sudo cp ~/git/setup_cob4/cob-pcs/cob.bash.bashrc.s /etc/cob.bash.bashrc
   fi
 
   echo -e "\n${green}INFO:  Define users rights${NC}\n"
