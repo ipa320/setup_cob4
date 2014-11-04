@@ -197,7 +197,7 @@ function Cob4Setup
   cp ~/git/setup_cob4/cob-pcs/user.bashrc ~/.bashrc
   source /opt/ros/indigo/setup.bash
   sudo sed -i "s/myrobot/$ROBOT/g" ~/.bashrc
-  sudo sed -i "s/mydistro/$ROS_DISTRO/g" /u/$1/.bashrc
+  sudo sed -i "s/mydistro/$ROS_DISTRO/g" ~/.bashrc
   
   echo -e "\n${green}INFO:  Create overlays for stacks${NC}\n"
   sleep 5
