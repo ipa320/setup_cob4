@@ -26,7 +26,7 @@ function BasicInstallation {
   if grep -q GRUB_RECORDFAIL_TIMEOUT= /etc/default/grub ; then
     echo "found GRUB_RECORD_FAIL flag already, skipping update-grub call"
   else
-    echo "echo GRUB_RECORDFAIL_TIMEOUT=10 | sudo tee -a /etc/default/grub"
+    echo GRUB_RECORDFAIL_TIMEOUT=10 | sudo tee -a /etc/default/grub
     sudo update-grub
   fi
 
