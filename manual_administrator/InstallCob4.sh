@@ -211,6 +211,7 @@ function Cob4Setup
   cd /u/robot/git/care-o-bot/src
   git clone https://github.com/ipa320/cob_robots
   git clone https://github.com/ipa320/cob_calibration_data
+  catkin_make install
   
   
   echo -e "\n${green}INFO:  Enable passwordless login${NC}\n"
@@ -225,7 +226,7 @@ function Cob4Setup
 
   echo -e "\n${green}INFO:  Install upstart job${NC}\n"
   sleep 5
-  sudo sh /u/robot/git/setup_cob4/upstart/upstart_install.sh
+  /u/robot/git/setup_cob4/upstart/upstart_install.sh
   
   echo -e "\n${green}INFO:  Define users rights${NC}\n"
   sleep 5
