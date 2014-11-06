@@ -47,6 +47,8 @@ function BasicInstallation {
   sleep 5
   echo "robot ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
   sudo adduser robot dialout
+  sudo adduser robot audio
+  sudo adduser robot pulse
 
   echo -e "\n${green}INFO:Setup local ROOT user${NC}\n"
   sleep 5
