@@ -42,9 +42,8 @@ if pgrep ps3joy.py > /dev/null ||
 	#exit 1
 else
 	echo "Starting ps3joy_node..."
-	/opt/ros/indigo/lib/ps3joy/ps3joy_node.py --inactivity-timeout=300  > /var/log/rc_local-ps3joy_node.log 2>&1  &
-	# we need the patched ps3joy_node from catkin workspace:
-	#/home/jenkins/git/catkin_ws/src/joystick_drivers/ps3joy/scripts/ps3joy_node.py --inactivity-timeout=300  > /var/log/rc_local-ps3joy_node.log 2>&1  &
+	/opt/ros/indigo/lib/ps3joy/ps3joy.py --inactivity-timeout=300  > /var/log/rc_local-ps3joy_node.log 2>&1  &
+
 	#exit 0
 fi
 sleep 5
