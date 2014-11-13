@@ -1,0 +1,1 @@
+KERNEL=="js?", ATTRS{name}=="Sony Playstation SixAxis/DS3", SYMLINK+="joypad" RUN+="/u/robot/git/setup_cob4/udev_rules/ps3joy_node_starter.sh"
