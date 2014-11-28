@@ -148,7 +148,7 @@ function NFSSetup
       echo "/u *(rw,fsid=0,sync,no_subtree_check)" | sudo tee -a /etc/exports
       if [ -d "/u/robot/git" ]
         then
-          sudo sed -i 's/home\/robot/u\/robot/g' /etc/default/nfs-common
+          sudo sed -i 's/home\/robot/u\/robot/g' /etc/passwd
           read -p "Reboot the computer for the changes to take effect (y/n)?" choice
             case "$choice" in 
                 y|Y ) echo "Yes" && sudo reboot;;
@@ -174,7 +174,7 @@ function NFSSetup
         
       if [ -d "/u/robot/git" ]
         then
-          sudo sed -i 's/home\/robot/u\/robot/g' /etc/default/nfs-common
+          sudo sed -i 's/home\/robot/u\/robot/g' /etc/passwd
           read -p "Reboot the computer for the changes to take effect (y/n)?" choice
             case "$choice" in 
                 y|Y ) sudo reboot;;
