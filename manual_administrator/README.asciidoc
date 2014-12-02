@@ -76,6 +76,20 @@ GRUB_RECORDFAIL_TIMEOUT=$GRUB_TIMEOUT
 
 Open a terminal and type +sudo update-grub+ to apply the changes you just made.
 
+Allow the pc shutdown after press the power button, editing the existing /etc/acpi/events/powerbtn file
+
+----
+sudo vi /etc/acpi/events/powerbtn
+----
+
+Add # to comment line: #action=/etc/acpi/powerbtn.shand add a new line: action=/sbin/poweroff and restart acpid:
+
+----
+sudo acpid restart
+----
+
+
+
 ==== Setup ssh server
 
 Install openssh server on all robot pcs
