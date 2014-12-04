@@ -1,0 +1,1 @@
+KERNEL=="ttyACM?", ATTRS{serial}=="314F0C472B001300", SYMLINK+="gripper_right"
