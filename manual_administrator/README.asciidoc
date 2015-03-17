@@ -76,6 +76,28 @@ GRUB_RECORDFAIL_TIMEOUT=$GRUB_TIMEOUT
 
 Open a terminal and type +sudo update-grub+ to apply the changes you just made.
 
+Allow the pc shutdown after press the power button, editing the existing /etc/acpi/powerbtn.sh file
+
+----
+sudo vi /etc/acpi/events/powerbtn
+----
+
+Add the line shutdown -h now as the first thing so it looks like:
+
+----
+#!/bin/sh
+# /etc/acpi/powerbtn.sh
+# Initiates a shutdown when the power putton has been
+# pressed.
+
+/sbin/shutdown -h now "Power button pressed"
+exit 0
+
+# leave the old code below (in case you want to revert!)
+----
+
+
+
 ==== Setup ssh server
 
 Install openssh server on all robot pcs

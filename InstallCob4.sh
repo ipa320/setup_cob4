@@ -129,11 +129,13 @@ function NFSSetup
   sudo apt-get install ntp -y --force-yes
   if [ "$MODE" == "master" ]
     then
+      sudo apt-get install apt-cacher-ng
       sudo echo "server 0.pool.ntp.org" | sudo tee -a /etc/ntp.conf
       sudo echo "restrict $IP mask 255.255.255.0 nomodify notrap" | sudo tee -a /etc/ntp.conf
   elif [ "$MODE" == "slave" ]
     then
       sudo echo "server $server" | sudo tee -a /etc/ntp.conf
+      sudo echo "Acquire::http { Proxy "http://$server:3142"; };" | sudo tee -a /etc/apt/apt.conf.d/01proxy
   fi
 
   echo -e "\n${green}INFO:  Install NFS${NC}\n"
