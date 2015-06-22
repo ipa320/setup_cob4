@@ -35,7 +35,7 @@ function BasicInstallation {
   sudo apt-get install openssh-server -y --force-yes
   echo -e "\n${green}INFO:Let the server send a alive interval to clients to not get a broken pipe${NC}\n"
   echo "ClientAliveInterval 60" | sudo tee -a /etc/ssh/sshd_config
-  sudo sed -i 's/PermitRootLogin/PermitRootLogin yes/g' /etc/ssh/sshd_config
+  sudo sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/g' /etc/ssh/sshd_config
 
   echo -e "\n${green}INFO:Checkout the setup repository${NC}\n"
   sleep 5
@@ -129,11 +129,13 @@ function NFSSetup
   sudo apt-get install ntp -y --force-yes
   if [ "$MODE" == "master" ]
     then
+      sudo apt-get install apt-cacher-ng
       sudo echo "server 0.pool.ntp.org" | sudo tee -a /etc/ntp.conf
       sudo echo "restrict $IP mask 255.255.255.0 nomodify notrap" | sudo tee -a /etc/ntp.conf
   elif [ "$MODE" == "slave" ]
     then
       sudo echo "server $server" | sudo tee -a /etc/ntp.conf
+      sudo echo "Acquire::http { Proxy "http://$server:3142"; };" | sudo tee -a /etc/apt/apt.conf.d/01proxy
   fi
 
   echo -e "\n${green}INFO:  Install NFS${NC}\n"
