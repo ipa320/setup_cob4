@@ -12,6 +12,7 @@ $ROBOT-t1
 $ROBOT-t2
 $ROBOT-t3
 $ROBOT-s1
+$ROBOT-h1
 $ROBOT-b1"
 
 for client in $client_list; do
