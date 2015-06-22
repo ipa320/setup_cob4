@@ -25,11 +25,13 @@ sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$ROBOT-t1:/etc/
 sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$ROBOT-t2:/etc/
 sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$ROBOT-t3:/etc/
 sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$ROBOT-s1:/etc/
+sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$ROBOT-h1:/etc/
 
 if [ "$1" != "" ]; then
 	echo "setup bash environment"
 	sudo cp /u/robot/git/setup_cob4/cob-pcs/user.bashrc /u/$1/.bashrc
 	sudo sed -i "s/myrobot/$ROBOT/g" /u/$1/.bashrc
+	sudo sed -i "s/mydistro/$ROS_DISTRO/g" /u/$1/.bashrc
 
 	if [ ! -d /u/$1/.ssh ]; then
         	echo "create new ssh key"
@@ -37,12 +39,13 @@ if [ "$1" != "" ]; then
 	fi
 
 	echo "copying ssh-keys to other pcs, please enter password of new user"
-	sudo -u $1 ssh-copy-id -i /u/$1/.ssh/id_rsa $1@$ROBOT-b1
-	sudo -u $1 ssh $1@$ROBOT-b1 -e "logout"
-	sudo -u $1 ssh $1@$ROBOT-t1 -e "logout"
-	sudo -u $1 ssh $1@$ROBOT-t2 -e "logout"
-	sudo -u $1 ssh $1@$ROBOT-t3 -e "logout"
-	sudo -u $1 ssh $1@$ROBOT-s1 -e "logout"
+	sudo -u $1 cat /u/$1/.ssh/id_rsa.pub | ssh $1@$ROBOT-b1 "cat >> /u/$1/.ssh/authorized_keys"
+    sudo -u $1 ssh $1@$ROBOT-b1 'exit'
+	sudo -u $1 ssh $1@$ROBOT-t1 'exit'
+	sudo -u $1 ssh $1@$ROBOT-t2 'exit'
+	sudo -u $1 ssh $1@$ROBOT-t3 'exit'
+	sudo -u $1 ssh $1@$ROBOT-s1 'exit'
+	sudo -u $1 ssh $1@$ROBOT-h1 'exit'
 	sudo su -c "rosdep update" $1
 	sudo su -c "mkdir -p ~/git/care-o-bot" $1
 fi
