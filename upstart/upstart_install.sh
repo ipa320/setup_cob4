@@ -5,7 +5,7 @@ if [ "$HOSTNAME" != "$ROBOT-b1" ]; then
 	exit
 fi
 
-
+sudo apt-get install ros-indigo-robot-upstart
 sudo cp /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
 sudo cp /u/robot/git/setup_cob4/upstart/cob-start /usr/sbin/cob-start
 sudo sed -i "s/myrobot/$ROBOT/g" /usr/sbin/cob-start
