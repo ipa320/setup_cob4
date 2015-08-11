@@ -1,0 +1,1 @@
+SUBSYSTEM=="input",ATTRS{name}=="Generic X-Box pad",SYMLINK+="joypad"

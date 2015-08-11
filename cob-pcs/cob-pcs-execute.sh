@@ -14,7 +14,6 @@ $ROBOT-b1
 $ROBOT-t1
 $ROBOT-t2
 $ROBOT-t3
-$ROBOT-s1
 $ROBOT-h1"
 
 for client in $client_list; do
@@ -26,7 +25,7 @@ for client in $client_list; do
 	ret=${PIPESTATUS[0]}
 	if [ $ret != 0 ] ; then
 		echo "command return an error (error code: $ret), aborting..."
-		exit 1
+#		exit 1
 	fi
 	echo ""
 done
