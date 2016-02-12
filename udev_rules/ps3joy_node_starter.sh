@@ -11,7 +11,6 @@ fi
 echo "Note that we run as root with user config files so some warning outputs are to be expected."
 
 # we source this because of ROS_IP etc:
-#source /home/jenkins/.bashrc
 
 # but as ~-relative paths from that won't work as we are root,
 # so we make sure we have ros sourced:
@@ -19,7 +18,6 @@ source /opt/ros/indigo/setup.bash
 
 # the above line would suffice if we'd use the joystick_drivers from
 # source, but as we have modified them from source we need the catkin_ws
-#source /home/jenkins/git/catkin_ws/devel/setup.bash
 
 while true; do #after roscore shutdown try again
 echo "waiting for roscore being started.."
