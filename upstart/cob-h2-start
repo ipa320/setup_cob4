@@ -57,7 +57,7 @@
 
 export ROS_MASTER_URI=http://myrobot-b1:11311
 #source /opt/ros/indigo/setup.bash
-source /home/robot/git/care-o-bot/src/install/setup.bash
+source /home/robot/git/care-o-bot/install/setup.bash
 touch /tmp/robot.launch.pid
 started=false
 while true
