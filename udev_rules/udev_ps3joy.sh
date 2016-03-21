@@ -62,89 +62,18 @@
 #
 #################################################################
 
-## Scan1 ##
-Scan1Attr1='ATTRS{bInterfaceNumber}=="01"'
-Scan1Attr2='ATTRS{serial}=="FT7IGCRK"'
-
-## Scan2 ##
-Scan2Attr1='ATTRS{bInterfaceNumber}=="00"'
-Scan2Attr2='ATTRS{serial}=="FT7IGCRK"'
-
-## Scan3 ##
-Scan3Attr1='ATTRS{bInterfaceNumber}=="00"'
-Scan3Attr2='ATTRS{serial}=="FTDGE9HC"'
-
 ## Joystick ##
-JoyAttr1='ATTRS{idVendor}=="046d"'
-#JoyAttr2='ATTRS{idProduct}=="c21f"'
+JoyAttr1='Playstation'
 
 sleep 10
-
-sudo chmod 666 /dev/ttyUSB0
-sudo udevadm info -a -p $(udevadm info -q path -n /dev/ttyUSB0) > /tmp/usb0
-if grep -qs $Scan1Attr1 /tmp/usb0  && grep -qs $Scan1Attr2 /tmp/usb0 
-then
-    sudo ln -s ttyUSB0 /dev/ttyScanFront
-fi
-if grep -qs $Scan2Attr1 /tmp/usb0  && grep -qs $Scan2Attr2 /tmp/usb0 
-then
-    sudo ln -s ttyUSB0 /dev/ttyScanLeft
-fi
-if grep -qs $Scan3Attr1 /tmp/usb0  && grep -qs $Scan3Attr2 /tmp/usb0 
-then
-    sudo ln -s ttyUSB0 /dev/ttyScanRight
-fi
-
-sudo chmod 666 /dev/ttyUSB1
-sudo udevadm info -a -p $(udevadm info -q path -n /dev/ttyUSB1) > /tmp/usb1
-if grep -qs $Scan1Attr1 /tmp/usb1  && grep -qs $Scan1Attr2 /tmp/usb1 
-then
-    sudo ln -s ttyUSB1 /dev/ttyScanFront
-fi
-if grep -qs $Scan2Attr1 /tmp/usb1  && grep -qs $Scan2Attr2 /tmp/usb1 
-then
-    sudo ln -s ttyUSB1 /dev/ttyScanLeft
-fi
-if grep -qs $Scan3Attr1 /tmp/usb1  && grep -qs $Scan3Attr2 /tmp/usb1 
-then
-    sudo ln -s ttyUSB1 /dev/ttyScanRight
-fi
-
-sudo chmod 666 /dev/ttyUSB2
-sudo udevadm info -a -p $(udevadm info -q path -n /dev/ttyUSB2) > /tmp/usb2
-if grep -qs $Scan1Attr1 /tmp/usb2  && grep -qs $Scan1Attr2 /tmp/usb2 
-then
-    sudo ln -s ttyUSB2 /dev/ttyScanFront
-fi
-if grep -qs $Scan2Attr1 /tmp/usb2  && grep -qs $Scan2Attr2 /tmp/usb2 
-then
-    sudo ln -s ttyUSB2 /dev/ttyScanLeft
-fi
-if grep -qs $Scan3Attr1 /tmp/usb2  && grep -qs $Scan3Attr2 /tmp/usb2 
-then
-    sudo ln -s ttyUSB2 /dev/ttyScanRight
-fi
-
-sudo chmod 666 /dev/ttyUSB3
-sudo udevadm info -a -p $(udevadm info -q path -n /dev/ttyUSB3) > /tmp/usb3
-if grep -qs $Scan1Attr1 /tmp/usb3 && grep -qs $Scan1Attr2 /tmp/usb3 
-then
-    sudo ln -s ttyUSB3 /dev/ttyScanFront
-fi
-if grep -qs $Scan2Attr1 /tmp/usb3  && grep -qs $Scan2Attr2 /tmp/usb3 
-then
-    sudo ln -s ttyUSB3 /dev/ttyScanLeft
-fi
-if grep -qs $Scan3Attr1 /tmp/usb3  && grep -qs $Scan3Attr2 /tmp/usb3 
-then
-    sudo ln -s ttyUSB3 /dev/ttyScanRight
-fi
 
 sudo chmod 666 /dev/input/js0
 sudo udevadm info -a -p $(udevadm info -q path -n /dev/input/js0) > /tmp/js0
 if grep -qs $JoyAttr1 /tmp/js0
 then
     sudo ln -s input/js0 /dev/joypad
+    sudo chown :dialout /dev/joypad
+    sudo sh /u/robot/git/setup_cob4/udev_rules/ps3joy_node_starter.sh
 fi
 
 sudo chmod 666 /dev/input/js1
@@ -152,6 +81,8 @@ sudo udevadm info -a -p $(udevadm info -q path -n /dev/input/js1) > /tmp/js1
 if grep -qs $JoyAttr1 /tmp/js1 
 then
     sudo ln -s input/js1 /dev/joypad
+    sudo chown :dialout /dev/joypad
+    sudo sh /u/robot/git/setup_cob4/udev_rules/ps3joy_node_starter.sh
 fi
 
 sudo chmod 666 /dev/input/js2
@@ -159,4 +90,6 @@ sudo udevadm info -a -p $(udevadm info -q path -n /dev/input/js2) > /tmp/js2
 if grep -qs $JoyAttr1 /tmp/js2
 then
     sudo ln -s input/js2 /dev/joypad
+    sudo chown :dialout /dev/joypad
+    sudo sh /u/robot/git/setup_cob4/udev_rules/ps3joy_node_starter.sh
 fi

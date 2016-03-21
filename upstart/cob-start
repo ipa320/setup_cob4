@@ -32,27 +32,30 @@ pcs="
 $ROBOT-b1
 $ROBOT-t1
 $ROBOT-t2
-$ROBOT-t3"
+$ROBOT-t3
+$ROBOT-s1
+$ROBOT-h1"
 
 for i in $pcs; do 
     Alive=False
     Crono=0
-    Timeout=False
-    while [[ $Alive=False && $Crono -le 50 ]]
+    while [[ $Alive=False && $Crono -le 40 ]]
     do
         ping -c 1 -w 3 $i
         if [ $? -ne 0 ] ; then
           Crono=$((Crono+1))
+          Timeout=True
           Alive=False
           echo $i not found
         else
           Alive=True
+          Timeout=False
           echo $i alive
           break
         fi
         sleep 1
     done
-    if [ $Crono -ge 50 ] ; then
+    if [ $Crono -ge 40 ] ; then
       Timeout=True
       echo $i timeout
       break
@@ -64,10 +67,10 @@ function log() {
   logger -s -p user.$1 ${@:2}
 }
 
-log info "robot.launch: Using workspace setup file /etc/ros/$DISTRO/cob.d/setup.bash"
-source /etc/ros/$DISTRO/cob.d/setup/setup.bash
+log info "robot.launch: Using workspace setup file /etc/ros/$DISTRO/cob.d/setup/setup.sh"
+source /etc/ros/$DISTRO/cob.d/setup/setup.sh
 
-if [ $Timeout ] ; then
+if [ $Crono -ge 40 ] ; then
   JOB_FOLDER=/etc/ros/$DISTRO/cob.d/launch/base_solo
   echo base_solo
 else
