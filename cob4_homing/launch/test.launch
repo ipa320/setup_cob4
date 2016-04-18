@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="robot" default="$(optenv ROBOT !!NO_ROBOT_SET!!)" />
+    <arg name="pkg_hardware_config" default="$(find cob_hardware_config)"/>
+    <arg name="can_module" default="can0"/>
+
+    <!-- upload robot_description -->
+    <include file="$(arg pkg_hardware_config)/common/upload_robot.launch" >
+            <arg name="robot" value="$(arg robot)" />
+    </include>
+
+    <!-- parameters for CANopen node -->
+    <node name="calib_driver" pkg="canopen_motor_node" type="canopen_motor_node" output="screen">
+        <rosparam command="load" file="$(arg pkg_hardware_config)/$(arg robot)/config/$(arg can_module).yaml" />
+    </node>
+    <rosparam command="load" file="$(find cob4_homing)/config/base_controller.yaml" />
+
+    <node name="base_test" pkg="cob4_homing" type="patch.py" output="screen" required="true"/>
+</launch>
