@@ -1,0 +1,30 @@
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The primary network interface
+auto eth0
+iface eth0 inet dhcp
+
+auto can0
+iface can0 inet manual
+pre-up ifconfig $IFACE up
+post-down ifconfig $IFACE down
+
+auto can1
+iface can1 inet manual
+pre-up ifconfig $IFACE up
+post-down ifconfig $IFACE down
+
+auto can2
+iface can2 inet manual
+pre-up ifconfig $IFACE up
+post-down ifconfig $IFACE down
+
+auto can3
+iface can3 inet manual
+pre-up ifconfig $IFACE up
+post-down ifconfig $IFACE down
