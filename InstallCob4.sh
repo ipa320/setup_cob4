@@ -32,7 +32,7 @@ function BasicInstallation {
 
   echo -e "\n${green}INFO:Upgrade the kernel ${NC}\n"
   sleep 5
-  sudo apt-get install linux-headers-generic-lts-wily linux-tools-generic-lts-wily -y --force-yes
+  sudo apt-get install --install-recommends linux-generic-lts-wily -y --force-yes
 
   echo -e "\n${green}INFO:Install openssh server${NC}\n"
   sleep 5
