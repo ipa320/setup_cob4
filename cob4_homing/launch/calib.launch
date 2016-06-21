@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="robot" default="$(optenv ROBOT !!NO_ROBOT_SET!!)" />
+    <arg name="pkg_hardware_config" default="$(find cob_hardware_config)"/>
+    <arg name="can_device" default="can0"/>
+
+    <!-- upload robot_description -->
+    <include file="$(arg pkg_hardware_config)/common/upload_robot.launch" >
+      <arg name="robot" value="$(arg robot)" />
+    </include>
+    <include file="$(find cob_default_robot_config)/upload_param.launch" >
+      <arg name="robot" value="$(arg robot)" />
+    </include>
+
+	<!-- start robot_state_publisher -->
+    <node pkg="robot_state_publisher" type="state_publisher" name="robot_state_publisher" />
+    <rosparam command="load" file="$(find cob4_homing)/config/base_controller.yaml" />
+
+    <node pkg="controller_manager" type="controller_manager" name="base_controller_spawner" args="spawn joint_state_controller twist_controller odometry_controller fl_caster_rotation_joint_position_controller fr_caster_rotation_joint_position_controller b_caster_rotation_joint_position_controller" respawn="false" output="screen"/>
+
+    <node name="calib_driver" pkg="canopen_motor_node" type="canopen_motor_node" clear_params="true">
+      <rosparam param="bus/device" subst_value="True">$(arg can_device)</rosparam>
+      <rosparam command="load" file="$(find cob4_homing)/config/calib_driver.yaml" />
+    </node>
+
+    <node name="base_calib" pkg="cob4_homing" type="calib.py" output="screen" required="true"/>
+
+</launch>
