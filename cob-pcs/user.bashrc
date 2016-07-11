@@ -141,7 +141,3 @@ case '$ROS_PACKAGE_PATH' in
 esac
 
 export JAVA_HOME=/usr/lib/jvm/java-6-openjdk-amd64
-
-COUNT=$(cat /proc/cpuinfo | grep 'processor' | wc -l)
-COUNT=$(echo "$COUNT*2" | bc)
-export ROS_PARALLEL_JOBS=-j$COUNT

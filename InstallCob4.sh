@@ -30,6 +30,10 @@ function BasicInstallation {
     sudo update-grub
   fi
 
+  echo -e "\n${green}INFO:Upgrade the kernel ${NC}\n"
+  sleep 5
+  sudo apt-get install --install-recommends linux-generic-lts-wily -y --force-yes
+
   echo -e "\n${green}INFO:Install openssh server${NC}\n"
   sleep 5
   sudo apt-get install openssh-server -y --force-yes
@@ -96,6 +100,17 @@ function BasicInstallation {
   if [[ "$HOSTNAME" == "$ROBOT-s"* ]]
     then
       sudo cp ~/git/setup_cob4/cob-pcs/cob.bash.bashrc.s /etc/cob.bash.bashrc
+  fi
+
+  echo -e "\n${green}INFO: Setup network interfaces${NC}\n"
+  sleep 5
+  if [[ "$HOSTNAME" == "$ROBOT-b1" ]]
+    then
+      sudo cp ~/git/setup_cob4/cob-pcs/networkInterfacesB1 /etc/network/interfaces
+  fi
+  if [[ "$HOSTNAME" == "$ROBOT-t1" ]]
+    then
+      sudo cp ~/git/setup_cob4/cob-pcs/networkInterfacesT1 /etc/network/interfaces 
   fi
 
   echo -e "\n${green}INFO:  Define users rights${NC}\n"
