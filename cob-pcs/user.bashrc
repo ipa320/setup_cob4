@@ -117,7 +117,7 @@ export PATH=/u/robot/git/setup_cob4:$PATH
 export MY_CATKIN_WORKSPACE=~/git/care-o-bot
 
 export ROBOT=myrobot
-export ROBOT_ENV=ipa-apartment
+export ROBOT_ENV=empty
 export ROSLAUNCH_SSH_UNKNOWN=1
 export ROS_MASTER_URI=http://myrobot-b1:11311
 

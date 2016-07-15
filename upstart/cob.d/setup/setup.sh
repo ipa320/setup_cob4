@@ -12,7 +12,7 @@
 _SETUP_UTIL="$_CATKIN_SETUP_DIR/_setup_util.py"
 unset _CATKIN_SETUP_DIR
 export ROSLAUNCH_SSH_UNKNOWN=1
-export ROS_MASTER_URI=http://cob4-2-b1:11311
+export ROS_MASTER_URI=http://myrobot-b1:11311
 
 if [ ! -f "$_SETUP_UTIL" ]; then
   echo "Missing Python script: $_SETUP_UTIL"

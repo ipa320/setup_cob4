@@ -150,7 +150,7 @@ function NFSSetup
   elif [ "$MODE" == "slave" ]
     then
       sudo echo "server $server" | sudo tee -a /etc/ntp.conf
-      sudo echo "Acquire::http { Proxy "http://$server:3142"; };" | sudo tee -a /etc/apt/apt.conf.d/01proxy
+      sudo echo 'Acquire::http:Proxy "http://$server:3142";' | sudo tee -a /etc/apt/apt.conf.d/01proxy                 
   fi
 
   echo -e "\n${green}INFO:  Install NFS${NC}\n"
