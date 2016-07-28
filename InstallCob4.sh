@@ -19,7 +19,7 @@ function BasicInstallation {
   echo -e "\n${green}INFO:Installing basic tools${NC}\n"
   sleep 5
   sudo apt-get update
-  sudo apt-get install vim tree gitg meld curl openjdk-6-jdk zsh terminator language-pack-de language-pack-en ipython -y --force-yes
+  sudo apt-get install vim tree gitg git-gui meld curl openjdk-6-jdk zsh terminator language-pack-de language-pack-en ipython -y --force-yes
 
   echo -e "\n${green}INFO:Update grub to avoid hangs on reboot${NC}\n"
   sleep 5
