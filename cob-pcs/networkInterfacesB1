@@ -13,3 +13,4 @@ iface can0 can static
 allow-hotplug can1
 iface can1 can static
     bitrate 500000
+    pre-up ip link set $IFACE type can restart-ms 10
