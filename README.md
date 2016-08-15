@@ -5,7 +5,7 @@
 
 1. <a href="#Installation">Installation</a>
 2. <a href="#Extra-Installation">Extra Installation</a>
-     1. <a href="#Hands">Hand condiguration</a>
+     1. <a href="#Hands">Hand configuration</a>
      2. <a href="#Mimic">Mimic</a>
      3. <a href="#Touch">Calibration touchscreen</a>
 
@@ -27,28 +27,28 @@ The installation script needs the parameters robot, ip address and installation 
 
 The script allow different types of installation:
 
- + **Basic Installation** It is composed by the following steps:
++ **Basic Installation** It is composed by the following steps:
 
- * Install basic tools (vim, meld, terminator ...)
- * Install and configure openssh
- * Allow robot user to execute sudo command without password
- * Setup root user (in this step the user will be asked for a password)
- * Install ROS
- * Setup udev rules
- * Setup bash environment 
+  * Install basic tools (vim, meld, terminator ...)
+  * Install and configure openssh
+  * Allow robot user to execute sudo command without password
+  * Setup root user (in this step the user will be asked for a password)
+  * Install ROS
+  * Setup udev rules
+  * Setup bash environment 
 
- + **Setup NTP and NFS** This option will configure the NFS system depending on the installation mode, it is important that the master pc is already installed and per network reachable before install the slave computers, otherwise the installation process will be cancelled. After this installation it is necessary restart the computer.
++ **Setup NTP and NFS** This option will configure the NFS system depending on the installation mode, it is important that the master pc is already installed and per network reachable before install the slave computers, otherwise the installation process will be cancelled. After this installation it is necessary restart the computer.
  
- + **Full Installation** A full installation means the combination of 1 and 2 (Basic Installation + Setup NTP and NFS)
- + **Cob setup** This step holds the recommended configuration of the robot home directory. This step can only be execute after a full installation.
++ **Full Installation** A full installation means the combination of 1 and 2 (Basic Installation + Setup NTP and NFS)
++ **Cob setup** This step holds the recommended configuration of the robot home directory. This step can only be execute after a full installation.
 
 ### 2. Extra Installation <a id="Extra-Installation"/> 
 #### 2.1. Hands configuration <a id="Hands"/>
-The hands use a bluetooth connection to receive the commands. The bluetooth have to be configured on the hands (Raspberry pcs) and on the torso pc used to communicate with the hand, also some upstart jobs are required to launch the hand driver on boot.
+The hands use a bluetooth connection to receive the commands and send the link positions to ROS. This requires the configuration of the bluetooth devices on the hands (Raspberry pcs) and on the torso pc, also some upstart jobs are needed to launch the hand driver on boot.
 
-+ Hand pc:
+##### Hand Pcs:
 
-Add a rule (*/etc/udev/rules/98-bluetooth*) to find the serial port:
+Add a rule (*/etc/udev/rules/98-bluetooth*) to identify the bluetooth device as a serial port:
 
 ```
 KERNEL=="rfcomm*",GROUP="dialout",MODE="0666",SYMLINK+="ttyBridge"
@@ -69,7 +69,7 @@ And enable the service with the command:
 ```
 sudo systemctl enable cob_hand_bridge.service
 ```
-+ Torso pc:
+##### Torso Pcs:
 Uninstall the modemmanager package to avoid any bluetooth interference:
 ```
 sudo apt-get purge modemmanager
