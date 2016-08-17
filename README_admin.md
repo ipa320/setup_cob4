@@ -2,7 +2,7 @@
 # cob4 Administrator manual
 
 ### Contents
-<a href="#Administrator-Manual">Administrator manual</a>
+1. <a href="#Administrator-Manual">Administrator manual</a>
      1. <a href="#Network">Network setup</a>
      2. <a href="#New-Users">Create new user accounts</a>
      3. <a href="#Backup-Restore">Backup and restore the entire system</a>
