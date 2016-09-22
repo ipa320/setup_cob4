@@ -1,0 +1,57 @@
+#!/bin/bash
+ROBOT=cob4-1
+DISTRO=indigo
+pcs="
+cob4-2-b1
+cob4-2-t1
+cob4-2-t2
+cob4-2-t3
+cob4-2-s1
+cob4-2-h32"
+
+sleep 5
+for i in $pcs; do 
+    Alive=False
+    Crono=0
+    while [[ $Alive=False && $Crono -le 40 ]]
+    do
+        ping -c 1 -w 3 $i
+        if [ $? -ne 0 ] ; then
+          Crono=$((Crono+1))
+          Timeout=True
+          Alive=False
+          echo $i not found
+        else
+          Alive=True
+          Timeout=False
+          echo $i alive
+          break
+        fi
+        sleep 1
+    done
+    if [ $Crono -ge 40 ] ; then
+      Timeout=True
+      echo $i timeout
+      break
+    else
+      Timeout=False
+    fi  
+done
+function log() {
+  logger -s -p user.$1 ${@:2}
+}
+
+source /etc/ros/$DISTRO/cob.d/setup/setup.sh
+JOB_FOLDER=/etc/ros/$DISTRO/cob.d/launch/robot
+export ROSLAUNCH_SSH_UNKNOWN=1 
+LAUNCH_FILENAME=/tmp/robot.launch.launch
+export ROS_IP=`rosrun robot_upstart getifip eth0`
+export ROS_MASTER_URI=http://$ROS_IP:11311
+export ROS_LOG_DIR=/tmp
+rosrun robot_upstart mklaunch $JOB_FOLDER robot:=$ROBOT > $LAUNCH_FILENAME
+su msh -c "/u/msh/git/care-o-bot/devel/env.sh roslaunch $LAUNCH_FILENAME"
+PID=$!
+
+log info "robot.launch: Started roslaunch as background process, PID $PID"
+echo "$PID" > /tmp/robot.launch.pid
+wait "$PID"
