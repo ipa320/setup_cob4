@@ -5,9 +5,10 @@
 
 1. <a href="#Installation">Automatic installation</a>
 2. <a href="#Extra-Installation">Extra installation</a>
-     1. <a href="#Hands">Hand configuration</a>
-     2. <a href="#Mimic">Mimic</a>
-     3. <a href="#Touch">Calibration touchscreen</a>
+     1. <a href="#Asus">Asus Xtion</a>
+     2. <a href="#Hands">Hand configuration</a>
+     3. <a href="#Mimic">Mimic</a>
+     4. <a href="#Touch">Calibration touchscreen</a>
 
 
 ### 1. Automatic installation <a id="Installation"/> 
@@ -44,7 +45,19 @@ The script allow different types of installation:
 
 ### 2. Extra Installation <a id="Extra-Installation"/>
 
-#### 2.1. Hands configuration <a id="Hands"/>
+#### 2.1. Asus Xtion <a id="Asus"/>
+
+The Asus Xtion cameras are only properly supported by USB 2.0 , it is recommended to force the bios of the Computer to disable the xHCI driver. For the NUCs (5th generation) open the bios Menu go to "Advanced" -->  Devices --> USB --> xHCI Mode and choose the option "Auto", save your configuration, boot linux and disable the usbhid module:
+```
+sudo rmmod  usbhid
+```
+And save this configuration as default:
+```
+sudo update-initramfs -u 
+```
+
+
+#### 2.2. Hands configuration <a id="Hands"/>
 
 The hands use a bluetooth connection to receive the commands and send the link positions to ROS. This requires the configuration of the bluetooth devices on the hands (Raspberry pcs) and on the torso pc, also some upstart jobs are needed to launch the hand driver on boot.
 
@@ -102,7 +115,7 @@ script
 end script
 ```
 
-#### 2.2. Mimic <a id="Mimic"/>
+#### 2.4. Mimic <a id="Mimic"/>
 
 The mimic should be installed on head pc. A special user "mimic" has to be created to control the display. After create the user add the following lines to */etc/lightdm/lightdm.conf* :
 
@@ -126,7 +139,7 @@ Comment[en_US]=
 Comment=
 ```
 
-#### 2.3. Calibration touchscreen <a id="Touch"/>
+#### 2.4. Calibration touchscreen <a id="Touch"/>
 
 The touchscreen driver can be found under http://zytronic.co.uk/support/downloads/# , after install the driver use the following command to invert the axis and calibrate the panel:
 ```
