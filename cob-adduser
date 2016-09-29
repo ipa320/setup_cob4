@@ -1,11 +1,12 @@
 #!/bin/bash
+robot_name="${HOSTNAME//-b1}"
 
 if [ "$USER" != "robot" ]; then 
 	echo 'FATAL: CAN ONLY BE EXECUTED AS "robot" USER'
 	exit
 fi
 
-if [ "$HOSTNAME" != "$ROBOT-b1" ]; then 
+if [ "$HOSTNAME" != "$robot_name-b1" ]; then 
 	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC"
 	exit
 fi
@@ -21,11 +22,11 @@ sudo adduser $1 plugdev
 sudo adduser $1 users 
 
 echo "Syncing passwd file to other cob-pcs"
-sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$ROBOT-t1:/etc/
-sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$ROBOT-t2:/etc/
-sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$ROBOT-t3:/etc/
-sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$ROBOT-s1:/etc/
-sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$ROBOT-h1:/etc/
+sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$robot_name-t1:/etc/
+sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$robot_name-t2:/etc/
+sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$robot_name-t3:/etc/
+sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$robot_name-s1:/etc/
+sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$robot_name-h1:/etc/
 
 if [ "$1" != "" ]; then
 	echo "setup bash environment"
@@ -39,13 +40,13 @@ if [ "$1" != "" ]; then
 	fi
 
 	echo "copying ssh-keys to other pcs, please enter password of new user"
-	sudo -u $1 cat /u/$1/.ssh/id_rsa.pub | ssh $1@$ROBOT-b1 "cat >> /u/$1/.ssh/authorized_keys"
-	sudo -u $1 ssh $1@$ROBOT-b1 'exit'
-	sudo -u $1 ssh $1@$ROBOT-t1 'exit'
-	sudo -u $1 ssh $1@$ROBOT-t2 'exit'
-	sudo -u $1 ssh $1@$ROBOT-t3 'exit'
-	sudo -u $1 ssh $1@$ROBOT-s1 'exit'
-	sudo -u $1 ssh $1@$ROBOT-h1 'exit'
+	sudo -u $1 cat /u/$1/.ssh/id_rsa.pub | ssh $1@$robot_name-b1 "cat >> /u/$1/.ssh/authorized_keys"
+	sudo -u $1 ssh $1@$robot_name-b1 'exit'
+	sudo -u $1 ssh $1@$robot_name-t1 'exit'
+	sudo -u $1 ssh $1@$robot_name-t2 'exit'
+	sudo -u $1 ssh $1@$robot_name-t3 'exit'
+	sudo -u $1 ssh $1@$robot_name-s1 'exit'
+	sudo -u $1 ssh $1@$robot_name-h1 'exit'
 	sudo su -c "rosdep update" $1
 	sudo su -c "mkdir -p ~/git/care-o-bot" $1
 fi
