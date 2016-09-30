@@ -9,6 +9,13 @@ cob4-2-t3
 cob4-2-s1
 cob4-2-h32"
 
+if [ -e /tmp/robot.launch.pid ]; then
+  PID=$(cat /tmp/robot.launch.pid)
+  logger -p user.info "Attempting to stop robot.launch (PID $PID)"
+  kill $PID
+  wait $!
+fi
+
 for i in $pcs; do 
     Alive=False
     Crono=0
@@ -39,6 +46,8 @@ done
 function log() {
   logger -s -p user.$1 ${@:2}
 }
+su msh -c "sh /etc/ros/indigo/cob.d/roscore_start.sh"&  
+
 sleep 30
 source /etc/ros/$DISTRO/cob.d/setup/setup.sh
 JOB_FOLDER=/etc/ros/$DISTRO/cob.d/launch/robot
@@ -48,9 +57,9 @@ export ROS_IP=`rosrun robot_upstart getifip eth0`
 export ROS_MASTER_URI=http://$ROS_IP:11311
 export ROS_LOG_DIR=/tmp
 rosrun robot_upstart mklaunch $JOB_FOLDER robot:=$ROBOT > $LAUNCH_FILENAME
-su msh -c "sh /etc/ros/indigo/cob.d/robot_launch.sh"
-#PID=$!
+su msh -c "sh /etc/ros/indigo/cob.d/robot_launch.sh" 
+PID=$!
 
 #log info "robot.launch: Started roslaunch as background process, PID $PID"
-#echo "$PID" > /tmp/robot.launch.pid
+echo "$PID" > /tmp/cob-start.pid
 #wait "$PID"

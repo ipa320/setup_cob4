@@ -1,17 +1,14 @@
 #!/bin/bash
 export ROSLAUNCH_SSH_UNKNOWN=1
-LAUNCH_FILENAME=/tmp/robot.launch.launch
-echo "------------------------------------------------"
-echo "------------------------------------------------"
-echo "------------------------------------------------"
-echo "              Starting bringup                  "
-echo "------------------------------------------------"
-echo "------------------------------------------------"
-echo "------------------------------------------------"
-
-/u/msh/git/care-o-bot/devel/env.sh roslaunch $LAUNCH_FILENAME > /tmp/robot.log&
+/u/msh/git/care-o-bot/devel/env.sh roscore&
 PID=$!
-
+echo "------------------------------------------------"
+echo "------------------------------------------------"
+echo "------------------------------------------------"
+echo "              Starting rocore                  "
+echo "------------------------------------------------"
+echo "------------------------------------------------"
+echo "------------------------------------------------"
 #log info "robot.launch: Started roslaunch as background process, PID $PID"
-echo "$PID" > /tmp/robot.launch.pid
+echo "$PID" > /tmp/roscore.pid
 wait "$PID"
