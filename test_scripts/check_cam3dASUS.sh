@@ -7,6 +7,7 @@ check1=false
 check2=false
 check3=false
 check4=false
+check5=false
 
 echo "$(date)" >> /u/testlog_cam_right
 
@@ -38,8 +39,14 @@ else
   check4=true
 fi
 
+dmesg | grep "cannot set freq 44100 to ep 0x84"
+if [ $? -eq 0 ]; then
+  echo "error -- cannot set freq 44100 to ep 0x84 -- found" >> /u/testlog_cam_right  
+else
+  check5=true
+fi
 
-if $check1 && $check2 && $check3 && $check4; then
+if $check1 && $check2 && $check3 && $check4 && $check5; then
  echo "OK" >> /u/testlog_cam_right 
  echo " " >> /u/testlog_cam_right
  echo " " >> /u/testlog_cam_right
