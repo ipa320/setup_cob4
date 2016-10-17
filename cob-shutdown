@@ -6,14 +6,15 @@ if [ "$HOSTNAME" != "$ROBOT-b1" ]; then
 	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC($ROBOT-b1), current host is $HOSTNAME"
 	exit
 fi
+robot_name="${HOSTNAME//-b1}"
 
 client_list="
-$ROBOT-t1
-$ROBOT-t2
-$ROBOT-t3
-$ROBOT-s1
-$ROBOT-h1
-$ROBOT-b1"
+$robot_name-t1
+$robot_name-t2
+$robot_name-t3
+$robot_name-s1
+$robot_name-h1
+$robot_name-b1"
 
 for client in $client_list; do
 	echo "-------------------------------------------"

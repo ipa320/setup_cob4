@@ -19,7 +19,7 @@ function BasicInstallation {
   echo -e "\n${green}INFO:Installing basic tools${NC}\n"
   sleep 5
   sudo apt-get update
-  sudo apt-get install vim tree gitg meld curl openjdk-6-jdk zsh terminator language-pack-de language-pack-en ipython -y --force-yes
+  sudo apt-get install vim tree gitg git-gui meld curl openjdk-6-jdk zsh terminator language-pack-de language-pack-en ipython -y --force-yes
 
   echo -e "\n${green}INFO:Update grub to avoid hangs on reboot${NC}\n"
   sleep 5
@@ -150,7 +150,7 @@ function NFSSetup
   elif [ "$MODE" == "slave" ]
     then
       sudo echo "server $server" | sudo tee -a /etc/ntp.conf
-      sudo echo "Acquire::http { Proxy "http://$server:3142"; };" | sudo tee -a /etc/apt/apt.conf.d/01proxy
+      sudo echo 'Acquire::http:Proxy "http://$server:3142";' | sudo tee -a /etc/apt/apt.conf.d/01proxy                 
   fi
 
   echo -e "\n${green}INFO:  Install NFS${NC}\n"

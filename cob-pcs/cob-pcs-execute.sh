@@ -9,13 +9,15 @@ if [ "$#" -lt 1 ]; then
 	exit 1
 fi
 
+robot_name="${HOSTNAME//-b1}"
+
 client_list="
-$ROBOT-b1
-$ROBOT-t1
-$ROBOT-t2
-$ROBOT-t3
-$ROBOT-s1
-$ROBOT-h1"
+$robot_name-b1
+$robot_name-t1
+$robot_name-t2
+$robot_name-t3
+$robot_name-s1
+$robot_name-h1"
 
 for client in $client_list; do
 	echo "-------------------------------------------"

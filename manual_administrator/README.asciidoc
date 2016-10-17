@@ -9,6 +9,7 @@
 .. <<Enable passwordless login,Enable passwordless login>>
 .. <<Setup NTP time synchronitation,Setup NTP time synchronitation>>
 .. <<Install ROS and driver software,Install ROS and driver software>>
+.. <<Setup CAN Ports,Setup CAN Ports>>
 .. <<Setup hardware components, Setup hardware components>>
 .. <<Create new users accounts, Create new users accounts>>
 .. <<Install upstart job, Install upstart job>>
@@ -305,7 +306,9 @@ sudo apt-get install ntp
 ==== NTP configuration on cob4-X-b1 (NTP server)
 
 Edit +/etc/ntp.conf+, change the server to +0.pool.ntp.org+ and add the restrict
-line, IP is the parameter that define your <<Setup internal robot network,robot network>>.
+line, IP is the parameter that define your 
+
+<<Setup internal robot network,robot network>>.
 
 ----
 server 0.pool.ntp.org
@@ -397,6 +400,17 @@ If the release version of the stacks are not working for you, you can install ov
 cd /u/robot/git/care-o-bot/src
 git clone https://github.com/ipa320/cob_robots
 git clone https://github.com/ipa320/cob_calibration_data
+----
+
+=== [[Setup CAN Ports]] Setup CAN Ports
+
+Add the following lines to +/etc/network/interfaces+
+
+----
+allow-hotplug can0
+iface can0 can static
+  bitrate 500000
+  up ip link set $IFACE txqueuelen 15
 ----
 
 === [[Setup hardware components]] Setup hardware components

@@ -5,21 +5,27 @@
 
 if [ "$(whoami)" != "root" ]; then
         echo "Run me as super user!"
-        exit 1
+        exit 1 #we do not try again
 fi
 
 echo "Note that we run as root with user config files so some warning outputs are to be expected."
 
+#export HOME='/home/robot'
+export ROS_DISTRO='indigo'
+
 # we source this because of ROS_IP etc:
+#source $HOME/.bashrc
 
 # but as ~-relative paths from that won't work as we are root,
 # so we make sure we have ros sourced:
-source /opt/ros/indigo/setup.bash
+source /opt/ros/$ROS_DISTRO/setup.bash
 
 # the above line would suffice if we'd use the joystick_drivers from
 # source, but as we have modified them from source we need the catkin_ws
+#source $HOME/catkin_ws/devel/setup.bash #we don't need source
 
 while true; do #after roscore shutdown try again
+
 echo "waiting for roscore being started.."
 while ! rostopic list > /dev/null; do
 	sleep 1
@@ -40,9 +46,11 @@ if pgrep ps3joy.py > /dev/null ||
 	#exit 1
 else
 	echo "Starting ps3joy_node..."
-	/opt/ros/indigo/lib/ps3joy/ps3joy_node.py --inactivity-timeout=300  > /var/log/rc_local-ps3joy_node.log 2>&1  &
+	/opt/ros/indigo/lib/ps3joy/ps3joy.py --inactivity-timeout=300  > /var/log/rc_local-ps3joy.log 2>&1  &
 
 	#exit 0
 fi
 sleep 5
 done
+
+

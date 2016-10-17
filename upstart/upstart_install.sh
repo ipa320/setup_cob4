@@ -5,12 +5,15 @@ if [ "$HOSTNAME" != "$ROBOT-b1" ]; then
 	exit
 fi
 
-
+sudo apt-get install ros-indigo-robot-upstart
 sudo cp /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
 sudo cp /u/robot/git/setup_cob4/upstart/cob-start /usr/sbin/cob-start
 sudo sed -i "s/myrobot/$ROBOT/g" /usr/sbin/cob-start
 sudo sed -i "s/mydistro/$ROS_DISTRO/g" /usr/sbin/cob-start
 sudo cp /u/robot/git/setup_cob4/upstart/cob-stop /usr/sbin/cob-stop
+sudo echo "%users ALL=NOPASSWD:/usr/sbin/cob-start" | sudo tee -a /etc/sudoers
+sudo echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop" | sudo tee -a /etc/sudoers
+
 	
 
 client_list="
@@ -37,5 +40,5 @@ done
 
 sudo cp -r /u/robot/git/setup_cob4/upstart/cob.d/launch /etc/ros/$ROS_DISTRO/cob.d/
 sudo sed -i "s/myrobot/$ROBOT/g" /etc/ros/$ROS_DISTRO/cob.d/launch/robot/robot.launch
-
+sudo sed -i "s/myrobot/$ROBOT/g" /etc/ros/indigo/cob.d/setup/setup.sh
 

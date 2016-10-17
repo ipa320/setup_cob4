@@ -1,0 +1,1 @@
+../../../upstart/cob.d/setup/setup.bash
