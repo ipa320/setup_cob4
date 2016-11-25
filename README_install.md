@@ -9,6 +9,7 @@
      2. <a href="#Hands">Hand configuration</a>
      3. <a href="#Mimic">Mimic</a>
      4. <a href="#Touch">Calibration touchscreen</a>
+     5. <a href="#NetData">Netdata tool</a>
 
 
 ### 1. Automatic installation <a id="Installation"/> 
@@ -145,4 +146,23 @@ The touchscreen driver can be found under http://zytronic.co.uk/support/download
 ```
  sudo ZyConfig
 ```
+
+#### 2.5. Netdata tool <a id="NetData"/>
+
+Install the dependencies:
+```
+sudo apt-get install zlib1g-dev uuid-dev libmnl-dev gcc make git autoconf autoconf-archive autogen automake pkg-config curl
+```
+
+Install from netdata from source:
+```
+git clone https://github.com/firehol/netdata.git --depth=1
+cd netdata
+sudo ./netdata-installer.sh
+```
+
+The tool is available under the address http://*hostname*:19999
+
+For further information take a look at the official installation guide: https://github.com/firehol/netdata/wiki/Installation
+
 <a href="#top">top</a>
