@@ -1,5 +1,5 @@
 #!/bin/bash
-sleep 5
+sleep 30
 check1=false
 check2=false
 check3=false
