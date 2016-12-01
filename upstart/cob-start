@@ -74,7 +74,7 @@ for i in $pcs_cameras; do
     Check_cam=False
     while [[ $Check_cam=False ]]
       do
-        if ssh $i /tmp/check_done \> /dev/null 2\>\&1
+        if ssh $i stat /tmp/check_done \> /dev/null 2\>\&1
           then
             echo "File exists"
             Check_cam=True
