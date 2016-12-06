@@ -34,6 +34,10 @@ if [ -e /tmp/robot.launch.pid ]; then
 fi
 
 echo "------------------------------------------------"
+##### uncomment the following lines if Windows runs as a Virtual Machine
+#echo "Stopping the Windows VM...."
+#su mimic -c "ssh myrobotname-h1 'export DISPLAY=:0 && vboxmanage controlvm myrobotname-win acpipowerbutton'"
+##### 
 echo "Stopping the robot...."
 cobStartID=$(pgrep cob-start)
 pgrep cob-start

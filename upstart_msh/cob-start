@@ -1,18 +1,18 @@
 #!/bin/bash
-ROBOT=cob4-1
-DISTRO=indigo
+ROBOT=myrobot
+DISTRO=mydistro
 pcs="
-cob4-2-b1
-cob4-2-t1
-cob4-2-t2
-cob4-2-t3
-cob4-2-s1
-cob4-2-h32"
+myrobotname-b1
+myrobotname-t1
+myrobotname-t2
+myrobotname-t3
+myrobotname-s1
+myrobotname-h1"
 
 pcs_cameras="
-cob4-2-t2
-cob4-2-t3
-cob4-2-s1"
+myrobotname-t2
+myrobotname-t3
+myrobotname-s1"
 
 if [ -e /tmp/robot.launch.pid ]; then
   PID=$(cat /tmp/robot.launch.pid)
@@ -53,7 +53,7 @@ for i in $pcs_cameras; do
     Check_cam=False
     while [[ $Check_cam=False ]]
       do
-        if ssh $i /tmp/check_done \> /dev/null 2\>\&1
+        if ssh $i stat /tmp/check_done \> /dev/null 2\>\&1
           then
             echo "File exists"
             Check_cam=True
@@ -71,6 +71,19 @@ function log() {
 su msh -c "sh /etc/ros/indigo/cob.d/roscore_start.sh"&  
 
 sleep 30
+
+##### uncomment the following lines if Windows runs as a Virtual Machine
+#rm -rf /tmp/runningVMS
+#su mimic -c "ssh myrobotname-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
+
+#if grep -q myrobotname-win "/tmp/runningVMS"; then
+#  echo "VM already running"
+#else
+#  echo "starting VM..."
+#  su mimic -c "ssh myrobotname-h1 'export DISPLAY=:0 && virtualbox --startvm myrobotname-win --fullscreen'"&
+#fi
+#####
+
 source /etc/ros/$DISTRO/cob.d/setup/setup.sh
 JOB_FOLDER=/etc/ros/$DISTRO/cob.d/launch/robot
 export ROSLAUNCH_SSH_UNKNOWN=1 
