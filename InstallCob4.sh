@@ -115,6 +115,7 @@ function BasicInstallation {
 
   echo -e "\n${green}INFO:  Define users rights${NC}\n"
   sleep 5
+  sudo cp ~/git/setup_cob4/cob-shutdown /usr/sbin/cob-shutdown
   sudo echo "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown" | sudo tee -a /etc/sudoers
 
 }
@@ -251,6 +252,7 @@ function Cob4Setup
   sleep 5
   sudo echo "%users ALL=NOPASSWD:/usr/sbin/cob-start" | sudo tee -a /etc/sudoers
   sudo echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop" | sudo tee -a /etc/sudoers
+  sudo echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop-core" | sudo tee -a /etc/sudoers
  
   echo -e "\n${green}INFO:  Enable passwordless login${NC}\n"
   sleep 5

@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 
 # Script for executing commands on all cob-pc's.
+robot_name="${HOSTNAME//-b1}"
 
-if [ "$HOSTNAME" != "$ROBOT-b1" ]; then 
-	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC($ROBOT-b1), current host is $HOSTNAME"
+if [ "$HOSTNAME" != "$robot_name-b1" ]; then 
+	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC($robot_name-b1), current host is $HOSTNAME"
 	exit
 fi
-robot_name="${HOSTNAME//-b1}"
+
 
 client_list="
 $robot_name-t1
@@ -15,6 +16,12 @@ $robot_name-t3
 $robot_name-s1
 $robot_name-h1
 $robot_name-b1"
+
+cob-stop-core
+
+while rostopic list > /dev/null; do
+	sleep 1
+done
 
 for client in $client_list; do
 	echo "-------------------------------------------"
@@ -29,3 +36,4 @@ for client in $client_list; do
 	fi
 	echo ""
 done
+

@@ -1,0 +1,11 @@
+#!/bin/bash
+# Please send comments, questions, or patches to code@clearpathrobotics.com 
+if [ -e /tmp/roscore.pid ]; then
+  PID=$(cat /tmp/roscore.pid)
+  logger -p user.info "Attempting to stop robot.launch (PID $PID)"
+  kill $PID
+  wait $!
+fi
+
+#rm -rf /tmp/robot.launch.pid
+

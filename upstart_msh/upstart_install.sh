@@ -7,6 +7,7 @@ sudo cp /u/robot/git/setup_cob4/upstart_msh/cob-start /usr/sbin/cob-start
 sudo sed -i "s/myrobot/$ROBOT/g" /usr/sbin/cob-start
 sudo sed -i "s/mydistro/$ROS_DISTRO/g" /usr/sbin/cob-start
 sudo cp /u/robot/git/setup_cob4/upstart_msh/cob-stop /usr/sbin/cob-stop
+sudo cp /u/robot/git/setup_cob4/upstart_msh/cob-stop-core /usr/sbin/cob-stop-core
 
 client_list="
 $robot_name-b1
