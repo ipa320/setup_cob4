@@ -117,6 +117,8 @@ function BasicInstallation {
   sleep 5
   sudo cp ~/git/setup_cob4/cob-shutdown /usr/sbin/cob-shutdown
   sudo echo "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown" | sudo tee -a /etc/sudoers
+  sudo cp ~/git/setup_cob4/scripts/powerbtn-cob.sh /etc/acpi/powerbtn-cob.sh
+  sudo sed -i 's/etc\/acpi\/powerbtn.sh/etc\/acpi\/powerbtn-cob.sh/g' /etc/acpi/events/powerbtn
 
 }
 
