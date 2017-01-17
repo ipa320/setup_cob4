@@ -36,6 +36,12 @@ $ROBOT-t3
 $ROBOT-s1
 $ROBOT-h1"
 
+
+pcs_cameras="
+$ROBOT-t2
+$ROBOT-t3
+$ROBOT-s1"
+
 for i in $pcs; do 
     Alive=False
     Crono=0
@@ -63,6 +69,23 @@ for i in $pcs; do
       Timeout=False
     fi  
 done
+
+for i in $pcs_cameras; do 
+    Check_cam=False
+    while [[ $Check_cam=False ]]
+      do
+        if ssh $i stat /tmp/check_done \> /dev/null 2\>\&1
+          then
+            echo "File exists"
+            Check_cam=True
+            break
+          else
+            echo "File still does not exist"
+        fi
+      sleep 1
+    done
+done
+
 function log() {
   logger -s -p user.$1 ${@:2}
 }
