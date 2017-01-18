@@ -19,7 +19,7 @@ $robot_name-b1"
 
 cob-stop-core
 
-while rostopic list > /dev/null; do
+while /opt/ros/indigo/env.sh rostopic list > /dev/null; do
 	sleep 1
 done
 
