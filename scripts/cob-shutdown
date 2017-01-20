@@ -17,11 +17,11 @@ $robot_name-s1
 $robot_name-h1
 $robot_name-b1"
 
-cob-stop-core
+#cob-stop-core
 
-while /opt/ros/indigo/env.sh rostopic list > /dev/null; do
-	sleep 1
-done
+#while /opt/ros/indigo/env.sh rostopic list > /dev/null; do
+#	sleep 1
+#done
 
 for client in $client_list; do
 	echo "-------------------------------------------"
