@@ -33,13 +33,15 @@ for client in $client_list; do
       echo "command return an error (error code: $ret), aborting..."
     fi
     shutdown=false
-    while ! ($shutdown); do
+    Crono=0
+    while [[ !$shutdown &&  $Crono -le 60 ]]; do
       ping -c 1 -w 3 $client
       if [ $? -ne 0 ] ; then
         shutdown=true
         echo $client down
         break
       else
+        Crono=$((Crono+1))
         echo "waiting for" $client
       fi
       sleep 1
