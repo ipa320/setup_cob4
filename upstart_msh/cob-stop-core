@@ -4,8 +4,9 @@ if [ -e /tmp/roscore.pid ]; then
   PID=$(cat /tmp/roscore.pid)
   logger -p user.info "Attempting to stop robot.launch (PID $PID)"
   kill $PID
+  killall -9 roscore
+  killall -9 rosmaster
   wait $!
 fi
 
 #rm -rf /tmp/robot.launch.pid
-
