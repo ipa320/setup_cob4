@@ -40,7 +40,7 @@ open admin page and configure the follwing ddwrt settings:
 
 #### Services->VPN:
 - Start OpenVPN Client = Enabled
-- Server IP/Name = <zentyals external ip>
+- Server IP/Name = zentyals external ip
 - Port = 1194
 - Tunnel Device = TUN
 - Tunnel Protocol = UDP
