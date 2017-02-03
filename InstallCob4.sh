@@ -115,7 +115,7 @@ function BasicInstallation {
 
   echo -e "\n${green}INFO:  Define users rights${NC}\n"
   sleep 5
-  sudo cp ~/git/setup_cob4/cob-shutdown /usr/sbin/cob-shutdown
+  sudo cp ~/git/setup_cob4/scripts/cob-shutdown /usr/sbin/cob-shutdown
   sudo echo "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown" | sudo tee -a /etc/sudoers
   sudo sed -i 's/etc\/acpi\/powerbtn.sh/usr\/sbin\/cob-shutdown/g' /etc/acpi/events/powerbtn
 

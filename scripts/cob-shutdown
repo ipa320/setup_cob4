@@ -13,8 +13,7 @@ $robot_name-t1
 $robot_name-t2
 $robot_name-t3
 $robot_name-s1
-$robot_name-h1
-$robot_name-b1"
+$robot_name-h1"
 
 #cob-stop-core
 
@@ -32,6 +31,13 @@ for client in $client_list; do
     if [ $ret != 0 ] ; then
       echo "command return an error (error code: $ret), aborting..."
     fi
+done
+
+for client in $client_list; do
+    echo "-------------------------------------------"
+    echo "Executing <<waiting for>> on" $client  
+    echo "-------------------------------------------"
+    echo ""
     shutdown=false
     Crono=0
     while [[ !$shutdown &&  $Crono -le 60 ]]; do
@@ -48,3 +54,5 @@ for client in $client_list; do
     done
     echo "done"
 done
+
+sudo shutdown now -P 0
