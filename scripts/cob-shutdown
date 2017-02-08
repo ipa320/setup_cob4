@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+
+# Script for executing commands on all cob-pc's.
+robot_name="${HOSTNAME//-b1}"
+
+if [ "$HOSTNAME" != "$robot_name-b1" ]; then 
+	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC($robot_name-b1), current host is $HOSTNAME"
+	exit
+fi
+
+client_list="
+$robot_name-t1
+$robot_name-t2
+$robot_name-t3
+$robot_name-s1
+$robot_name-h1"
+
+cob-stop
+
+while true; do
+  rm -rf /tmp/runningVMS
+  su mimic -c "ssh myrobotname-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
+  if grep -q myrobotname-win "/tmp/runningVMS"; then
+    echo "VM still running"
+  else
+    echo "VM not running"
+    break
+  fi
+  sleep 1
+done
+
+#while /opt/ros/indigo/env.sh rostopic list > /dev/null; do
+#	sleep 1
+#done
+
+for client in $client_list; do
+    echo "-------------------------------------------"
+    echo "Executing <<"shutdown">> on $client"  
+    echo "-------------------------------------------"
+    echo ""
+    ssh $client "sudo shutdown now -P 0"
+    ret=${PIPESTATUS[0]}
+    if [ $ret != 0 ] ; then
+      echo "command return an error (error code: $ret), aborting..."
+    fi
+done
+
+for client in $client_list; do
+    echo "-------------------------------------------"
+    echo "Executing <<waiting for>> on" $client  
+    echo "-------------------------------------------"
+    echo ""
+    shutdown=false
+    Crono=0
+    while [[ !$shutdown &&  $Crono -le 60 ]]; do
+      ping -c 1 -w 3 $client
+      if [ $? -ne 0 ] ; then
+        shutdown=true
+        echo $client down
+        break
+      else
+        Crono=$((Crono+1))
+        echo "waiting for" $client
+      fi
+      sleep 1
+    done
+    echo "done"
+done
+
+sudo shutdown now -P 0

@@ -1,7 +1,6 @@
 #!/bin/bash
 
 robot_name="${HOSTNAME//-b1}"
-ROS_DISTRO=indigo
 
 sudo cp /u/robot/git/setup_cob4/upstart_msh/cob.conf /etc/init/cob.conf
 sudo cp /u/robot/git/setup_cob4/upstart_msh/cob-start /usr/sbin/cob-start
@@ -45,7 +44,7 @@ for client in $client_list; do
 done
 
 camera_client_list="
-$robot_name-t1
+$robot_name-t2
 $robot_name-t3
 $robot_name-s1"
 

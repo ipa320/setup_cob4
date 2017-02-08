@@ -159,6 +159,10 @@ The touchscreen driver can be found under http://zytronic.co.uk/support/download
 ```
  sudo ZyConfig
 ```
+or from a remote PC:
+```
+export DISPLAY=:0 && sudo ZyConfig
+```
 
 #### 2.5. Netdata tool <a id="NetData"/>
 
