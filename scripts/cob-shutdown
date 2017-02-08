@@ -15,12 +15,12 @@ $robot_name-t3
 $robot_name-s1
 $robot_name-h1"
 
-cob-stop
+cob-stop-msh-gui
 
 while true; do
   rm -rf /tmp/runningVMS
-  su mimic -c "ssh myrobotname-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
-  if grep -q myrobotname-win "/tmp/runningVMS"; then
+  su mimic -c "ssh $robot_name-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
+  if grep -q $robot_name-win "/tmp/runningVMS"; then
     echo "VM still running"
   else
     echo "VM not running"
