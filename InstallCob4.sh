@@ -230,8 +230,10 @@ function Cob4Setup
   cd /u/robot/git/care-o-bot
   catkin_make
   cd /u/robot/git/care-o-bot/src
-  git clone https://github.com/ipa320/cob_robots
-  git clone https://github.com/ipa320/cob_calibration_data
+  wstool init
+  wget https://raw.githubusercontent.com/ipa320/setup_cob4/master/.rosinstall
+  wstool update
+  cd /u/robot/git/care-o-bot
   catkin_make install
   
   
