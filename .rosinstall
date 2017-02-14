@@ -1,8 +1,4 @@
 - git:
-    uri: 'https://github.com/ipa320/cob_android.git'
-    local-name: cob_android
-    version: indigo_dev
-- git:
     uri: 'https://github.com/ipa320/cob_calibration_data.git'
     local-name: cob_calibration_data
     version: indigo_dev
@@ -19,16 +15,12 @@
     local-name: cob_control
     version: indigo_dev
 - git:
+    uri: 'https://github.com/ipa320/cob_docking.git'
+    local-name: cob_docking
+    version: indigo_dev
+- git:
     uri: 'https://github.com/ipa320/cob_driver.git'
     local-name: cob_driver
-    version: indigo_dev
-- git:
-    uri: 'https://github.com/ipa320/cob_environments.git'
-    local-name: cob_environments
-    version: indigo_dev
-- git:
-    uri: 'https://github.com/ipa320/cob_extern.git'
-    local-name: cob_extern
     version: indigo_dev
 - git:
     uri: 'https://github.com/ipa320/cob_hand.git'
@@ -43,20 +35,6 @@
     local-name: ros_canopen
     version: indigo-devel
 - git:
-    uri: 'https://github.com/ipa320/schunk_modular_robotics.git'
-    local-name: schunk_modular_robotics
-    version: indigo_dev
-- git:
-    uri: 'https://github.com/SICKAG/sick_visionary_t.git'
-    local-name: sick_visionary_t
-    version: indigo-devel
-- git:
     uri: 'https://github.com/ipa320/sick_flexisoft.git'
     local-name: sick_flexisoft
     version: indigo_dev
-- git:
-    uri: 'https://github.com/ipa320/cob_docking.git'
-    local-name: cob_docking
-    version: indigo_dev
-
-
