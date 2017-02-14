@@ -13,13 +13,13 @@ sudo cp /u/robot/git/setup_cob4/upstart_msh/cob-stop /usr/sbin/cob-stop
 sudo sed -i "s/myrobotname/$robot_name/g" /usr/sbin/cob-stop
 echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop" | sudo tee -a /etc/sudoers
 
-sudo cp /u/robot/git/setup_cob4/upstart_msh/cob-start-msh-gui /usr/sbin/cob-start-msh-gui
-sudo sed -i "s/myrobotname/$robot_name/g" /usr/sbin/cob-start-msh-gui
-echo "%users ALL=NOPASSWD:/usr/sbin/cob-start-msh-gui" | sudo tee -a /etc/sudoers
+sudo cp /u/robot/git/setup_cob4/upstart_msh/cob-start-vm-win /usr/sbin/cob-start-vm-win
+sudo sed -i "s/myrobotname/$robot_name/g" /usr/sbin/cob-start-vm-win
+echo "%users ALL=NOPASSWD:/usr/sbin/cob-start-vm-win" | sudo tee -a /etc/sudoers
 
-sudo cp /u/robot/git/setup_cob4/upstart_msh/cob-stop-msh-gui /usr/sbin/cob-stop-msh-gui
-sudo sed -i "s/myrobotname/$robot_name/g" /usr/sbin/cob-stop-msh-gui
-echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop-msh-gui" | sudo tee -a /etc/sudoers
+sudo cp /u/robot/git/setup_cob4/upstart_msh/cob-stop-vm-win /usr/sbin/cob-stop-vm-win
+sudo sed -i "s/myrobotname/$robot_name/g" /usr/sbin/cob-stop-vm-win
+echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop-vm-win" | sudo tee -a /etc/sudoers
 
 client_list="
 $robot_name-b1

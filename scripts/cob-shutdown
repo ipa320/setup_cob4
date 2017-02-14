@@ -15,19 +15,21 @@ $robot_name-t3
 $robot_name-s1
 $robot_name-h1"
 
-cob-stop
+##### uncomment the following lines if Windows runs as a Virtual Machine
+#cob-stop-vm-win
 
-while true; do
-  rm -rf /tmp/runningVMS
-  su mimic -c "ssh myrobotname-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
-  if grep -q myrobotname-win "/tmp/runningVMS"; then
-    echo "VM still running"
-  else
-    echo "VM not running"
-    break
-  fi
-  sleep 1
-done
+#while true; do
+#  rm -rf /tmp/runningVMS
+#  su mimic -c "ssh $robot_name-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
+#  if grep -q $robot_name-win "/tmp/runningVMS"; then
+#    echo "VM still running"
+#  else
+#    echo "VM not running"
+#    break
+#  fi
+#  sleep 1
+#done
+##### 
 
 #while /opt/ros/indigo/env.sh rostopic list > /dev/null; do
 #	sleep 1
