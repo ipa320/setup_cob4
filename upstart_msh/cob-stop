@@ -26,8 +26,16 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # 
 # Please send comments, questions, or patches to code@clearpathrobotics.com 
-USER=msh
+ROBOT=myrobotname
+USER=myuser
 
+if (ssh $USER@$ROBOT-t1 "tmux has-session -t 'statemachine' 2> /dev/null"); then
+  echo "Attempting to stop statemachine"
+  logger -p user.info "Attempting to stop statemachine"
+  ssh $USER@$ROBOT-t1 "tmux send -t statemachine C-c"
+  sleep 5
+  ssh $USER@$ROBOT-t1 "tmux kill-session -t statemachine"
+fi
 if (su $USER -l -c "tmux has-session -t 'bringup' 2> /dev/null"); then
   echo "Attempting to stop robot.launch"
   logger -p user.info "Attempting to stop robot.launch"
@@ -36,18 +44,11 @@ if (su $USER -l -c "tmux has-session -t 'bringup' 2> /dev/null"); then
   while [ -e /proc/$PID ]; do sleep 0.1; done
   su $USER -l -c "tmux kill-session -t bringup"
 fi
-if (su $USER -l -c "tmux has-session -t 'roscore' 2> /dev/null"); then
-  echo "Attempting to stop roscore"
-  logger -p user.info "Attempting to stop roscore"
-  su $USER -l -c "tmux send -t roscore C-c"
-  PID=$(cat /tmp/roscore.pid)
-  while [ -e /proc/$PID ]; do sleep 0.1; done
-  su $USER -l -c "tmux kill-session -t roscore"
-fi
+
 
 echo "------------------------------------------------"
 echo "Stopping the Windows VM...."
-su mimic -c "ssh cob4-2-h1 'export DISPLAY=:0 && vboxmanage controlvm cob4-2-win acpipowerbutton'"
+su mimic -c "ssh $ROBOT-h1 'export DISPLAY=:0 && vboxmanage controlvm $ROBOT-win acpipowerbutton'"
 echo "Stopping the robot...."
 cobStartID=$(pgrep cob-start)
 pgrep cob-start
@@ -61,6 +62,9 @@ if [ $? -eq 0 ]; then
 else
   echo "......(cob-start not running)....."
 fi
+
+#cleaning up roscore
+su $USER -l -c "rosnode cleanup"
 
 echo "....done!!                     "
 echo "------------------------------------------------"

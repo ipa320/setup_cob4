@@ -1,19 +1,19 @@
 #!/bin/bash
-ROBOT=cob4-2
-DISTRO=indigo
-USER=msh
+ROBOT=myrobotname
+DISTRO=mydistro
+USER=myuser
 pcs="
-cob4-2-b1
-cob4-2-t1
-cob4-2-t2
-cob4-2-t3
-cob4-2-s1
-cob4-2-h1"
+myrobotname-b1
+myrobotname-t1
+myrobotname-t2
+myrobotname-t3
+myrobotname-s1
+myrobotname-h1"
 
 pcs_cameras="
-cob4-2-t1
-cob4-2-t3
-cob4-2-s1"
+myrobotname-t1
+myrobotname-t3
+myrobotname-s1"
 
 if (su $USER -l -c "tmux has-session -t 'bringup' 2> /dev/null"); then
   logger -p user.info "Bringup already running. Exiting"
@@ -80,22 +80,25 @@ rosrun robot_upstart mklaunch $JOB_FOLDER robot:=$ROBOT > $LAUNCH_FILENAME
 
 #start roscore inside tmux sessiond2
 su $USER -l -c "tmux new -d -s roscore"
-su $USER -l -c "tmux send -t roscore.0 'sh /etc/ros/indigo/cob.d/roscore_start.sh' ENTER"
+su $USER -l -c "tmux send -t roscore.0 'sh /etc/ros/mydistro/cob.d/roscore_start.sh' ENTER"
 
 #wait for roscore
 until rostopic list; do sleep 1; done
 
 rm -rf /tmp/runningVMS
-su mimic -c "ssh cob4-2-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
+su mimic -c "ssh myrobotname-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
 
-if grep -q cob4-2-win "/tmp/runningVMS"; then
+if grep -q myrobotname-win "/tmp/runningVMS"; then
   echo "VM already running"
 else
   echo "starting VM..."
-  su mimic -c "ssh cob4-2-h1 'export DISPLAY=:0 && virtualbox --startvm cob4-2-win --fullscreen'"&
+  su mimic -c "ssh myrobotname-h1 'export DISPLAY=:0 && virtualbox --startvm myrobotname-win --fullscreen'"&
 fi
 
 
 #start bringup inside tmux session
 su $USER -l -c "tmux new -d -s bringup"
-su $USER -l -c "tmux send -t bringup 'sh /etc/ros/indigo/cob.d/robot_launch.sh' ENTER"
+su $USER -l -c "tmux send -t bringup 'sh /etc/ros/mydistro/cob.d/robot_launch.sh' ENTER"
+
+ssh $USER@myrobotname-t1 "tmux new -d -s statemachine"
+ssh $USER@myrobotname-t1 "tmux send -t statemachine 'roslaunch msh_statemachine machine.launch' ENTER"
