@@ -7,10 +7,12 @@ sudo cp /u/robot/git/setup_cob4/upstart_msh/cob-start /usr/sbin/cob-start
 sudo sed -i "s/myrobotname/$robot_name/g" /usr/sbin/cob-start
 sudo sed -i "s/mydistro/$ROS_DISTRO/g" /usr/sbin/cob-start
 sudo sed -i "s/myrobot/$ROBOT/g" /usr/sbin/cob-start
+sudo sed -i "s/myuser/msh/g" /usr/sbin/cob-start
 echo "%users ALL=NOPASSWD:/usr/sbin/cob-start" | sudo tee -a /etc/sudoers
 
 sudo cp /u/robot/git/setup_cob4/upstart_msh/cob-stop /usr/sbin/cob-stop
 sudo sed -i "s/myrobotname/$robot_name/g" /usr/sbin/cob-stop
+sudo sed -i "s/myuser/msh/g" /usr/sbin/cob-stop
 echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop" | sudo tee -a /etc/sudoers
 
 sudo cp /u/robot/git/setup_cob4/upstart_msh/cob-start-vm-win /usr/sbin/cob-start-vm-win
