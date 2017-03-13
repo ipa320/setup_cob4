@@ -6,7 +6,8 @@ if [ "$HOSTNAME" != "$robot_name-b1" ]; then
 	exit
 fi
 
-packages=$(dpkg --get-selections | grep -v "deinstall" | awk '{print $1}')
+#packages=$(dpkg --get-selections | grep -v "deinstall" | awk '{print $1}') #save also the version and reinstall it
+packages = $(dpkg-query --show  | grep '^ii' | awk '{print $2 "\t" $3}')
 echo $packages > /tmp/package_list
 
 pcs="

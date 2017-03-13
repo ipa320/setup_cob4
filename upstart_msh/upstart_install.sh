@@ -7,20 +7,20 @@ sudo cp /u/robot/git/setup_cob4/upstart_msh/cob-start /usr/sbin/cob-start
 sudo sed -i "s/myrobotname/$robot_name/g" /usr/sbin/cob-start
 sudo sed -i "s/mydistro/$ROS_DISTRO/g" /usr/sbin/cob-start
 sudo sed -i "s/myrobot/$ROBOT/g" /usr/sbin/cob-start
-echo "%users ALL=NOPASSWD:/usr/sbin/cob-start" | sudo tee -a /etc/sudoers
 
+sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-start|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-start||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-start" -e "}" /etc/sudoers 
 sudo cp /u/robot/git/setup_cob4/upstart_msh/cob-stop /usr/sbin/cob-stop
 sudo sed -i "s/myrobotname/$robot_name/g" /usr/sbin/cob-stop
-echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop" | sudo tee -a /etc/sudoers
 
+sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-stop|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-stop||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-stop" -e "}" /etc/sudoers 
 sudo cp /u/robot/git/setup_cob4/upstart_msh/cob-start-vm-win /usr/sbin/cob-start-vm-win
 sudo sed -i "s/myrobotname/$robot_name/g" /usr/sbin/cob-start-vm-win
-echo "%users ALL=NOPASSWD:/usr/sbin/cob-start-vm-win" | sudo tee -a /etc/sudoers
 
+sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-start-vm-win|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-start-vm-win||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-start-vm-win" -e "}" /etc/sudoers 
 sudo cp /u/robot/git/setup_cob4/upstart_msh/cob-stop-vm-win /usr/sbin/cob-stop-vm-win
 sudo sed -i "s/myrobotname/$robot_name/g" /usr/sbin/cob-stop-vm-win
-echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop-vm-win" | sudo tee -a /etc/sudoers
 
+sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-stop-vm-win|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-stop-vm-win||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-stop-vm-win" -e "}" /etc/sudoers 
 client_list="
 $robot_name-b1
 $robot_name-t1
