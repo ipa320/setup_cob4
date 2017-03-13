@@ -26,7 +26,9 @@ function BasicInstallation {
   if grep -q GRUB_RECORDFAIL_TIMEOUT= /etc/default/grub ; then
     echo "found GRUB_RECORD_FAIL flag already, skipping update-grub call"
   else
-    echo GRUB_RECORDFAIL_TIMEOUT=10 | sudo tee -a /etc/default/grub
+
+	sudo sed -i -e "\|GRUB_RECORDFAIL_TIMEOUT=10|h; \${x;s|GRUB_RECORDFAIL_TIMEOUT=10||;{g;t};a\\" -e "GRUB_RECORDFAIL_TIMEOUT=10" -e "}" /etc/default/grub
+	
     sudo update-grub
   fi
 
@@ -38,7 +40,9 @@ function BasicInstallation {
   sleep 5
   sudo apt-get install openssh-server -y --force-yes
   echo -e "\n${green}INFO:Let the server send a alive interval to clients to not get a broken pipe${NC}\n"
-  echo "ClientAliveInterval 60" | sudo tee -a /etc/ssh/sshd_config
+
+	sudo sed -i -e "\|ClientAliveInterval 60|h; \${x;s|ClientAliveInterval 60||;{g;t};a\\" -e "ClientAliveInterval 60" -e "}" /etc/ssh/sshd_config
+
   sudo sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/g' /etc/ssh/sshd_config
 
   echo -e "\n${green}INFO:Checkout the setup repository${NC}\n"
@@ -49,14 +53,16 @@ function BasicInstallation {
 
   echo -e "\n${green}INFO:Allow robot user to execute sudo command without password${NC}\n"
   sleep 5
-  echo "robot ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
+
+	sudo sed -i -e "\|robot ALL=(ALL) NOPASSWD: ALL|h; \${x;s|robot ALL=(ALL) NOPASSWD: ALL||;{g;t};a\\" -e "robot ALL=(ALL) NOPASSWD: ALL" -e "}" /etc/sudoers
+  
   sudo adduser robot dialout
   sudo adduser robot audio
   sudo adduser robot pulse
 
   echo -e "\n${green}INFO:Setup local ROOT user${NC}\n"
   sleep 5
-  sudo passwd root      
+  sudo passwd root    #robot  
       
   echo -e "\n${green}INFO: Install ROS${NC}\n"
   sleep 5
@@ -116,7 +122,9 @@ function BasicInstallation {
   echo -e "\n${green}INFO:  Define users rights${NC}\n"
   sleep 5
   sudo cp ~/git/setup_cob4/scripts/cob-shutdown /usr/sbin/cob-shutdown
-  sudo echo "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown" | sudo tee -a /etc/sudoers
+
+sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown"'| sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-shutdown|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-shutdown||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown" -e "}" /etc/sudoers
+
   sudo sed -i 's/etc\/acpi\/powerbtn.sh/usr\/sbin\/cob-shutdown/g' /etc/acpi/events/powerbtn
 
 }
@@ -147,12 +155,19 @@ function NFSSetup
   if [ "$MODE" == "master" ]
     then
       sudo apt-get install apt-cacher-ng
-      sudo echo "server 0.pool.ntp.org" | sudo tee -a /etc/ntp.conf
-      sudo echo "restrict $IP mask 255.255.255.0 nomodify notrap" | sudo tee -a /etc/ntp.conf
+
+sudo sh -c 'echo "server 0.pool.ntp.org"' | sudo sed -i -e "\|server 0.pool.ntp.org|h; \${x;s|server 0.pool.ntp.org||;{g;t};a\\" -e "server 0.pool.ntp.org" -e "}" /etc/ntp.conf
+
+    
+
+sudo sh -c 'echo "restrict $IP mask 255.255.255.0 nomodify notrap"' | sudo sed -i -e "\|restrict $IP mask 255.255.255.0 nomodify notrap|h; \${x;s|restrict $IP mask 255.255.255.0 nomodify notrap||;{g;t};a\\" -e "restrict $IP mask 255.255.255.0 nomodify notrap" -e "}" /etc/ntp.conf
+   
   elif [ "$MODE" == "slave" ]
     then
-      sudo echo "server $server" | sudo tee -a /etc/ntp.conf
-      sudo echo 'Acquire::http:Proxy "http://$server:3142";' | sudo tee -a /etc/apt/apt.conf.d/01proxy                 
+      sudo echo "server $server" | sudo F -a /etc/ntp.conf
+
+sudo sh -c 'echo "Acquire::http:Proxy "http://$server:3142";"' | sudo sed -i -e "\|Acquire::http:Proxy "http://$server:3142";|h; \${x;s|Acquire::http:Proxy "http://$server:3142";||;{g;t};a\\" -e "Acquire::http:Proxy "http://$server:3142";" -e "}" /etc/apt/apt.conf.d/01proxy                 
+                  
   fi
 
   echo -e "\n${green}INFO:  Install NFS${NC}\n"
@@ -161,10 +176,14 @@ function NFSSetup
   sudo mkdir /u
   if [[ "$MODE" == "master" ]]
     then
-      echo "/home /u none bind 0 0" | sudo tee -a /etc/fstab
+
+	sudo sed -i -e "\|/home /u none bind 0 0|h; \${x;s|/home /u none bind 0 0||;{g;t};a\\" -e "/home /u none bind 0 0" -e "}" /etc/fstab
+   
       sudo mount /u
       sudo sed -i 's/NEED_STADT\=/NEED_STADT\=yes/g' /etc/default/nfs-common
-      echo "/u *(rw,fsid=0,sync,no_subtree_check)" | sudo tee -a /etc/exports
+
+	sudo sed -i -e "\|/u *(rw,fsid=0,sync,no_subtree_check)|h; \${x;s|/u *(rw,fsid=0,sync,no_subtree_check)||;{g;t};a\\" -e "/u *(rw,fsid=0,sync,no_subtree_check)" -e "}" /etc/exports
+    
       if [ -d "/u/robot/git" ]
         then
           sudo sed -i 's/home\/robot/u\/robot/g' /etc/passwd
@@ -185,8 +204,10 @@ function NFSSetup
       sudo sed -i 's/NEED_STADT\=/NEED_STADT\=yes/g' /etc/default/nfs-common
       
       sudo touch /etc/auto.direct
-      sudo echo "/-  /etc/auto.direct" | sudo tee -a /etc/auto.master
-      sudo echo "/u  -fstype=nfs4    $server:/" | sudo tee -a /etc/auto.direct
+
+sudo sh -c 'echo "/-  /etc/auto.direct"' | sudo sed -i -e "\|/-  /etc/auto.direct|h; \${x;s|/-  /etc/auto.direct||;{g;t};a\\" -e "/-  /etc/auto.direct" -e "}" /etc/auto.master
+    
+sudo sh -c 'echo "/u  -fstype=nfs4    $server:/"' | sudo sed -i -e "\|/u  -fstype=nfs4    $server:/|h; \${x;s|/u  -fstype=nfs4    $server:/||;{g;t};a\\" -e "/u  -fstype=nfs4    $server:/" -e "}" /etc/auto.direct
       sudo update-rc.d autofs defaults
       sudo service autofs restart
       sudo modprobe nfs
@@ -251,9 +272,12 @@ function Cob4Setup
   
   echo -e "\n${green}INFO:  Define users rights${NC}\n"
   sleep 5
-  sudo echo "%users ALL=NOPASSWD:/usr/sbin/cob-start" | sudo tee -a /etc/sudoers
-  sudo echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop" | sudo tee -a /etc/sudoers
-  sudo echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop-core" | sudo tee -a /etc/sudoers
+ 
+sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-start"' | sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-start|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-start||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-start" -e "}" /etc/sudoers 
+
+sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop"' | sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-stop|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-stop||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-stop" -e "}" /etc/sudoers
+
+sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop-core"' | sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-stop-core|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-stop-core||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-stop-core" -e "}" /etc/sudoers
  
   echo -e "\n${green}INFO:  Enable passwordless login${NC}\n"
   sleep 5
@@ -266,6 +290,47 @@ function Cob4Setup
   ssh root@$ROBOT-s1 'exit'
   ssh root@$ROBOT-h1 'exit'
   
+}
+
+####Miminc##############
+function Mimic
+{
+  if [ "$HOSTNAME" != "$ROBOT-h1" ]; then 
+	  echo "FATAL: CAN ONLY BE EXECUTED ON Slave h1 PC"
+	  exit
+  fi
+ echo -e "\n${green}INFO:  Mimic ${NC}\n"
+  sleep 5
+
+sudo ssh $server "cob-adduser mimic"
+
+sudo sed -i '$ [SeatDefaults]' /etc/lightdm/lightdm.conf 
+sudo sed -i '$ autologin-user=mimic' /etc/lightdm/lightdm.conf 
+sudo sed -i '$ autologin-user-timeout=60' /etc/lightdm/lightdm.conf 
+
+sudo sed -i '$ [Desktop Entry]' /u/mimic/.config/autostart/xhost.desktop 
+sudo sed -i '$ Type=Application' /u/mimic/.config/autostart/xhost.desktop 
+sudo sed -i '$ Exec=xhost +' /u/mimic/.config/autostart/xhost.desktop 
+sudo sed -i '$ Hidden=false' /u/mimic/.config/autostart/xhost.desktop 
+sudo sed -i '$ NoDisplay=false' /u/mimic/.config/autostart/xhost.desktop 
+sudo sed -i '$ X-GNOME-Autostart-enabled=true' /u/mimic/.config/autostart/xhost.desktop 
+sudo sed -i '$ Name[en_US]=mimic' /u/mimic/.config/autostart/xhost.desktop 
+sudo sed -i '$ Name=mimic' /u/mimic/.config/autostart/xhost.desktop 
+sudo sed -i '$ Comment[en_US]=' /u/mimic/.config/autostart/xhost.desktop 
+sudo sed -i '$ Comment=' /u/mimic/.config/autostart/xhost.desktop 
+}
+
+########Netdata tools############
+function Netdatatools {
+
+  echo -e "\n${green}INFO:Installing Netdata tools${NC}\n"
+  sleep 5
+  sudo apt-get update
+
+  sudo apt-get install zlib1g-dev uuid-dev libmnl-dev gcc make git autoconf autoconf-archive autogen automake pkg-config curl -y --force-yes
+  git clone https://github.com/firehol/netdata.git --depth=1
+  cd ~/netdata
+  sudo ./netdata-installer.sh
 }
 ########################################################################
 ############################# INITIAL MENU #############################
@@ -329,6 +394,8 @@ read -p "Please select the installation type
 2.Basic installation
 3.Setup NTP and NFS system
 4.Cob4 setup (Execute only on master pc and after a full installation)
+5.Mimic (Execute only on slave h1 pc and after a full installation)
+6.Netdatatools
  " choice 
  
 if [[ "$choice" == 1 ]]
@@ -350,4 +417,12 @@ fi
 if [[ "$choice" == 4 ]]
   then
        Cob4Setup
+fi
+if [[ "$choice" == 5 ]]
+  then
+       Cob4Setup
+fi
+if [[ "$choice" == 6 ]]
+  then
+       Netdatatools
 fi
