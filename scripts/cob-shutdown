@@ -18,13 +18,16 @@ $robot_name-h1"
 ##### uncomment the following lines if Windows runs as a Virtual Machine
 #cob-stop-vm-win
 
-#while true; do
-#  rm -rf /tmp/runningVMS
-#  su mimic -c "ssh $robot_name-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
+#rm -rf /tmp/runningVMS
+#Crono=0
+#while [[ $Crono -le 60 ]]; do
+#  su mimic -c "ssh -o ConnectTimeout=15 $robot_name-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
 #  if grep -q $robot_name-win "/tmp/runningVMS"; then
 #    echo "VM still running"
+#    Crono=$((Crono+1))
 #  else
 #    echo "VM not running"
+#    Crono=100
 #    break
 #  fi
 #  sleep 1
@@ -40,7 +43,7 @@ for client in $client_list; do
     echo "Executing <<"shutdown">> on $client"  
     echo "-------------------------------------------"
     echo ""
-    ssh $client "sudo shutdown now -P 0"
+    ssh -o ConnectTimeout=15 $client "sudo shutdown now -P 0"
     ret=${PIPESTATUS[0]}
     if [ $ret != 0 ] ; then
       echo "command return an error (error code: $ret), aborting..."
