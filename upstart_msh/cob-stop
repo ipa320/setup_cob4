@@ -3,12 +3,13 @@ ROBOT=myrobotname
 DISTRO=mydistro
 USER=myuser
 
-if (ssh $USER@$ROBOT-t2 "tmux has-session -t 'sm' 2> /dev/null"); then
+check_sm_session='tmux has-session -t "sm" 2> /dev/null'
+if (su $USER -l -c "ssh $ROBOT-t2 $check_sm_session"); then
   echo "Attempting to stop statemachine"
   logger -p user.info "Attempting to stop statemachine"
-  ssh $USER@$ROBOT-t2 "tmux send -t sm C-c"
+  su $USER -l -c "ssh $ROBOT-t2 'tmux send -t sm C-c'"
   sleep 5
-  ssh $USER@$ROBOT-t2 "tmux kill-session -t sm"
+  su $USER -l -c "ssh $ROBOT-t2 'tmux kill-session -t sm'"
 fi
 if (su $USER -l -c "tmux has-session -t 'bringup' 2> /dev/null"); then
   echo "Attempting to stop bringup"
