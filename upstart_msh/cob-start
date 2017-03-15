@@ -100,7 +100,7 @@ fi
 su $USER -l -c "tmux new -d -s bringup"
 su $USER -l -c "tmux send -t bringup 'sh /etc/ros/$DISTRO/cob.d/robot_launch.sh' ENTER"
 
-until rosparam get /robot_description; do sleep 1; done
+until rosparam get /robot_description > /dev/null ; do sleep 1; done
 
 ssh $USER@$ROBOT-t2 "tmux new -d -s sm"
 ssh $USER@$ROBOT-t2 "tmux send -t sm 'roslaunch msh_statemachine machine.launch' ENTER"
