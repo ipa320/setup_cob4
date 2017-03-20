@@ -2,9 +2,9 @@
 sleep 30
 check1=false
 check2=false
-check3=false
+check3=true
 check4=false
-check5=false
+check5=true
 
 echo "$(date)"
 
@@ -22,12 +22,12 @@ else
   check2=true
 fi
 
-dmesg | grep "cannot get freq at ep 0x84"
-if [ $? -eq 0 ]; then
-  echo "error -- cannot get freq -- found" 
-else
-  check3=true
-fi
+#dmesg | grep "cannot get freq at ep 0x84"
+#if [ $? -eq 0 ]; then
+#  echo "error -- cannot get freq -- found" 
+#else
+#  check3=true
+#fi
 
 dmesg | grep "device descriptor read/all, error -110"
 if [ $? -eq 0 ]; then
@@ -36,12 +36,12 @@ else
   check4=true
 fi
 
-dmesg | grep "cannot set freq 44100 to ep 0x84"
-if [ $? -eq 0 ]; then
-  echo "error -- cannot set freq 44100 to ep 0x84 -- found"
-else
-  check5=true
-fi
+#dmesg | grep "cannot set freq 44100 to ep 0x84"
+#if [ $? -eq 0 ]; then
+#  echo "error -- cannot set freq 44100 to ep 0x84 -- found"
+#else
+#  check5=true
+#fi
 
 if $check1 && $check2 && $check3 && $check4 && $check5; then
  echo "OK"
