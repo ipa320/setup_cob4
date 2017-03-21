@@ -70,6 +70,10 @@ function BasicInstallation {
   sudo rosdep init
   rosdep update
 
+  echo -e "\n${green}INFO: Installing NoMachine!${NC}\n"
+  wget http://download.nomachine.com/download/5.2/Linux/nomachine_5.2.11_1_i386.deb -O /tmp/nomachine.deb
+  sudo dpkg -i /tmp/nomachine.deb
+
   echo -e "\n${green}INFO: Setup udev rules${NC}\n"
   sleep 5
   sudo cp ~/git/setup_cob4/udev_rules/udev_cob.sh /etc/init.d/
