@@ -108,7 +108,7 @@ Setup the bluetooth configuration (*/etc/bluetooth/rfcomm.conf*):
 
 ```
 rfcomm0 {
-bind yes;
+bind no;
 device **B8:27:EB:67:31:B4**; (hand hci device address)
 channel	1;
 comment "Bluetooth hand right";
