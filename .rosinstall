@@ -15,7 +15,7 @@
     local-name: cob_control
     version: indigo_dev
 - git:
-    uri: 'https://github.com/ipa320/cob_docking.git'
+    uri: 'git@github.com:ipa320/cob_docking.git'
     local-name: cob_docking
     version: indigo_dev
 - git:
@@ -35,6 +35,6 @@
     local-name: ros_canopen
     version: indigo-devel
 - git:
-    uri: 'https://github.com/ipa320/sick_flexisoft.git'
+    uri: 'git@github.com:ipa320/sick_flexisoft.git'
     local-name: sick_flexisoft
     version: indigo_dev
