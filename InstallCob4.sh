@@ -27,7 +27,8 @@ function BasicInstallation {
     echo "found GRUB_RECORD_FAIL flag already, skipping update-grub call"
   else
 
-	sudo sed -i -e "\|GRUB_RECORDFAIL_TIMEOUT=10|h; \${x;s|GRUB_RECORDFAIL_TIMEOUT=10||;{g;t};a\\" -e "GRUB_RECORDFAIL_TIMEOUT=10" -e "}" /etc/default/grub
+
+grep -q -F 'GRUB_RECORDFAIL_TIMEOUT=10' /etc/default/grub || sudo sh -c '(echo "GRUB_RECORDFAIL_TIMEOUT=10") > /etc/default/grub'
 	
     sudo update-grub
   fi
@@ -41,7 +42,8 @@ function BasicInstallation {
   sudo apt-get install openssh-server -y --force-yes
   echo -e "\n${green}INFO:Let the server send a alive interval to clients to not get a broken pipe${NC}\n"
 
-	sudo sed -i -e "\|ClientAliveInterval 60|h; \${x;s|ClientAliveInterval 60||;{g;t};a\\" -e "ClientAliveInterval 60" -e "}" /etc/ssh/sshd_config
+
+grep -q -F 'ClientAliveInterval 60' /etc/ssh/sshd_config || sudo sh -c '(echo "ClientAliveInterval 60") > /etc/ssh/sshd_config'
 
   sudo sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/g' /etc/ssh/sshd_config
 
@@ -54,7 +56,8 @@ function BasicInstallation {
   echo -e "\n${green}INFO:Allow robot user to execute sudo command without password${NC}\n"
   sleep 5
 
-	sudo sed -i -e "\|robot ALL=(ALL) NOPASSWD: ALL|h; \${x;s|robot ALL=(ALL) NOPASSWD: ALL||;{g;t};a\\" -e "robot ALL=(ALL) NOPASSWD: ALL" -e "}" /etc/sudoers
+
+grep -q -F 'robot ALL=(ALL) NOPASSWD: ALL' /etc/sudoers || sudo sh -c '(echo "robot ALL=(ALL) NOPASSWD: ALL") > /etc/sudoers'
   
   sudo adduser robot dialout
   sudo adduser robot audio
@@ -123,8 +126,8 @@ function BasicInstallation {
   sleep 5
   sudo cp ~/git/setup_cob4/scripts/cob-shutdown /usr/sbin/cob-shutdown
 
-sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown"'| sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-shutdown|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-shutdown||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown" -e "}" /etc/sudoers
 
+grep -q -F '%users ALL=NOPASSWD:/usr/sbin/cob-shutdown' /etc/sudoers || sudo sh -c '(echo "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown") > /etc/sudoers'
   sudo sed -i 's/etc\/acpi\/powerbtn.sh/usr\/sbin\/cob-shutdown/g' /etc/acpi/events/powerbtn
 
 }
@@ -156,18 +159,25 @@ function NFSSetup
     then
       sudo apt-get install apt-cacher-ng
 
-sudo sh -c 'echo "server 0.pool.ntp.org"' | sudo sed -i -e "\|server 0.pool.ntp.org|h; \${x;s|server 0.pool.ntp.org||;{g;t};a\\" -e "server 0.pool.ntp.org" -e "}" /etc/ntp.conf
 
+grep -q -F 'server 0.pool.ntp.org' /etc/ntp.conf || sudo sh -c '(echo "server 0.pool.ntp.org") > /etc/ntp.conf'
     
 
-sudo sh -c 'echo "restrict $IP mask 255.255.255.0 nomodify notrap"' | sudo sed -i -e "\|restrict $IP mask 255.255.255.0 nomodify notrap|h; \${x;s|restrict $IP mask 255.255.255.0 nomodify notrap||;{g;t};a\\" -e "restrict $IP mask 255.255.255.0 nomodify notrap" -e "}" /etc/ntp.conf
+grep -q -F 'restrict $IP mask 255.255.255.0 nomodify notrap' /etc/ntp.conf || sudo sh -c '(echo "restrict $IP mask 255.255.255.0 nomodify notrap") > /etc/ntp.conf'
    
   elif [ "$MODE" == "slave" ]
     then
-      sudo echo "server $server" | sudo F -a /etc/ntp.conf
 
-sudo sh -c 'echo "Acquire::http:Proxy "http://$server:3142";"' | sudo sed -i -e "\|Acquire::http:Proxy "http://$server:3142";|h; \${x;s|Acquire::http:Proxy "http://$server:3142";||;{g;t};a\\" -e "Acquire::http:Proxy "http://$server:3142";" -e "}" /etc/apt/apt.conf.d/01proxy                 
-                  
+grep -q -F 'server '$server'' /etc/ntp.conf || sudo sh -c '(echo "server '$server'") > /etc/ntp.conf'
+     
+
+grep -q -F 'Acquire::http::Proxy \""http://'$server':3142"\";' /etc/apt/apt.conf.d/01proxy || sudo sh -c '(echo "Acquire::http::Proxy \""http://'$server':3142"\";") > /etc/apt/apt.conf.d/01proxy'
+   
+
+#others
+#grep -q -F 'Acquire::http::Proxy \""http://'$server':3142"\";' /etc/apt/apt.conf.d/01proxy || sudo sh -c '(echo "Acquire::http::Proxy "http://'$server':3142";") > /etc/apt/apt.conf.d/01proxy'
+
+             
   fi
 
   echo -e "\n${green}INFO:  Install NFS${NC}\n"
@@ -177,12 +187,14 @@ sudo sh -c 'echo "Acquire::http:Proxy "http://$server:3142";"' | sudo sed -i -e 
   if [[ "$MODE" == "master" ]]
     then
 
-	sudo sed -i -e "\|/home /u none bind 0 0|h; \${x;s|/home /u none bind 0 0||;{g;t};a\\" -e "/home /u none bind 0 0" -e "}" /etc/fstab
+
+grep -q -F '/home /u none bind 0 0' /etc/fstab || sudo sh -c '(echo "/home /u none bind 0 0") > /etc/fstab'
    
       sudo mount /u
       sudo sed -i 's/NEED_STADT\=/NEED_STADT\=yes/g' /etc/default/nfs-common
 
-	sudo sed -i -e "\|/u *(rw,fsid=0,sync,no_subtree_check)|h; \${x;s|/u *(rw,fsid=0,sync,no_subtree_check)||;{g;t};a\\" -e "/u *(rw,fsid=0,sync,no_subtree_check)" -e "}" /etc/exports
+
+grep -q -F '/u *(rw,fsid=0,sync,no_subtree_check)' /etc/exports || sudo sh -c '(echo "/u *(rw,fsid=0,sync,no_subtree_check)") > /etc/exports'
     
       if [ -d "/u/robot/git" ]
         then
@@ -205,9 +217,11 @@ sudo sh -c 'echo "Acquire::http:Proxy "http://$server:3142";"' | sudo sed -i -e 
       
       sudo touch /etc/auto.direct
 
-sudo sh -c 'echo "/-  /etc/auto.direct"' | sudo sed -i -e "\|/-  /etc/auto.direct|h; \${x;s|/-  /etc/auto.direct||;{g;t};a\\" -e "/-  /etc/auto.direct" -e "}" /etc/auto.master
+
+grep -q -F '/-  /etc/auto.direct' /etc/auto.master || sudo sh -c '(echo "/-  /etc/auto.direct") > /etc/auto.master'
     
-sudo sh -c 'echo "/u  -fstype=nfs4    $server:/"' | sudo sed -i -e "\|/u  -fstype=nfs4    $server:/|h; \${x;s|/u  -fstype=nfs4    $server:/||;{g;t};a\\" -e "/u  -fstype=nfs4    $server:/" -e "}" /etc/auto.direct
+
+grep -q -F '/u  -fstype=nfs4    '$server':/' /etc/auto.direct || sudo sh -c '(echo "/u  -fstype=nfs4    '$server':/") > /etc/auto.direct'
       sudo update-rc.d autofs defaults
       sudo service autofs restart
       sudo modprobe nfs
@@ -273,12 +287,14 @@ function Cob4Setup
   echo -e "\n${green}INFO:  Define users rights${NC}\n"
   sleep 5
  
-sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-start"' | sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-start|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-start||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-start" -e "}" /etc/sudoers 
-
-sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop"' | sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-stop|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-stop||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-stop" -e "}" /etc/sudoers
-
-sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop-core"' | sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-stop-core|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-stop-core||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-stop-core" -e "}" /etc/sudoers
  
+grep -q -F '%users ALL=NOPASSWD:/usr/sbin/cob-start' /etc/sudoers  || sudo sh -c '(echo "%users ALL=NOPASSWD:/usr/sbin/cob-start") > /etc/sudoers'
+
+
+grep -q -F '%users ALL=NOPASSWD:/usr/sbin/cob-stop' /etc/sudoers  || sudo sh -c '(echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop") > /etc/sudoers'
+
+
+ grep -q -F '%users ALL=NOPASSWD:/usr/sbin/cob-stop-core' /etc/sudoers  || sudo sh -c '(echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop-core") > /etc/sudoers'
   echo -e "\n${green}INFO:  Enable passwordless login${NC}\n"
   sleep 5
   su root
@@ -328,7 +344,7 @@ function Netdatatools {
   sudo apt-get update
 
   sudo apt-get install zlib1g-dev uuid-dev libmnl-dev gcc make git autoconf autoconf-archive autogen automake pkg-config curl -y --force-yes
-  git clone https://github.com/firehol/netdata.git --depth=1
+  git clone https://github.com/firehol/netdata.git /u/robot/netdata --depth=1
   cd ~/netdata
   sudo ./netdata-installer.sh
 }
