@@ -20,10 +20,6 @@ if (su $USER -l -c "tmux has-session -t 'bringup' 2> /dev/null"); then
   su $USER -l -c "tmux kill-session -t bringup"
 fi
 
-
-echo "------------------------------------------------"
-echo "Stopping the Windows VM...."
-su mimic -c "ssh $ROBOT-h1 'export DISPLAY=:0 && vboxmanage controlvm $ROBOT-win acpipowerbutton'"
 echo "Stopping the robot...."
 cobStartID=$(pgrep cob-start)
 pgrep cob-start
