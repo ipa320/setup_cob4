@@ -35,7 +35,7 @@ else
 fi
 
 #cleaning up roscore
-su $USER -l -c "source /opt/ros/$DISTRO/setup.bash && rosnode cleanup"
+su $USER -l -c "source /opt/ros/$DISTRO/setup.bash && echo 'y' | rosnode cleanup"
 
 rm -rf /tmp/robot.launch.pid
 
