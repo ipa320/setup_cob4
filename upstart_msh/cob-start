@@ -85,17 +85,6 @@ su $USER -l -c "tmux send -t roscore.0 'sh /etc/ros/$DISTRO/cob.d/roscore_start.
 #wait for roscore
 until rostopic list; do sleep 1; done
 
-rm -rf /tmp/runningVMS
-su mimic -c "ssh $ROBOT-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
-
-if grep -q $ROBOT-win "/tmp/runningVMS"; then
-  echo "VM already running"
-else
-  echo "starting VM..."
-  su mimic -c "ssh $ROBOT-h1 'export DISPLAY=:0 && virtualbox --startvm $ROBOT-win --fullscreen'"&
-fi
-
-
 #start bringup inside tmux session
 su $USER -l -c "tmux new -d -s bringup"
 su $USER -l -c "tmux send -t bringup 'sh /etc/ros/$DISTRO/cob.d/robot_launch.sh' ENTER"
@@ -103,5 +92,5 @@ su $USER -l -c "tmux send -t bringup 'sh /etc/ros/$DISTRO/cob.d/robot_launch.sh'
 until rosparam get /robot_description > /dev/null ; do sleep 1; done
 
 su $USER -l -c "ssh $ROBOT-t2 'tmux new -d -s sm'"
-roslaunch_command="roslaunch msh_statemachine machine.launch"
+roslaunch_command="roslaunch\ msh_statemachine\ machine.launch"
 su $USER -l -c "ssh $ROBOT-t2 'tmux send -t sm $roslaunch_command ENTER'"
