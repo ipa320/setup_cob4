@@ -3,6 +3,7 @@
 robot_name="${HOSTNAME//-b1}"
 
 sudo cp /u/robot/git/setup_cob4/upstart_msh/cob.conf /etc/init/cob.conf
+sudo cp /u/robot/git/setup_cob4/upstart_msh/cob_msh.conf /etc/init/cob_msh.conf
 sudo cp /u/robot/git/setup_cob4/upstart_msh/cob-start /usr/sbin/cob-start
 sudo sed -i "s/myrobotname/$robot_name/g" /usr/sbin/cob-start
 sudo sed -i "s/mydistro/$ROS_DISTRO/g" /usr/sbin/cob-start
