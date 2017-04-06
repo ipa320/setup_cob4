@@ -1,0 +1,311 @@
+#!/bin/bash
+blue='\e[1;34m'
+black='\e[0;30m'
+red='\e[0;31m'
+green='\e[1;32m'
+
+ProgName=$(basename $0)
+
+get_clients_list(){
+  IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
+  client_list=$(nmap --unprivileged $IP-98 --system-dns | grep report | awk '{print $5}') 
+}
+
+get_users_list(){
+  users_list=$(ps aux | grep 'tmux new' | awk '{ print $1 }'| sed '$ d' | sort | uniq)
+}
+
+get_pid(){
+  pid="$1"
+  for child in $(ps -o pid  --no-headers --ppid $pid)
+    do 
+      [[ "$$" -eq "$child" ]] 
+      echo $(ps -o pid= -p $child)
+  done
+}
+
+list_sessions(){
+  get_clients_list
+  get_users_list
+
+  for i in $client_list
+  do
+    for u in $users_list
+    do
+      sessions_list=""
+      num=0
+      sessions_list=$(su $u -l -c "ssh $i 'tmux list-sessions'" | awk '{print $1}') 
+      ret=${PIPESTATUS[0]}
+      if [ $ret != 0 ] ; then
+        break
+      else
+        for session_name in $sessions_list
+        do
+          num=$((num+1))
+          sessions[$num]=${session_name%%:*}
+        done
+          for n in $(seq 1 $num) 
+          do
+            echo "${sessions[$n]}"
+            if ${verbose}; then
+              echo "  pc: $i"
+              echo "  user: $u"
+            fi
+          done
+      fi
+    done
+  done
+}
+
+find_session(){
+  SESSION_NAME="$1"
+  get_clients_list
+  get_users_list
+  for i in $client_list
+  do
+    for u in $users_list
+    do
+      sessions_list=$(su $u -l -c "ssh $i 'tmux list-sessions' 2>&1")
+      ret=${PIPESTATUS[0]}
+      if [ $ret != 0 ] ; then
+        false
+      else
+        sessions_list="${sessions_list//:}"
+        if [ "${sessions_list/$SESSION_NAME}" != "$sessions_list" ]; then
+          where_session=$i
+          who_session=$u
+          break
+        fi
+      fi
+    done
+  done
+}
+
+stop_session(){
+  arg_session_stop="$1"
+  echo -e "${red}===========================================${NC}"
+	echo "              Stopping $arg_session_stop        "
+  echo -e "${red}===========================================${NC}"
+  echo -e "${black}\n ${NC}"
+  find_session $arg_session_stop
+  PC=$where_session
+  USER=$who_session
+  if [ -z "$PC" ]; then
+    echo "$arg_session_stop not found"
+    exit
+  fi
+  pid_command='tmux list-panes -s -F "#{pane_pid}" -t '
+  quom="'"
+  ssh_command="ssh $PC $quom$pid_command$arg_session_stop$quom"
+  tmux_pid=$(su $USER -l -c "$ssh_command")
+  if [ -z "$tmux_pid" ]; then
+    echo "$arg_session_stop not active"
+    exit
+  fi
+  PID=$(get_pid $tmux_pid)
+  su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
+  if [ ! -z "$PID" ]; then
+    while ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 ; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && sleep 1; done
+  fi
+  su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
+}
+
+sub_help(){
+    echo "Usage: $ProgName command -options <arguments>\n"
+    echo "Commands:"
+    echo "    ls [-v]"
+    echo "    find <session_name>"
+    echo "    start <session_name> '<command>' [<pc>] [<user>]"
+    echo "    start -a"
+    echo "    stop [-a] [<session_name>]"
+    echo "    stop_core"
+    echo "    reboot"
+    echo "    start_gui"
+    echo "    stop_gui"
+    echo ""
+}
+
+sub_ls(){
+  echo -e "${blue}===========================================${NC}"
+  echo "Listing sessions...."
+  echo -e "${blue}===========================================${NC}"
+  echo -e "${black}\n ${NC}"
+  list_sessions
+}
+
+sub_find(){
+  echo -e "${blue}===========================================${NC}"
+  echo "Finding sessions...."
+  echo -e "${blue}===========================================${NC}"
+  echo -e "${black}\n ${NC}"
+  if [ -z "$arg_session_name" ]; then
+		  echo "no session name defined"
+      echo -e $usage
+      exit
+  fi
+  find_session $arg_session_name
+  echo "session: $arg_session_name"
+  echo "pc: $where_session"
+  echo "user: $who_session"
+}
+
+sub_start(){
+  echo -e "${blue}===========================================${NC}"
+  echo "Starting sessions...."
+  echo -e "${blue}===========================================${NC}"
+  echo -e "${black}\n ${NC}"
+  if ${all}; then
+    echo "to be implemented...."
+    exit
+  fi
+  if [ -z "$arg_session_name" ]; then
+		  echo "ERROR: please define a session name"
+      echo " "
+      sub_help
+      exit
+  fi
+  if [ -z "$arg_command" ]; then
+		  echo "ERROR: please define a command"
+      echo " "
+      sub_help
+      exit
+  fi
+  if [ -z "$arg_pc" ]; then
+      arg_pc="localhost"
+  fi
+  if [ -z "$arg_user" ]; then
+      arg_user="robot"
+  fi
+
+  echo -e "${green}===========================================${NC}"
+	echo "              Starting $arg_session_name        "
+  echo -e "${green}===========================================${NC}"
+  echo -e "${black}\n ${NC}"
+
+  send_command=${arg_command//" "/"\ "}
+	su $arg_user -l -c "ssh $arg_pc 'tmux new -d -s $arg_session_name'"
+	su $arg_user -l -c "ssh $arg_pc 'tmux send -t $arg_session_name $send_command ENTER'"
+}
+
+sub_stop(){
+  echo -e "${blue}===========================================${NC}"
+  echo "Stopping sessions...."
+  echo -e "${blue}===========================================${NC}"
+  echo -e "${black}\n ${NC}"
+  if ${all}; then
+    sessions_list=$(list_sessions)
+    for i in $sessions_list
+    do
+      stop_session $i
+    done
+  elif ! [ -z "$arg_session_name" ]; then
+    stop_session $arg_session_name
+  else
+    sessions_list=$(list_sessions)
+    for session_name in $sessions_list
+    do
+      num=$((num+1))
+      sessions[$num]=$session_name
+    done
+
+	  echo -e "${blue}===========================================${NC}"
+	  echo -e "${blue}===========================================${NC}"
+	  echo "              Stop Session Menu                 "
+	  echo -e "${blue}===========================================${NC}"
+	  echo -e "${blue}===========================================${NC}"
+	  echo -e "${black}\n ${NC}"
+	  for i in $(seq 1 $num) 
+	  do
+  	  echo "$i: ${sessions[i]}"
+	  done
+	  read -p "Please select a session number or 'all' to kill all the active sessions: " choice
+	  if ! [[ "$choice" =~ ^[1-$num]+$ || "$choice" == "all" ]]; then
+      echo -e "========> $choice not valid , please choose a number session between 1-$num"
+      exit
+	  fi
+    if [[ "$choice" == "all" ]]; then
+      for i in $sessions_list
+      do
+        stop_session $i
+      done
+    else
+      echo -e "========> $choice - Stopping session ${sessions[$choice]}"
+      stop_session ${sessions[$choice]}
+    fi
+  fi
+}
+
+sub_stop_core(){
+  echo -e "${blue}===========================================${NC}"
+  echo "Stopping the core...."
+  echo -e "${blue}===========================================${NC}"
+	echo -e "${black}\n ${NC}"
+  killall -9 roscore
+  killall -9 rosmaster
+  wait $!
+}
+
+sub_reboot(){
+  echo -e "${blue}===========================================${NC}"
+  echo "Rebooting the robot...."
+  echo -e "${blue}===========================================${NC}"
+	echo -e "${black}\n ${NC}"
+  sh /usr/sbin/cob-shutdown
+}
+  
+sub_start_gui(){
+  echo -e "${blue}===========================================${NC}"
+  echo "Starting VM...."
+  echo -e "${blue}===========================================${NC}"
+	echo -e "${black}\n ${NC}"
+  rm -rf /tmp/runningVMS
+  su mimic -c "ssh $ROBOT-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
+
+  if grep -q myrobotname-win "/tmp/runningVMS"; then
+    echo "VM already running"
+  else
+    echo "starting VM..."
+    su mimic -c "ssh $ROBOT-h1 'export DISPLAY=:0 && virtualbox --startvm myrobotname-win --fullscreen'"&
+  fi
+}
+
+sub_stop_gui(){
+  echo -e "${blue}===========================================${NC}"
+  echo "Stopping the Windows VM...."
+  echo -e "${blue}===========================================${NC}"
+	echo -e "${black}\n ${NC}"
+  su mimic -c "ssh -o ConnectTimeout=15 $ROBOT-h1 'export DISPLAY=:0 && vboxmanage controlvm myrobotname-win acpipowerbutton'"
+}
+
+##### PARSE OPTIONS AND ARGUMENTS ##### 
+verbose=false
+all=false
+subcommand=$1
+
+case $subcommand in
+    "" | "-h" | "--help" | "help")
+        sub_help
+        ;;
+    *)shift
+      option=$1
+      case $option in 
+      "-v" | "--verbose") shift
+          verbose=true
+            ;;
+      "-a" | "--all") shift
+          all=true
+          ;;
+    *)
+    esac
+esac
+
+  arg_session_name=$1
+  arg_command=$2
+  arg_pc=$3
+  arg_user=$4
+  sub_${subcommand} $@
+  if [ $? = 127 ]; then
+    echo "Error: '$subcommand' is not a known subcommand." >&2
+    exit 1
+  fi
+
