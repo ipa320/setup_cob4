@@ -1,19 +1,14 @@
 #!/usr/bin/env bash
 
 # Script for executing commands on all cob-pc's.
-robot_name="${HOSTNAME//-b1}"
+IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
 
-if [ "$HOSTNAME" != "$robot_name-b1" ]; then 
-	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC($robot_name-b1), current host is $HOSTNAME"
+client_list=$(nmap $IP-100 --system-dns | grep report | awk '{print $5}')
+
+if [[ $HOSTNAME != *"b"* ]]; then 
+	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC, current host is $HOSTNAME"
 	exit
 fi
-
-client_list="
-$robot_name-t1
-$robot_name-t2
-$robot_name-t3
-$robot_name-s1
-$robot_name-h1"
 
 ##### uncomment the following lines if Windows runs as a Virtual Machine
 #cob-stop-vm-win
