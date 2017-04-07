@@ -71,15 +71,15 @@ function log() {
 }
 
 #start roscore
-/usr/sbin/cob-command roscore "roscore" $ROBOT-b1 $USER
+/usr/sbin/cob-command start roscore "roscore" $ROBOT-b1 $USER
 
 #wait for roscore
 until /opt/ros/indigo/env.sh rostopic list; do sleep 1; done
 
 #start bringup
-/usr/sbin/cob-command bringup "roslaunch msh_bringup all.launch env-script:=/u/$USER/git/care-o-bot/devel/env.sh robot_env:=saturn-ingolstadt" $ROBOT-b1 $USER
+/usr/sbin/cob-command start bringup "roslaunch msh_bringup all.launch env-script:=/u/$USER/git/care-o-bot/devel/env.sh robot_env:=saturn-ingolstadt" $ROBOT-b1 $USER
 
 until /opt/ros/indigo/env.sh rosparam get /robot_description > /dev/null ; do sleep 1; done
 
 #start state machine
-/usr/sbin/cob-command sm "roslaunch msh_statemachine machine.launch" $ROBOT-t2 $USER
+/usr/sbin/cob-command start sm "roslaunch msh_statemachine machine.launch" $ROBOT-t2 $USER

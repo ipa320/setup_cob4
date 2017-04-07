@@ -10,7 +10,7 @@ ProgName=$(basename $0)
 
 get_clients_list(){
   IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
-  client_list=$(nmap --unprivileged $IP-98 --system-dns | grep report | awk '{print $5}') 
+  client_list=$(nmap --unprivileged $IP-98 --system-dns | grep report | awk '{print $6}' | sed 's/(//g;s/)//g') 
 }
 
 get_users_list(){
@@ -44,7 +44,6 @@ list_sessions(){
   do
     for u in ${users_list[$pos]}
     do
-      echo 
       sessions_list=""
       num=0
       sessions_list=$(su $u -l -c "ssh $i 'tmux list-sessions'" | awk '{print $1}') 
@@ -121,10 +120,10 @@ stop_session(){
   PID=$(get_pid $tmux_pid)
   su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
   if [ ! -z "$PID" ]; then
-    while ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 ; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && sleep 1; done
+    while su $standard_user -l -c "ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 "; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && sleep 1; done
   fi
   su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
-  su $standard_user -l -c "source /opt/ros/$DISTRO/setup.bash && echo 'y' | rosnode cleanup"
+  su $standard_user -l -c "source /opt/ros/indigo/setup.bash && echo 'y' | rosnode cleanup"
 }
 
 sub_help(){
@@ -267,7 +266,7 @@ sub_reboot(){
   echo "Rebooting the robot...."
   echo -e "${blue}===========================================${NC}"
   echo -e "${black}\n ${NC}"
-  sh /usr/sbin/cob-shutdown
+  cob-shutdown
 }
   
 sub_start_gui(){
