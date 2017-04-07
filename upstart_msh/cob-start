@@ -1,5 +1,6 @@
 #!/bin/bash
 ROBOT=myrobotname
+ROBOT_ENV=
 DISTRO=mydistro
 USER=myuser
 pcs="
@@ -58,28 +59,16 @@ function log() {
   logger -s -p user.$1 ${@:2}
 }
 
-source /etc/ros/$DISTRO/cob.d/setup/setup.sh
-JOB_FOLDER=/etc/ros/$DISTRO/cob.d/launch/robot
-export ROSLAUNCH_SSH_UNKNOWN=1 
-LAUNCH_FILENAME=/tmp/robot.launch.launch
-export ROS_IP=`rosrun robot_upstart getifip eth0`
-export ROS_MASTER_URI=http://$ROS_IP:11311
-export ROS_LOG_DIR=/tmp
-rosrun robot_upstart mklaunch $JOB_FOLDER robot:=$ROBOT > $LAUNCH_FILENAME
-
-#start roscore inside tmux sessiond2
-su $USER -l -c "tmux new -d -s roscore"
-su $USER -l -c "tmux send -t roscore.0 'sh /etc/ros/$DISTRO/cob.d/roscore_start.sh' ENTER"
+#start roscore
+/usr/sbin/cob-command roscore "roscore" $ROBOT-b1 $USER
 
 #wait for roscore
-until rostopic list; do sleep 1; done
+until /opt/ros/indigo/env.sh rostopic list; do sleep 1; done
 
-#start bringup inside tmux session
-su $USER -l -c "tmux new -d -s bringup"
-su $USER -l -c "tmux send -t bringup 'sh /etc/ros/$DISTRO/cob.d/robot_launch.sh' ENTER"
+#start bringup
+/usr/sbin/cob-command bringup "roslaunch msh_bringup all.launch env-script:=/u/$USER/git/care-o-bot/devel/env.sh robot_env:=saturn-ingolstadt" $ROBOT-b1 $USER
 
-until rosparam get /robot_description > /dev/null ; do sleep 1; done
+until /opt/ros/indigo/env.sh rosparam get /robot_description > /dev/null ; do sleep 1; done
 
-su $USER -l -c "ssh $ROBOT-t2 'tmux new -d -s sm'"
-roslaunch_command="roslaunch\ msh_statemachine\ machine.launch"
-su $USER -l -c "ssh $ROBOT-t2 'tmux send -t sm $roslaunch_command ENTER'"
+#start state machine
+/usr/sbin/cob-command sm "roslaunch msh_statemachine machine.launch" $ROBOT-t2 $USER
