@@ -4,6 +4,8 @@ black='\e[0;30m'
 red='\e[0;31m'
 green='\e[1;32m'
 
+standard_user="robot"
+
 ProgName=$(basename $0)
 
 get_clients_list(){
@@ -12,7 +14,17 @@ get_clients_list(){
 }
 
 get_users_list(){
-  users_list=$(ps aux | grep 'tmux new' | awk '{ print $1 }'| sed '$ d' | sort | uniq)
+  get_clients_list
+  pos=0
+  for i in $client_list
+  do
+    #ssh $i "ps aux | grep 'tmux new'" > /tmp/$i.users
+    #current_users=$(sed '/grep/d' /tmp/$i.users | awk '{ print $1 }'| sort | uniq)
+    #command="ssh $i "ps aux | grep 'tmux new'" |  sed '/grep/d' | awk '{ print $1 }'|  sort | uniq"
+    current_users=$(su $standard_user -l -c "ssh $i 'ps aux | grep tmux '" |  sed '/grep/d' | awk '{ print $1 }'| sort | uniq)
+    users_list[$pos]=$current_users
+    pos=$((pos+1))
+  done
 }
 
 get_pid(){
@@ -27,11 +39,12 @@ get_pid(){
 list_sessions(){
   get_clients_list
   get_users_list
-
+  pos=0
   for i in $client_list
   do
-    for u in $users_list
+    for u in ${users_list[$pos]}
     do
+      echo 
       sessions_list=""
       num=0
       sessions_list=$(su $u -l -c "ssh $i 'tmux list-sessions'" | awk '{print $1}') 
@@ -54,6 +67,7 @@ list_sessions(){
           done
       fi
     done
+    pos=$((pos+1))
   done
 }
 
@@ -61,9 +75,10 @@ find_session(){
   SESSION_NAME="$1"
   get_clients_list
   get_users_list
+  pos=0
   for i in $client_list
   do
-    for u in $users_list
+    for u in ${users_list[$pos]}
     do
       sessions_list=$(su $u -l -c "ssh $i 'tmux list-sessions' 2>&1")
       ret=${PIPESTATUS[0]}
@@ -78,13 +93,14 @@ find_session(){
         fi
       fi
     done
+    pos=$((pos+1))
   done
 }
 
 stop_session(){
   arg_session_stop="$1"
   echo -e "${red}===========================================${NC}"
-	echo "              Stopping $arg_session_stop        "
+  echo "              Stopping $arg_session_stop        "
   echo -e "${red}===========================================${NC}"
   echo -e "${black}\n ${NC}"
   find_session $arg_session_stop
@@ -108,6 +124,7 @@ stop_session(){
     while ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 ; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && sleep 1; done
   fi
   su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
+  su $standard_user -l -c "source /opt/ros/$DISTRO/setup.bash && echo 'y' | rosnode cleanup"
 }
 
 sub_help(){
@@ -139,7 +156,7 @@ sub_find(){
   echo -e "${blue}===========================================${NC}"
   echo -e "${black}\n ${NC}"
   if [ -z "$arg_session_name" ]; then
-		  echo "no session name defined"
+      echo "no session name defined"
       echo -e $usage
       exit
   fi
@@ -159,13 +176,13 @@ sub_start(){
     exit
   fi
   if [ -z "$arg_session_name" ]; then
-		  echo "ERROR: please define a session name"
+      echo "ERROR: please define a session name"
       echo " "
       sub_help
       exit
   fi
   if [ -z "$arg_command" ]; then
-		  echo "ERROR: please define a command"
+      echo "ERROR: please define a command"
       echo " "
       sub_help
       exit
@@ -178,13 +195,13 @@ sub_start(){
   fi
 
   echo -e "${green}===========================================${NC}"
-	echo "              Starting $arg_session_name        "
+  echo "              Starting $arg_session_name        "
   echo -e "${green}===========================================${NC}"
   echo -e "${black}\n ${NC}"
 
   send_command=${arg_command//" "/"\ "}
-	su $arg_user -l -c "ssh $arg_pc 'tmux new -d -s $arg_session_name'"
-	su $arg_user -l -c "ssh $arg_pc 'tmux send -t $arg_session_name $send_command ENTER'"
+  su $arg_user -l -c "ssh $arg_pc 'tmux new -d -s $arg_session_name'"
+  su $arg_user -l -c "ssh $arg_pc 'tmux send -t $arg_session_name $send_command ENTER'"
 }
 
 sub_stop(){
@@ -208,21 +225,21 @@ sub_stop(){
       sessions[$num]=$session_name
     done
 
-	  echo -e "${blue}===========================================${NC}"
-	  echo -e "${blue}===========================================${NC}"
-	  echo "              Stop Session Menu                 "
-	  echo -e "${blue}===========================================${NC}"
-	  echo -e "${blue}===========================================${NC}"
-	  echo -e "${black}\n ${NC}"
-	  for i in $(seq 1 $num) 
-	  do
-  	  echo "$i: ${sessions[i]}"
-	  done
-	  read -p "Please select a session number or 'all' to kill all the active sessions: " choice
-	  if ! [[ "$choice" =~ ^[1-$num]+$ || "$choice" == "all" ]]; then
+    echo -e "${blue}===========================================${NC}"
+    echo -e "${blue}===========================================${NC}"
+    echo "              Stop Session Menu                 "
+    echo -e "${blue}===========================================${NC}"
+    echo -e "${blue}===========================================${NC}"
+    echo -e "${black}\n ${NC}"
+    for i in $(seq 1 $num) 
+    do
+      echo "$i: ${sessions[i]}"
+    done
+    read -p "Please select a session number or 'all' to kill all the active sessions: " choice
+    if ! [[ "$choice" =~ ^[1-$num]+$ || "$choice" == "all" ]]; then
       echo -e "========> $choice not valid , please choose a number session between 1-$num"
       exit
-	  fi
+    fi
     if [[ "$choice" == "all" ]]; then
       for i in $sessions_list
       do
@@ -239,7 +256,7 @@ sub_stop_core(){
   echo -e "${blue}===========================================${NC}"
   echo "Stopping the core...."
   echo -e "${blue}===========================================${NC}"
-	echo -e "${black}\n ${NC}"
+  echo -e "${black}\n ${NC}"
   killall -9 roscore
   killall -9 rosmaster
   wait $!
@@ -249,7 +266,7 @@ sub_reboot(){
   echo -e "${blue}===========================================${NC}"
   echo "Rebooting the robot...."
   echo -e "${blue}===========================================${NC}"
-	echo -e "${black}\n ${NC}"
+  echo -e "${black}\n ${NC}"
   sh /usr/sbin/cob-shutdown
 }
   
@@ -257,7 +274,7 @@ sub_start_gui(){
   echo -e "${blue}===========================================${NC}"
   echo "Starting VM...."
   echo -e "${blue}===========================================${NC}"
-	echo -e "${black}\n ${NC}"
+  echo -e "${black}\n ${NC}"
   rm -rf /tmp/runningVMS
   su mimic -c "ssh $ROBOT-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
 
@@ -273,28 +290,29 @@ sub_stop_gui(){
   echo -e "${blue}===========================================${NC}"
   echo "Stopping the Windows VM...."
   echo -e "${blue}===========================================${NC}"
-	echo -e "${black}\n ${NC}"
+  echo -e "${black}\n ${NC}"
   su mimic -c "ssh -o ConnectTimeout=15 $ROBOT-h1 'export DISPLAY=:0 && vboxmanage controlvm myrobotname-win acpipowerbutton'"
 }
 
-##### PARSE OPTIONS AND ARGUMENTS ##### 
+##### PARSE OPTIONS AND ARGUMENTS #####
+
 verbose=false
 all=false
 subcommand=$1
 
 case $subcommand in
-    "" | "-h" | "--help" | "help")
-        sub_help
-        ;;
-    *)shift
-      option=$1
-      case $option in 
-      "-v" | "--verbose") shift
-          verbose=true
-            ;;
-      "-a" | "--all") shift
-          all=true
-          ;;
+  "" | "-h" | "--help" | "help")
+  sub_help
+  ;;
+  *)shift
+    option=$1
+    case $option in 
+    "-v" | "--verbose") shift
+    verbose=true
+    ;;
+    "-a" | "--all") shift
+    all=true
+    ;;
     *)
     esac
 esac
