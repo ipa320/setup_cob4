@@ -255,17 +255,6 @@ function Cob4Setup
   sleep 5
   /u/robot/git/setup_cob4/upstart/upstart_install.sh
 
-  echo -e "\n${green}INFO:  Define users rights${NC}\n"
-  sleep 5
-
-
-grep -q -F '%users ALL=NOPASSWD:/usr/sbin/cob-start' /etc/sudoers  || sudo sh -c '(echo "%users ALL=NOPASSWD:/usr/sbin/cob-start") > /etc/sudoers'
-
-
-grep -q -F '%users ALL=NOPASSWD:/usr/sbin/cob-stop' /etc/sudoers  || sudo sh -c '(echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop") > /etc/sudoers'
-
-
- grep -q -F '%users ALL=NOPASSWD:/usr/sbin/cob-stop-core' /etc/sudoers  || sudo sh -c '(echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop-core") > /etc/sudoers'
   echo -e "\n${green}INFO:  Enable passwordless login${NC}\n"
   sleep 5
   su root
@@ -289,22 +278,22 @@ function Mimic
  echo -e "\n${green}INFO:  Mimic ${NC}\n"
   sleep 5
 
-sudo ssh $server "cob-adduser mimic"
+  sudo ssh $server "cob-adduser mimic"
 
-sudo sed -i '$ [SeatDefaults]' /etc/lightdm/lightdm.conf 
-sudo sed -i '$ autologin-user=mimic' /etc/lightdm/lightdm.conf 
-sudo sed -i '$ autologin-user-timeout=60' /etc/lightdm/lightdm.conf 
+  sudo sed -i '$ [SeatDefaults]' /etc/lightdm/lightdm.conf 
+  sudo sed -i '$ autologin-user=mimic' /etc/lightdm/lightdm.conf 
+  sudo sed -i '$ autologin-user-timeout=60' /etc/lightdm/lightdm.conf 
 
-sudo sed -i '$ [Desktop Entry]' /u/mimic/.config/autostart/xhost.desktop 
-sudo sed -i '$ Type=Application' /u/mimic/.config/autostart/xhost.desktop 
-sudo sed -i '$ Exec=xhost +' /u/mimic/.config/autostart/xhost.desktop 
-sudo sed -i '$ Hidden=false' /u/mimic/.config/autostart/xhost.desktop 
-sudo sed -i '$ NoDisplay=false' /u/mimic/.config/autostart/xhost.desktop 
-sudo sed -i '$ X-GNOME-Autostart-enabled=true' /u/mimic/.config/autostart/xhost.desktop 
-sudo sed -i '$ Name[en_US]=mimic' /u/mimic/.config/autostart/xhost.desktop 
-sudo sed -i '$ Name=mimic' /u/mimic/.config/autostart/xhost.desktop 
-sudo sed -i '$ Comment[en_US]=' /u/mimic/.config/autostart/xhost.desktop 
-sudo sed -i '$ Comment=' /u/mimic/.config/autostart/xhost.desktop 
+  sudo sed -i '$ [Desktop Entry]' /u/mimic/.config/autostart/xhost.desktop 
+  sudo sed -i '$ Type=Application' /u/mimic/.config/autostart/xhost.desktop 
+  sudo sed -i '$ Exec=xhost +' /u/mimic/.config/autostart/xhost.desktop 
+  sudo sed -i '$ Hidden=false' /u/mimic/.config/autostart/xhost.desktop 
+  sudo sed -i '$ NoDisplay=false' /u/mimic/.config/autostart/xhost.desktop 
+  sudo sed -i '$ X-GNOME-Autostart-enabled=true' /u/mimic/.config/autostart/xhost.desktop 
+  sudo sed -i '$ Name[en_US]=mimic' /u/mimic/.config/autostart/xhost.desktop 
+  sudo sed -i '$ Name=mimic' /u/mimic/.config/autostart/xhost.desktop 
+  sudo sed -i '$ Comment[en_US]=' /u/mimic/.config/autostart/xhost.desktop 
+  sudo sed -i '$ Comment=' /u/mimic/.config/autostart/xhost.desktop 
 }
 
 ########Netdata tools############
