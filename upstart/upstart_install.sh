@@ -3,12 +3,12 @@
 robot_name="${HOSTNAME//-b1}"
 
 sudo apt-get install ros-indigo-robot-upstart
-sudo cp /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
-sudo cp /u/robot/git/setup_cob4/upstart/cob-start /usr/sbin/cob-start
+sudo cp -f /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
+sudo cp -f /u/robot/git/setup_cob4/upstart/cob-start /usr/sbin/cob-start
 sudo sed -i "s/myrobot/$ROBOT/g" /usr/sbin/cob-start
 sudo sed -i "s/mydistro/$ROS_DISTRO/g" /usr/sbin/cob-start
-sudo cp /u/robot/git/setup_cob4/upstart/cob-stop /usr/sbin/cob-stop
-sudo cp /u/robot/git/setup_cob4/upstart/cob-stop-core /usr/sbin/cob-stop-core
+sudo cp -f /u/robot/git/setup_cob4/upstart/cob-stop /usr/sbin/cob-stop
+sudo cp -f /u/robot/git/setup_cob4/upstart/cob-stop-core /usr/sbin/cob-stop-core
 
 sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-start"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-start|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-start||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-start" -e "}" /etc/sudoers 
 
@@ -50,11 +50,11 @@ for client in $camera_client_list; do
         echo "Executing on $client"
         echo "-------------------------------------------"
         echo ""
-        ssh $client "sudo cp /u/robot/git/setup_cob4/upstart/check_cameras.sh /etc/init.d/check_cameras.sh"
+        ssh $client "sudo cp -f /u/robot/git/setup_cob4/upstart/check_cameras.sh /etc/init.d/check_cameras.sh"
         ssh $client "sudo update-rc.d check_cameras.sh defaults"
 done
 
-sudo cp -r /u/robot/git/setup_cob4/upstart/cob.d/launch /etc/ros/$ROS_DISTRO/cob.d/
+sudo cp -rf /u/robot/git/setup_cob4/upstart/cob.d/launch /etc/ros/$ROS_DISTRO/cob.d/
 sudo sed -i "s/myrobot/$ROBOT/g" /etc/ros/$ROS_DISTRO/cob.d/launch/robot/robot.launch
 sudo sed -i "s/myrobot/$robot_name/g" /etc/ros/indigo/cob.d/setup/setup.sh
 
