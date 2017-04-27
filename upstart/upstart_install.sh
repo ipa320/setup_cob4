@@ -1,6 +1,7 @@
 #!/bin/bash
 
 robot_name="${HOSTNAME//-b1}"
+ROS_DISTRO="indigo"
 
 sudo apt-get install ros-indigo-robot-upstart
 sudo cp -f /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf

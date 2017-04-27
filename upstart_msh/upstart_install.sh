@@ -1,6 +1,7 @@
 #!/bin/bash
 
 robot_name="${HOSTNAME//-b1}"
+ROS_DISTRO="indigo"
 
 sudo cp -f /u/robot/git/setup_cob4/upstart_msh/cob.conf /etc/init/cob.conf
 sudo cp -f /u/robot/git/setup_cob4/upstart_msh/cob_msh.conf /etc/init/cob_msh.conf
@@ -14,6 +15,7 @@ echo "%users ALL=NOPASSWD:/usr/sbin/cob-start" | sudo tee -a /etc/sudoers
 sudo cp -f /u/robot/git/setup_cob4/upstart_msh/cob-stop /usr/sbin/cob-stop
 sudo sed -i "s/myrobotname/$robot_name/g" /usr/sbin/cob-stop
 sudo sed -i "s/myuser/msh/g" /usr/sbin/cob-stop
+sudo sed -i "s/mydistro/$ROS_DISTRO/g" /usr/sbin/cob-stop
 echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop" | sudo tee -a /etc/sudoers
 
 sudo cp -f /u/robot/git/setup_cob4/upstart_msh/cob-start-gui /usr/sbin/cob-start-gui
