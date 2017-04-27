@@ -14,6 +14,8 @@
 - Download the Certificate
 
 ### 2. Zentyal Config <a id="Zentyal"/>
+- Got to Network->Members and add a new Member to vpn.routes Object.<br>
+  e.g. name=cob4-7 ip-address: 10.4.7.0/24
 - ssh to zentyal<br>
   `ssh stud-admin@10.0.1.1`
 - cd directory to openvpn client config<br>
