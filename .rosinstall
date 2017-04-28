@@ -27,6 +27,10 @@
     local-name: cob_hand
     version: indigo_dev
 - git:
+    uri: 'https://github.com/ipa320/cob_navigation.git'
+    local-name: cob_navigation
+    version: indigo_dev
+- git:
     uri: 'https://github.com/ipa320/cob_robots.git'
     local-name: cob_robots
     version: indigo_dev
