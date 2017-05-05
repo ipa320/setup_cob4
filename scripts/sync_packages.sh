@@ -1,34 +1,41 @@
 #!/bin/bash
-robot_name="${HOSTNAME//-b1}"
 
-if [ "$HOSTNAME" != "$robot_name-b1" ]; then 
-	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC"
-	exit
-fi
+#if [ "$HOSTNAME" != "$ROBOT-b1" ]; then 
+#	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC"
+#	exit
+#fi
 
 packages=$(dpkg --get-selections | grep -v "deinstall" | awk '{print $1}')
 echo $packages > /tmp/package_list
 
 pcs="
-$robot_name-b1
-$robot_name-t1
-$robot_name-t2
-$robot_name-t3
-$robot_name-s1
-$robot_name-h1"
+$ROBOT-b1
+$ROBOT-t1
+$ROBOT-t2
+$ROBOT-t3
+$ROBOT-s1
+$ROBOT-h1"
+
+declare -a commands=(
+'sudo apt-get update > /dev/null'
+'xargs sudo apt-get install -y <<< $packages'
+'sudo apt-get autoremove -y'
+)
+
 
 for i in $pcs; do 
   echo "-------------------------------------------"
   echo "Installing packages on $i"
   echo "-------------------------------------------"
   echo ""
-  ssh $i "sudo apt-get update"
-  ssh $i "xargs sudo apt-get install -y" <<< $packages
-  ret=${PIPESTATUS[0]}
-  if [ $ret != 0 ] ; then
-    echo -t "apt-get return an error (error code: $ret), aborting..."
-    exit 1
-  fi
+  for command in "${commands[@]}"; do
+    ssh $i $command
+    ret=${PIPESTATUS[0]}
+    if [ $ret != 0 ] ; then
+      echo -t "$command return an error in $i (error code: $ret), aborting..."
+      exit 1
+    fi
+  done
   echo ""
 done
 
