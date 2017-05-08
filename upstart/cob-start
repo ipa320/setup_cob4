@@ -73,7 +73,7 @@ function log() {
 /usr/sbin/cob-command start roscore "roscore" $ROBOT-b1 $USER
 
 #wait for roscore
-until /opt/ros/indigo/env.sh rostopic list; do sleep 1; done
+until /opt/ros/indigo/env.sh rosnode list > /dev/null ; do sleep 1; done
 
 #start bringup
 /usr/sbin/cob-command start bringup "roslaunch cob_bringup robot.launch env-script:=/u/$USER/git/care-o-bot/devel/env.sh robot:=$ROBOT" $ROBOT-b1 $USER
