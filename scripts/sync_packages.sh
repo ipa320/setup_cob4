@@ -17,9 +17,10 @@ $ROBOT-s1
 $ROBOT-h1"
 
 declare -a commands=(
-'sudo apt-get update > /dev/null'
-'xargs sudo apt-get install -y <<< $packages'
-'sudo apt-get autoremove -y'
+"sudo apt-get update > /dev/null"
+"sudo apt-get install -y $packages"
+"sudo apt-get upgrade -y"
+"sudo apt-get autoremove -y"
 )
 
 
@@ -29,6 +30,7 @@ for i in $pcs; do
   echo "-------------------------------------------"
   echo ""
   for command in "${commands[@]}"; do
+    echo "----> executing: $command"
     ssh $i $command
     ret=${PIPESTATUS[0]}
     if [ $ret != 0 ] ; then
