@@ -7,6 +7,7 @@ green='\e[1;32m'
 standard_user="robot"
 
 ProgName=$(basename $0)
+upstart_file_path="/etc/ros/indigo/cob.yaml"
 
 get_clients_list(){
   IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
@@ -36,6 +37,23 @@ get_pid(){
   done
 }
 
+parse_yaml(){
+  local prefix=$2
+  local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+  sed -ne "s|^\($s\):|\1|" \
+        -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
+        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
+  awk -F$fs '{
+      indent = length($1)/2;
+      vname[indent] = $2;
+      for (i in vname) {if (i > indent) {delete vname[i]}}
+      if (length($3) > 0) {
+         vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+         printf("%s%s=%s\n",vn,$2,$3)
+      }
+   }' > /tmp/cob
+}
+
 list_sessions(){
   get_clients_list
   get_users_list
@@ -58,10 +76,18 @@ list_sessions(){
         done
           for n in $(seq 1 $num) 
           do
+            pid_command='tmux list-panes -s -F "#{pane_pid}" -t '
+            quom="'"
+            ssh_command="ssh $i $quom$pid_command${sessions[$n]}$quom"
+            tmux_pid=$(su $u -l -c "$ssh_command")
+            PID=$(get_pid $tmux_pid)
+            command=$(ps -p $PID -o args)
             echo "${sessions[$n]}"
             if ${verbose}; then
               echo "  pc: $i"
               echo "  user: $u"
+              echo "  PID: $PID"
+              echo "  command: ${command#* }"
             fi
           done
       fi
@@ -88,6 +114,7 @@ find_session(){
         if [ "${sessions_list/$SESSION_NAME}" != "$sessions_list" ]; then
           where_session=$i
           who_session=$u
+          session_found=true
           break
         fi
       fi
@@ -118,12 +145,59 @@ stop_session(){
     exit
   fi
   PID=$(get_pid $tmux_pid)
-  su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
-  if [ ! -z "$PID" ]; then
-    while su $standard_user -l -c "ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 "; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && sleep 1; done
+  command=$(ps -p $PID -o args)
+  command=${command#* }
+  if [[ $command == *'roscore'* ]]; then
+    echo -e "${red}Ignoring roscore, to kill the core please use the command: cob-command stop-core${NC}"
+    echo -e "${black}\n ${NC}"
+  else
+    su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
+    if [ ! -z "$PID" ]; then
+      while su $standard_user -l -c "ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 "; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && sleep 1; done
+    fi
+    su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
+    su $standard_user -l -c "source /opt/ros/indigo/setup.bash && echo 'y' | rosnode cleanup"
   fi
-  su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
-  su $standard_user -l -c "source /opt/ros/indigo/setup.bash && echo 'y' | rosnode cleanup"
+}
+
+start_session(){
+  if [ -z "$arg_session_name" ]; then
+      echo "SYNTAX ERROR: please check your " $upstart_file_path ":session name not defined"
+      echo " "
+      exit
+  fi
+  if [ -z "$arg_command" ]; then
+      echo "SYNTAX ERROR: please check your " $upstart_file_path ":command not defined"
+      echo " "
+      exit
+  fi
+  if [ -z "$arg_pc" ]; then
+      arg_pc="localhost"
+  fi
+  if [ -z "$arg_user" ]; then
+      arg_user="robot"
+  fi
+
+  echo -e "${green}===========================================${NC}"
+  echo "              Starting $arg_session_name        "
+  echo "User: $arg_user"
+  echo "Pc: $arg_pc"
+  echo "Command: $arg_command"
+  echo -e "${green}===========================================${NC}"
+  echo -e "${black}\n ${NC}"
+  unset session_found
+  find_session $arg_session_name > /dev/null
+  if ! [[ $arg_command == *'ros'* ]]; then
+    echo -e "${red}ERROR: only ros commands are allow${NC}"
+    echo -e "${black} ${NC}"
+  elif ! [ -z "$session_found" ]; then
+    echo -e "${red}ERROR: $arg_session_name session already exist${NC}"
+    echo -e "${black} ${NC}"
+  else
+    send_command=${arg_command//" "/"\ "}
+    su $arg_user -l -c "ssh $arg_pc 'tmux new -d -s $arg_session_name'"
+    su $arg_user -l -c "ssh $arg_pc 'tmux send -t $arg_session_name $send_command ENTER'"
+  fi
 }
 
 sub_help(){
@@ -131,13 +205,10 @@ sub_help(){
     echo "Commands:"
     echo "    ls [-v]"
     echo "    find <session_name>"
-    echo "    start <session_name> '<command>' [<pc>] [<user>]"
-    echo "    start -a"
+    echo "    start [<file path>]"
     echo "    stop [-a] [<session_name>]"
     echo "    stop_core"
     echo "    reboot"
-    echo "    start_gui"
-    echo "    stop_gui"
     echo ""
 }
 
@@ -170,37 +241,40 @@ sub_start(){
   echo "Starting sessions...."
   echo -e "${blue}===========================================${NC}"
   echo -e "${black}\n ${NC}"
-  if ${all}; then
-    echo "to be implemented...."
-    exit
+  arg_upstart_file_path=$1
+  if ! [ -z "$arg_upstart_file_path" ]; then
+    upstart_file_path=$arg_upstart_file_path
   fi
-  if [ -z "$arg_session_name" ]; then
-      echo "ERROR: please define a session name"
-      echo " "
-      sub_help
-      exit
-  fi
-  if [ -z "$arg_command" ]; then
-      echo "ERROR: please define a command"
-      echo " "
-      sub_help
-      exit
-  fi
-  if [ -z "$arg_pc" ]; then
-      arg_pc="localhost"
-  fi
-  if [ -z "$arg_user" ]; then
-      arg_user="robot"
-  fi
+  echo "Reading file "$upstart_file_path"...."
+  parse_yaml $upstart_file_path
+  IFS="="
+  num=0
+  while read -r name value
+  do
+    if [[ $name == *'session_name' ]];then
+      num=$((num+1))
+      sessions[$num]=$value
+    fi
+  done < /tmp/cob
+  for ((n=1; n <= $num; n++))
+  do
+      arg_session_name=${sessions[$n]}
+      IFS="="
+      while read -r name value
+      do
+        if [[ $name == ${sessions[$n]}'_command' ]];then
+          arg_command=$value
+        fi
+        if [[ $name == ${sessions[$n]}'_user' ]];then
+          arg_user=$value
+        fi
+        if [[ $name == ${sessions[$n]}'_pc' ]];then
+          arg_pc=$value
+        fi
+      done < /tmp/cob
+      start_session
+  done
 
-  echo -e "${green}===========================================${NC}"
-  echo "              Starting $arg_session_name        "
-  echo -e "${green}===========================================${NC}"
-  echo -e "${black}\n ${NC}"
-
-  send_command=${arg_command//" "/"\ "}
-  su $arg_user -l -c "ssh $arg_pc 'tmux new -d -s $arg_session_name'"
-  su $arg_user -l -c "ssh $arg_pc 'tmux send -t $arg_session_name $send_command ENTER'"
 }
 
 sub_stop(){
@@ -208,6 +282,7 @@ sub_stop(){
   echo "Stopping sessions...."
   echo -e "${blue}===========================================${NC}"
   echo -e "${black}\n ${NC}"
+  arg_session_name=$1
   if ${all}; then
     sessions_list=$(list_sessions)
     for i in $sessions_list
@@ -240,6 +315,7 @@ sub_stop(){
       exit
     fi
     if [[ "$choice" == "all" ]]; then
+      all=true
       for i in $sessions_list
       do
         stop_session $i
@@ -300,8 +376,9 @@ all=false
 subcommand=$1
 
 case $subcommand in
-  "" | "-h" | "--help" | "help")
+  "" | "-h" | "--help" | "help" | " ")
   sub_help
+  exit 1
   ;;
   *)shift
     option=$1
@@ -316,10 +393,6 @@ case $subcommand in
     esac
 esac
 
-  arg_session_name=$1
-  arg_command=$2
-  arg_pc=$3
-  arg_user=$4
   sub_${subcommand} $@
   if [ $? = 127 ]; then
     echo "Error: '$subcommand' is not a known subcommand." >&2
