@@ -1,13 +1,9 @@
 roscore:
   session_name: roscore
   command: "roscore"
-  user: nhg
-test:
-  session_name: test
-  command: "ls"
-  user: nhg
+  user: robot
 bringup:
   session_name: bringup
-  command: "roslaunch cob_bringup_sim robot.launch"
-  user: nhg
+  command: "roslaunch cob_bringup robot.launch"
+  user: robot
 
