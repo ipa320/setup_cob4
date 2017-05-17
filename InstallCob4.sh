@@ -70,6 +70,9 @@ function BasicInstallation {
   sudo rosdep init
   rosdep update
 
+  echo -e "\n${green}INFO: Removing modemmanager${NC}\n"
+  sudo apt-get purge modemmanager
+  
   echo -e "\n${green}INFO: Installing NoMachine!${NC}\n"
   wget http://download.nomachine.com/download/5.2/Linux/nomachine_5.2.11_1_i386.deb -O /tmp/nomachine.deb
   sudo dpkg -i /tmp/nomachine.deb
