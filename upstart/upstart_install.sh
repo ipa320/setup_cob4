@@ -9,7 +9,7 @@ sudo cp -f /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
 sudo cp -f /u/robot/git/setup_cob4/upstart/cob-start /usr/sbin/cob-start
 
 sudo cp -f /u/robot/git/setup_cob4/upstart/cob.yaml /etc/ros/cob.yaml
-sudo sed -i "s/myrobot/$ROBOT/g" /etc/ros/cob.yaml
+sudo sed -i "s/myrobot/$robot_name/g" /etc/ros/cob.yaml
 
 sudo cp -f /u/robot/git/setup_cob4/scripts/cob-command /usr/sbin/cob-command
 
