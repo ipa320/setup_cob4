@@ -1,0 +1,10 @@
+#!/bin/bash
+rm -rf /tmp/runningVMS
+su mimic -c "ssh myrobotname-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
+
+if grep -q myrobotname-win "/tmp/runningVMS"; then
+  echo "VM already running"
+else
+  echo "starting VM..."
+  su mimic -c "ssh myrobotname-h1 'export DISPLAY=:0 && virtualbox --startvm myrobotname-win --fullscreen'"&
+fi
