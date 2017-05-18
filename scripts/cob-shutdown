@@ -10,6 +10,9 @@ if [[ $HOSTNAME != *"b"* ]]; then
 	exit
 fi
 
+sudo /usr/sbin/cob-command stop -a
+sudo /usr/sbin/cob-command stop_core
+
 ##### uncomment the following lines if Windows runs as a Virtual Machine
 #cob-stop-vm-win
 
