@@ -1,7 +1,5 @@
 #!/bin/bash
 ROBOT=myrobotname
-DISTRO=mydistro
-USER=myuser
 pcs="
 $ROBOT-b1
 $ROBOT-t1
@@ -11,15 +9,9 @@ $ROBOT-s1
 $ROBOT-h1"
 
 pcs_cameras="
-$ROBOT-t2
+$ROBOT-t1
 $ROBOT-t3
 $ROBOT-s1"
-
-if (su $USER -l -c "tmux has-session -t 'bringup' 2> /dev/null"); then
-  logger -p user.info "Bringup already running. Exiting"
-  echo "Bringup already running. Exiting"
-  exit
-fi
 
 for i in $pcs; do 
     Alive=False
@@ -69,11 +61,4 @@ function log() {
   logger -s -p user.$1 ${@:2}
 }
 
-#start roscore
-/usr/sbin/cob-command start roscore "roscore" $ROBOT-b1 $USER
-
-#wait for roscore
-until /opt/ros/indigo/env.sh rosnode list > /dev/null ; do sleep 1; done
-
-#start bringup
-/usr/sbin/cob-command start bringup "roslaunch cob_bringup robot.launch env-script:=/u/$USER/git/care-o-bot/devel/env.sh robot:=$ROBOT" $ROBOT-b1 $USER
+/usr/sbin/cob-command start

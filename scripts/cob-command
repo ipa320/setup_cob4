@@ -7,7 +7,7 @@ green='\e[1;32m'
 standard_user="robot"
 
 ProgName=$(basename $0)
-upstart_file_path="/etc/ros/indigo/cob.yaml"
+upstart_file_path="/etc/ros/cob.yaml"
 
 get_clients_list(){
   IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
@@ -148,7 +148,7 @@ stop_session(){
   command=$(ps -p $PID -o args)
   command=${command#* }
   if [[ $command == *'roscore'* ]]; then
-    echo -e "${red}Ignoring roscore, to kill the core please use the command: cob-command stop-core${NC}"
+    echo -e "${red}Ignoring roscore, to kill the core please use the command: cob-command stop_core${NC}"
     echo -e "${black}\n ${NC}"
   else
     su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
@@ -183,6 +183,7 @@ start_session(){
   echo "User: $arg_user"
   echo "Pc: $arg_pc"
   echo "Command: $arg_command"
+  echo "Pre condition: $arg_pre_condition"
   echo -e "${green}===========================================${NC}"
   echo -e "${black}\n ${NC}"
   unset session_found
@@ -194,9 +195,15 @@ start_session(){
     echo -e "${red}ERROR: $arg_session_name session already exist${NC}"
     echo -e "${black} ${NC}"
   else
+    if ! [ -z $arg_pre_condition ]; then
+      arg_command=$arg_pre_condition' && '$arg_command
+    fi
     send_command=${arg_command//" "/"\ "}
-    su $arg_user -l -c "ssh $arg_pc 'tmux new -d -s $arg_session_name'"
-    su $arg_user -l -c "ssh $arg_pc 'tmux send -t $arg_session_name $send_command ENTER'"
+    send_command=${send_command//"&"/"\&"}
+    send_command=${send_command//";"/"\;"}
+    send_command=${send_command//">"/"\>"}
+    su $arg_user -l -c "ssh $arg_pc 'tmux -u new -d -s $arg_session_name'"
+    su $arg_user -l -c "ssh $arg_pc 'tmux -u send -t $arg_session_name $send_command ENTER'"
   fi
 }
 
@@ -271,6 +278,9 @@ sub_start(){
         if [[ $name == ${sessions[$n]}'_pc' ]];then
           arg_pc=$value
         fi
+        if [[ $name == ${sessions[$n]}'_pre_condition' ]];then
+          arg_pre_condition=$value
+        fi
       done < /tmp/cob
       start_session
   done
@@ -335,6 +345,7 @@ sub_stop_core(){
   killall -9 roscore
   killall -9 rosmaster
   wait $!
+  stop_session roscore
 }
 
 sub_reboot(){
