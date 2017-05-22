@@ -7,7 +7,7 @@ fi
 
 # Script for executing commands on all cob-pc's.
 IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
-client_list=$(nmap --unprivileged $IP-100 --system-dns | grep report | awk '{print $5}')
+client_list=$(nmap --unprivileged $IP-98 --system-dns | grep report | awk '{print $5}')
 
 ##### uncomment the following lines if Windows runs as a Virtual Machine
 #cob-stop-vm-win
