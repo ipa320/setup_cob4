@@ -7,26 +7,39 @@ ROS_DISTRO="indigo"
 
 sudo cp -f /u/robot/git/setup_cob4/upstart_msh/cob.conf /etc/init/cob.conf
 sudo cp -f /u/robot/git/setup_cob4/upstart_msh/cob_msh.conf /etc/init/cob_msh.conf
+
 sudo cp -f /u/robot/git/setup_cob4/upstart_msh/cob-start /usr/sbin/cob-start
 sudo sed -i "s/myrobotname/$robot_name/g" /usr/sbin/cob-start
 sudo sed -i "s/mydistro/$ROS_DISTRO/g" /usr/sbin/cob-start
 sudo sed -i "s/myrobot/$ROBOT/g" /usr/sbin/cob-start
 sudo sed -i "s/myuser/msh/g" /usr/sbin/cob-start
-echo "%users ALL=NOPASSWD:/usr/sbin/cob-start" | sudo tee -a /etc/sudoers
+sudoers_string="%users ALL=NOPASSWD:/usr/sbin/cob-start"
+if ! sudo grep -q "$sudoers_string" /etc/sudoers ; then
+  echo $sudoers_string | sudo tee -a /etc/sudoers
+fi
 
 sudo cp -f /u/robot/git/setup_cob4/upstart_msh/cob-stop /usr/sbin/cob-stop
 sudo sed -i "s/myrobotname/$robot_name/g" /usr/sbin/cob-stop
 sudo sed -i "s/myuser/msh/g" /usr/sbin/cob-stop
 sudo sed -i "s/mydistro/$ROS_DISTRO/g" /usr/sbin/cob-stop
-echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop" | sudo tee -a /etc/sudoers
+sudoers_string="%users ALL=NOPASSWD:/usr/sbin/cob-stop"
+if ! sudo grep -q "$sudoers_string" /etc/sudoers ; then
+  echo $sudoers_string | sudo tee -a /etc/sudoers
+fi
 
 sudo cp -f /u/robot/git/setup_cob4/upstart_msh/cob-start-gui /usr/sbin/cob-start-gui
 sudo sed -i "s/myrobotname/$robot_name/g" /usr/sbin/cob-start-gui
-echo "%users ALL=NOPASSWD:/usr/sbin/cob-start-gui" | sudo tee -a /etc/sudoers
+sudoers_string="%users ALL=NOPASSWD:/usr/sbin/cob-start-gui"
+if ! sudo grep -q "$sudoers_string" /etc/sudoers ; then
+  echo $sudoers_string | sudo tee -a /etc/sudoers
+fi
 
 sudo cp -f /u/robot/git/setup_cob4/upstart_msh/cob-stop-gui /usr/sbin/cob-stop-gui
 sudo sed -i "s/myrobotname/$robot_name/g" /usr/sbin/cob-stop-gui
-echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop-gui" | sudo tee -a /etc/sudoers
+sudoers_string="%users ALL=NOPASSWD:/usr/sbin/cob-stop-gui"
+if ! sudo grep -q "$sudoers_string" /etc/sudoers ; then
+  echo $sudoers_string | sudo tee -a /etc/sudoers
+fi
 
 client_list="
 $robot_name-b1
