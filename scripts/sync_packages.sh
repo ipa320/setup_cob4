@@ -1,20 +1,12 @@
 #!/bin/bash
 
-#if [ "$HOSTNAME" != "$ROBOT-b1" ]; then 
-#	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC"
-#	exit
-#fi
-
+# get installed packages
 packages=$(dpkg --get-selections | grep -v "deinstall" | awk '{print $1}')
 echo $packages > /tmp/package_list
 
-pcs="
-$ROBOT-b1
-$ROBOT-t1
-$ROBOT-t2
-$ROBOT-t3
-$ROBOT-s1
-$ROBOT-h1"
+# get pcs in local network
+IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
+client_list=$(nmap --unprivileged $IP-98 --system-dns | grep report | awk '{print $5}')
 
 declare -a commands=(
 "sudo apt-get update > /dev/null"
@@ -24,17 +16,17 @@ declare -a commands=(
 )
 
 
-for i in $pcs; do 
+for client in $client_list; do 
   echo "-------------------------------------------"
-  echo "Installing packages on $i"
+  echo "Installing packages on $client"
   echo "-------------------------------------------"
   echo ""
   for command in "${commands[@]}"; do
     echo "----> executing: $command"
-    ssh $i $command
+    ssh $client $command
     ret=${PIPESTATUS[0]}
     if [ $ret != 0 ] ; then
-      echo -t "$command return an error in $i (error code: $ret), aborting..."
+      echo -t "$command return an error in $client (error code: $ret), aborting..."
       exit 1
     fi
   done
