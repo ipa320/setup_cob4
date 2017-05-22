@@ -19,7 +19,7 @@ function BasicInstallation {
   echo -e "\n${green}INFO:Installing basic tools${NC}\n"
   sleep 5
   sudo apt-get update
-  sudo apt-get install vim tree gitg git-gui meld curl openjdk-6-jdk zsh terminator language-pack-de language-pack-en ipython -y --force-yes
+  sudo apt-get install vim tree gitg git-gui meld curl default-jdk terminator language-pack-de language-pack-en ipython nmap -y --force-yes
 
   echo -e "\n${green}INFO:Update grub to avoid hangs on reboot${NC}\n"
   sleep 5
@@ -66,7 +66,7 @@ function BasicInstallation {
   wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
   echo -e "\n${green}   INFO: Install ROS${NC}\n"
   sudo apt-get update
-  sudo apt-get install ros-indigo-rosbash python-ros-* ros-indigo-care-o-bot-robot -y --force-yes
+  sudo apt-get install ros-indigo-rosbash ros-indigo-care-o-bot-robot -y --force-yes
   sudo rosdep init
   rosdep update
 
