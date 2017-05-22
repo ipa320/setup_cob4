@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 robot_name="${HOSTNAME//-b1}"
 ROS_DISTRO="indigo"
 
@@ -40,16 +42,14 @@ for client in $client_list; do
 	echo "-------------------------------------------"
 	echo ""
 	ssh $client "sudo mkdir -p /etc/ros/$ROS_DISTRO/cob.d"
-	ssh $client "sudo ln -s /u/robot/git/setup_cob4/upstart_msh/cob.d/setup /etc/ros/$ROS_DISTRO/cob.d/setup"
-	ret=${PIPESTATUS[0]}
-	if [ $ret != 0 ] ; then
-		echo "command return an error (error code: $ret), aborting..."
-	fi
+	ssh $client "sudo cp -rf /u/robot/git/setup_cob4/upstart_msh/cob.d /etc/ros/$ROS_DISTRO/"
+	sudo sed -i "s/myrobot/$ROBOT/g" /etc/ros/$ROS_DISTRO/cob.d/launch/robot/robot.launch
 	echo ""
 done
 
+# define ASUS camera pcs
 camera_client_list="
-$robot_name-t2
+$robot_name-t1
 $robot_name-t3
 $robot_name-s1"
 
@@ -61,6 +61,3 @@ for client in $camera_client_list; do
         ssh $client "sudo cp -f /u/robot/git/setup_cob4/upstart/check_cameras.sh /etc/init.d/check_cameras.sh"
         ssh $client "sudo update-rc.d check_cameras.sh defaults"
 done
-
-sudo cp -rf /u/robot/git/setup_cob4/upstart_msh/cob.d /etc/ros/$ROS_DISTRO/.
-sudo sed -i "s/myrobot/$ROBOT/g" /etc/ros/$ROS_DISTRO/cob.d/launch/robot/robot.launch
