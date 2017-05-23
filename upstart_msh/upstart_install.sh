@@ -41,25 +41,6 @@ if ! sudo grep -q "$sudoers_string" /etc/sudoers ; then
   echo $sudoers_string | sudo tee -a /etc/sudoers
 fi
 
-client_list="
-$robot_name-b1
-$robot_name-t1
-$robot_name-t2
-$robot_name-t3
-$robot_name-s1
-$robot_name-h1"
-
-for client in $client_list; do
-	echo "-------------------------------------------"
-	echo "Executing on $client"
-	echo "-------------------------------------------"
-	echo ""
-	ssh $client "sudo mkdir -p /etc/ros/$ROS_DISTRO/cob.d"
-	ssh $client "sudo cp -rf /u/robot/git/setup_cob4/upstart_msh/cob.d /etc/ros/$ROS_DISTRO/"
-	sudo sed -i "s/myrobot/$ROBOT/g" /etc/ros/$ROS_DISTRO/cob.d/launch/robot/robot.launch
-	echo ""
-done
-
 # define ASUS camera pcs
 camera_client_list="
 $robot_name-t1
@@ -74,3 +55,7 @@ for client in $camera_client_list; do
         ssh $client "sudo cp -f /u/robot/git/setup_cob4/upstart/check_cameras.sh /etc/init.d/check_cameras.sh"
         ssh $client "sudo update-rc.d check_cameras.sh defaults"
 done
+
+sudo mkdir -p /etc/ros/$ROS_DISTRO/cob.d
+sudo cp -rf /u/robot/git/setup_cob4/upstart_msh/cob.d /etc/ros/$ROS_DISTRO/
+sudo sed -i "s/myrobot/$ROBOT/g" /etc/ros/$ROS_DISTRO/cob.d/launch/robot/robot.launch
