@@ -1,21 +1,17 @@
 #!/bin/bash
 
 robot_name="${HOSTNAME//-b1}"
-ROS_DISTRO="indigo"
 
-sudo apt-get install ros-indigo-robot-upstart
 sudo cp -f /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
 sudo cp -f /u/robot/git/setup_cob4/upstart/cob-start /usr/sbin/cob-start
-sudo sed -i "s/myrobot/$ROBOT/g" /usr/sbin/cob-start
-sudo sed -i "s/mydistro/$ROS_DISTRO/g" /usr/sbin/cob-start
-sudo cp -f /u/robot/git/setup_cob4/upstart/cob-stop /usr/sbin/cob-stop
-sudo cp -f /u/robot/git/setup_cob4/upstart/cob-stop-core /usr/sbin/cob-stop-core
+
+sudo cp -f /u/robot/git/setup_cob4/upstart/cob.yaml /etc/ros/cob.yaml
+sudo sed -i "s/myrobot/$robot_name/g" /etc/ros/cob.yaml
+
+sudo cp -f /u/robot/git/setup_cob4/scripts/cob-command /usr/sbin/cob-command
 
 sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-start"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-start|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-start||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-start" -e "}" /etc/sudoers 
-
-sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-stop|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-stop||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-stop" -e "}" /etc/sudoers 
-
-sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop-core"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-stop-core|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-stop-core||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-stop-core" -e "}" /etc/sudoers
+sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-command"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-command|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-command||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-command" -e "}" /etc/sudoers 
 
 camera_client_list="
 $robot_name-t2
@@ -30,10 +26,3 @@ for client in $camera_client_list; do
         ssh $client "sudo cp -f /u/robot/git/setup_cob4/upstart/check_cameras.sh /etc/init.d/check_cameras.sh"
         ssh $client "sudo update-rc.d check_cameras.sh defaults"
 done
-
-sudo mkdir -p /etc/ros/$ROS_DISTRO/cob.d
-sudo ln -s /u/robot/git/setup_cob4/upstart/cob.d/setup /etc/ros/$ROS_DISTRO/cob.d/setup
-sudo cp -rf /u/robot/git/setup_cob4/upstart/cob.d/launch /etc/ros/$ROS_DISTRO/cob.d/
-sudo sed -i "s/myrobot/$ROBOT/g" /etc/ros/$ROS_DISTRO/cob.d/launch/robot/robot.launch
-sudo sed -i "s/myrobot/$robot_name/g" /etc/ros/indigo/cob.d/setup/setup.sh
-

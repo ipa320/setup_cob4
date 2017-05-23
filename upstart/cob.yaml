@@ -1,0 +1,9 @@
+roscore:
+  session_name: roscore
+  user: robot
+  command: "roscore"
+bringup:
+  session_name: bringup
+  user: robot
+  command: "roslaunch cob_bringup robot.launch"
+  pre_condition: "until /opt/ros/indigo/env.sh rostopic list; do sleep 1; done"
