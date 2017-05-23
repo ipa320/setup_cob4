@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 
-# Script for executing commands on all cob-pc's.
-IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
-
-client_list=$(nmap $IP-100 --system-dns | grep report | awk '{print $5}')
-
 if [[ $HOSTNAME != *"b"* ]]; then 
 	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC, current host is $HOSTNAME"
 	exit
 fi
+
+# Script for executing commands on all cob-pc's.
+IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
+client_list=$(nmap --unprivileged $IP-98 --system-dns | grep report | awk '{print $5}')
 
 ##### uncomment the following lines if Windows runs as a Virtual Machine
 #cob-stop-vm-win
@@ -34,6 +33,10 @@ fi
 #done
 
 for client in $client_list; do
+    if [ $client == $HOSTNAME ] ; then
+        echo "skipping $client"
+        continue
+    fi
     echo "-------------------------------------------"
     echo "Executing <<"shutdown">> on $client"  
     echo "-------------------------------------------"
@@ -46,6 +49,10 @@ for client in $client_list; do
 done
 
 for client in $client_list; do
+    if [ $client == $HOSTNAME ] ; then
+        echo "skipping $client"
+        continue
+    fi
     echo "-------------------------------------------"
     echo "Executing <<waiting for>> on" $client  
     echo "-------------------------------------------"
@@ -53,7 +60,7 @@ for client in $client_list; do
     shutdown=false
     Crono=0
     while [[ !$shutdown &&  $Crono -le 60 ]]; do
-      ping -c 1 -w 3 $client
+      ping -qc 1 -w 3 $client > /dev/null
       if [ $? -ne 0 ] ; then
         shutdown=true
         echo $client down
