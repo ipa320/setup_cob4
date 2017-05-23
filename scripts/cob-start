@@ -15,30 +15,19 @@ $ROBOT-s1"
 
 for i in $pcs; do 
     Alive=False
-    Crono=0
-    while [[ $Alive=False && $Crono -le 40 ]]
+    while [[ $Alive=False]]
     do
         ping -c 1 -w 3 $i
         if [ $? -ne 0 ] ; then
-          Crono=$((Crono+1))
-          Timeout=True
           Alive=False
           echo $i not found
         else
           Alive=True
-          Timeout=False
           echo $i alive
           break
         fi
         sleep 1
     done
-    if [ $Crono -ge 40 ] ; then
-      Timeout=True
-      echo $i timeout
-      break
-    else
-      Timeout=False
-    fi  
 done
 
 for i in $pcs_cameras; do 

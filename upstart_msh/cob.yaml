@@ -5,7 +5,7 @@ roscore:
 bringup:
   session_name: bringup
   user: msh
-  command: "roslaunch msh_bringup all.launch env-script:=/u/msh/git/care-o-bot/devel/env.sh robot_env:=saturn-ingolstadt"
+  command: "roslaunch msh_bringup all.launch"
   pre_condition: "until /opt/ros/indigo/env.sh rostopic list; do sleep 1; done"
 sm:
   session_name: sm

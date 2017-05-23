@@ -5,7 +5,7 @@ set -e
 robot_name="${HOSTNAME//-b1}"
 
 sudo cp -f /u/robot/git/setup_cob4/upstart_msh/cob.conf /etc/init/cob.conf
-sudo cp -f /u/robot/git/setup_cob4/upstart_msh/cob-start /usr/sbin/cob-start
+sudo cp -f /u/robot/git/setup_cob4/scripts/cob-start /usr/sbin/cob-start
 sudo cp -f /u/robot/git/setup_cob4/scripts/cob-command /usr/sbin/cob-command
 
 sudo cp -f /u/robot/git/setup_cob4/upstart_msh/cob.yaml /etc/ros/cob.yaml
@@ -31,7 +31,7 @@ for client in $camera_client_list; do
         echo "Executing on $client"
         echo "-------------------------------------------"
         echo ""
-        ssh $client "sudo cp -f /u/robot/git/setup_cob4/upstart/check_cameras.sh /etc/init.d/check_cameras.sh"
+        ssh $client "sudo cp -f /u/robot/git/setup_cob4/scripts/check_cameras.sh /etc/init.d/check_cameras.sh"
         ssh $client "sudo update-rc.d check_cameras.sh defaults"
 done
 
