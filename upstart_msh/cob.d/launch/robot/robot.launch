@@ -1,8 +1,4 @@
 <?xml version="1.0"?>
 <launch>
-	
-	<include file="$(find msh_bringup)/launch/all.launch" >
-		<arg name="env-script" value="/u/msh/git/care-o-bot/devel/env.sh"/>
-	</include>
-
+	<include file="$(find msh_bringup)/launch/all.launch" />
 </launch>
