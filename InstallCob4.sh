@@ -66,7 +66,7 @@ function BasicInstallation {
   wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
   echo -e "\n${green}   INFO: Install ROS${NC}\n"
   sudo apt-get update
-  sudo apt-get install ros-indigo-rosbash ros-indigo-care-o-bot-robot -y --force-yes
+  sudo apt-get install ros-indigo-rosbash ros-indigo-care-o-bot-robot python-rosdep python-rosinstall -y --force-yes
   sudo rosdep init
   rosdep update
 
