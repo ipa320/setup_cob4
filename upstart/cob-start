@@ -1,10 +1,16 @@
 #!/bin/bash
 
 set -e
+ROBOT=myrobot
 
 # get pcs in local network
-IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
-pcs=$(nmap --unprivileged $IP-98 --system-dns | grep report | awk '{print $5}')
+pcs="
+$ROBOT-b1
+$ROBOT-t1
+$ROBOT-t2
+$ROBOT-t3
+$ROBOT-s1
+$ROBOT-h1"
 
 # define ASUS camera pcs
 camera_client_list="
@@ -16,7 +22,7 @@ for i in $pcs; do
     Alive=False
     while [[ $Alive=False ]]
     do
-        ping -qc 1 -w 3 $client > /dev/null
+        ping -qc 1 -w 3 $i > /dev/null
         if [ $? -ne 0 ] ; then
           Alive=False
           echo $i not found

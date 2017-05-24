@@ -4,6 +4,8 @@ set -e
 
 sudo cp -f /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
 sudo cp -f /u/robot/git/setup_cob4/upstart/cob-start /usr/sbin/cob-start
+sudo sed -i "s/myrobot/$ROBOT/g" /usr/sbin/cob-start
+
 sudo cp -f /u/robot/git/setup_cob4/scripts/cob-command /usr/sbin/cob-command
 
 sudo cp -f /u/robot/git/setup_cob4/upstart/cob.yaml /etc/ros/cob.yaml

@@ -31,13 +31,11 @@ get_users_list(){
 
 get_pid(){
   pid="$1"
-	if ! [ -z "$PID" ]; then
-		for child in $(ps -o pid --no-headers --ppid $pid)
+	for child in $(ps -o pid --no-headers --ppid $pid)
 		do 
 		  [[ "$$" -eq "$child" ]] 
 		  echo $(ps -o pid= -p $child)
 		done
-	fi
 }
 
 parse_yaml(){
@@ -82,11 +80,11 @@ list_sessions(){
             quom="'"
             ssh_command="ssh $i $quom$pid_command${sessions[$n]}$quom"
             tmux_pid=$(su $u -l -c "$ssh_command")
+            unset PID
             PID=$(get_pid $tmux_pid)
             if [ -z "$PID" ]; then
             	command=""
             else
-							echo "PID $PID"
             	command=$(ps -p $PID -o args)
             fi
             echo "${sessions[$n]}"
@@ -407,6 +405,8 @@ sub_stop_gui(){
 verbose=false
 all=false
 subcommand=$1
+lock_core=true
+unset PID
 
 case $subcommand in
   "" | "-h" | "--help" | "help" | " ")
