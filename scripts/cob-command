@@ -368,11 +368,11 @@ sub_start_gui(){
   rm -rf /tmp/runningVMS
   su mimic -c "ssh $ROBOT-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
 
-  if grep -q myrobotname-win "/tmp/runningVMS"; then
+  if grep -q myrobot-win "/tmp/runningVMS"; then
     echo "VM already running"
   else
     echo "starting VM..."
-    su mimic -c "ssh $ROBOT-h1 'export DISPLAY=:0 && virtualbox --startvm myrobotname-win --fullscreen'"&
+    su mimic -c "ssh $ROBOT-h1 'export DISPLAY=:0 && virtualbox --startvm myrobot-win --fullscreen'"&
   fi
 }
 
@@ -381,7 +381,7 @@ sub_stop_gui(){
   echo "Stopping the Windows VM...."
   echo -e "${blue}===========================================${NC}"
   echo -e "${black}\n ${NC}"
-  su mimic -c "ssh -o ConnectTimeout=15 $ROBOT-h1 'export DISPLAY=:0 && vboxmanage controlvm myrobotname-win acpipowerbutton'"
+  su mimic -c "ssh -o ConnectTimeout=15 $ROBOT-h1 'export DISPLAY=:0 && vboxmanage controlvm myrobot-win acpipowerbutton'"
 }
 
 ##### PARSE OPTIONS AND ARGUMENTS #####
