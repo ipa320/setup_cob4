@@ -14,7 +14,7 @@ $ROBOT-s1"
 
 for i in $pcs; do 
     Alive=False
-    while [[ $Alive=False]]
+    while [[ $Alive=False ]]
     do
         ping -qc 1 -w 3 $client > /dev/null
         if [ $? -ne 0 ] ; then
