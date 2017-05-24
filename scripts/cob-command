@@ -10,8 +10,9 @@ ProgName=$(basename $0)
 upstart_file_path="/etc/ros/cob.yaml"
 
 get_clients_list(){
+  IFS=$'\n'
   IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
-  client_list=$(nmap --unprivileged $IP-98 --system-dns | grep report | awk '{print $6}' | sed 's/(//g;s/)//g') 
+  client_list=$(nmap --unprivileged $IP-98 --system-dns | grep report | awk '{print $6}' | sed 's/(//g;s/)//g')
 }
 
 get_users_list(){
@@ -30,11 +31,14 @@ get_users_list(){
 
 get_pid(){
   pid="$1"
-  for child in $(ps -o pid  --no-headers --ppid $pid)
-    do 
-      [[ "$$" -eq "$child" ]] 
-      echo $(ps -o pid= -p $child)
-  done
+  if [[ $pid = *[!\ ]* ]]
+	then
+	  for child in $(ps -o pid --no-headers --ppid $pid)
+	    do 
+	      [[ "$$" -eq "$child" ]] 
+	      echo $(ps -o pid= -p $child)
+	    done
+  fi
 }
 
 parse_yaml(){
@@ -55,7 +59,6 @@ parse_yaml(){
 }
 
 list_sessions(){
-  get_clients_list
   get_users_list
   pos=0
   for i in $client_list
@@ -98,7 +101,6 @@ list_sessions(){
 
 find_session(){
   SESSION_NAME="$1"
-  get_clients_list
   get_users_list
   pos=0
   for i in $client_list
@@ -147,7 +149,7 @@ stop_session(){
   PID=$(get_pid $tmux_pid)
   command=$(ps -p $PID -o args)
   command=${command#* }
-  if [[ $command == *'roscore'* ]]; then
+  if [ [ $command == *'roscore'* ] && [$lock_core] ]; then
     echo -e "${red}Ignoring roscore, to kill the core please use the command: cob-command stop_core${NC}"
     echo -e "${black}\n ${NC}"
   else
@@ -324,6 +326,7 @@ sub_stop(){
       echo -e "========> $choice not valid , please choose a number session between 1-$num"
       exit
     fi
+		lock_core=true
     if [[ "$choice" == "all" ]]; then
       all=true
       for i in $sessions_list
@@ -345,6 +348,7 @@ sub_stop_core(){
   killall -9 roscore
   killall -9 rosmaster
   wait $!
+  lock_core=false
   stop_session roscore
 }
 
