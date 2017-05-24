@@ -31,14 +31,11 @@ get_users_list(){
 
 get_pid(){
   pid="$1"
-  if [[ $pid = *[!\ ]* ]]
-	then
-	  for child in $(ps -o pid --no-headers --ppid $pid)
-	    do 
-	      [[ "$$" -eq "$child" ]] 
-	      echo $(ps -o pid= -p $child)
-	    done
-  fi
+  for child in $(ps -o pid --no-headers --ppid $pid)
+  do 
+    [[ "$$" -eq "$child" ]] 
+    echo $(ps -o pid= -p $child)
+  done
 }
 
 parse_yaml(){
@@ -84,7 +81,11 @@ list_sessions(){
             ssh_command="ssh $i $quom$pid_command${sessions[$n]}$quom"
             tmux_pid=$(su $u -l -c "$ssh_command")
             PID=$(get_pid $tmux_pid)
-            command=$(ps -p $PID -o args)
+            if [ -z "$PID" ]; then
+            	command=""
+            else
+            	command=$(ps -p $PID -o args)
+            fi
             echo "${sessions[$n]}"
             if ${verbose}; then
               echo "  pc: $i"
@@ -147,19 +148,33 @@ stop_session(){
     exit
   fi
   PID=$(get_pid $tmux_pid)
-  command=$(ps -p $PID -o args)
-  command=${command#* }
-  if [ [ $command == *'roscore'* ] && [$lock_core] ]; then
-    echo -e "${red}Ignoring roscore, to kill the core please use the command: cob-command stop_core${NC}"
-    echo -e "${black}\n ${NC}"
+  if [ -z "$PID" ]; then
+    command=" "
   else
-    su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
-    if [ ! -z "$PID" ]; then
-      while su $standard_user -l -c "ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 "; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && sleep 1; done
-    fi
-    su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
-    su $standard_user -l -c "source /opt/ros/indigo/setup.bash && echo 'y' | rosnode cleanup"
+    command=$(ps -p $PID -o args)
   fi
+  command=${command#* }
+  if $lock_core; then
+		if [[ $command == *'roscore'* ]]; then
+		  echo -e "${red}Ignoring roscore, to kill the core please use the command: cob-command stop_core${NC}"
+		  echo -e "${black}\n ${NC}"
+		else
+			su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
+			if [ ! -z "$PID" ]; then
+				while su $standard_user -l -c "ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 "; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && sleep 1; done
+			fi
+			su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
+			su $standard_user -l -c "source /opt/ros/indigo/setup.bash && echo 'y' | rosnode cleanup"
+		fi
+	else
+		su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
+		if [ ! -z "$PID" ]; then
+		  while su $standard_user -l -c "ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 "; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && sleep 1; done
+		fi
+		su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
+		su $standard_user -l -c "source /opt/ros/indigo/setup.bash && echo 'y' | rosnode cleanup"
+	fi
+
 }
 
 start_session(){
