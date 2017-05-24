@@ -31,11 +31,13 @@ get_users_list(){
 
 get_pid(){
   pid="$1"
-  for child in $(ps -o pid --no-headers --ppid $pid)
-  do 
-    [[ "$$" -eq "$child" ]] 
-    echo $(ps -o pid= -p $child)
-  done
+	if ! [ -z "$PID" ]; then
+		for child in $(ps -o pid --no-headers --ppid $pid)
+		do 
+		  [[ "$$" -eq "$child" ]] 
+		  echo $(ps -o pid= -p $child)
+		done
+	fi
 }
 
 parse_yaml(){
@@ -84,6 +86,7 @@ list_sessions(){
             if [ -z "$PID" ]; then
             	command=""
             else
+							echo "PID $PID"
             	command=$(ps -p $PID -o args)
             fi
             echo "${sessions[$n]}"
