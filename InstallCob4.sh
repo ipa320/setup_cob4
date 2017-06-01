@@ -154,11 +154,11 @@ function NFSSetup
   if [ "$MODE" == "master" ]
     then
       sudo apt-get install apt-cacher-ng
-      sudo cp ~/git/setup_cob4/cob-pcs/ntp_server /etc/ntp.conf
+      sudo cp -f ~/git/setup_cob4/cob-pcs/ntp_server /etc/ntp.conf
       sudo sed -i "s/server_ip/$IP/g" /etc/ntp.conf
   elif [ "$MODE" == "slave" ]
     then
-      sudo cp ~/git/setup_cob4/cob-pcs/ntp_client /etc/ntp.conf
+      sudo cp -f ~/git/setup_cob4/cob-pcs/ntp_client /etc/ntp.conf
       sudo sed -i "s/server_ip/$server/g" /etc/ntp.conf
       grep -q -F 'Acquire::http::Proxy \""http://'$server':3142"\";' /etc/apt/apt.conf.d/01proxy || sudo sh -c '(echo "Acquire::http::Proxy \""http://'$server':3142"\";") > /etc/apt/apt.conf.d/01proxy'
   fi
