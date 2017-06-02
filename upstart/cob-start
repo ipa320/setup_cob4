@@ -34,7 +34,7 @@ for i in $pcs; do
     done
 done
 
-for i in $pcamera_client_list; do 
+for i in $camera_client_list; do 
     Check_cam=False
     while [[ $Check_cam=False ]]
       do
