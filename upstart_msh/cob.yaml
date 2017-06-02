@@ -1,0 +1,15 @@
+roscore:
+  session_name: roscore
+  user: msh
+  command: "roscore"
+bringup:
+  session_name: bringup
+  user: msh
+  command: "roslaunch msh_bringup all.launch"
+  pre_condition: "until /opt/ros/indigo/env.sh rostopic list; do sleep 1; done"
+sm:
+  session_name: sm
+  user: msh
+  pc: myrobot-t1
+  command: "roslaunch msh_statemachine machine.launch"
+  pre_condition: "until /opt/ros/indigo/env.sh rosparam get /robot_description > /dev/null ; do sleep 1; done"

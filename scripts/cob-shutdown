@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 
 if [[ $HOSTNAME != *"b"* ]]; then 
-	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC, current host is $HOSTNAME"
-	exit
+    echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC, current host is $HOSTNAME"
+    exit
 fi
 
-# Script for executing commands on all cob-pc's.
+# get pcs in local network
 IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
 client_list=$(nmap --unprivileged $IP-98 --system-dns | grep report | awk '{print $5}')
 
 ##### uncomment the following lines if Windows runs as a Virtual Machine
 #cob-stop-vm-win
-
+#
 #rm -rf /tmp/runningVMS
 #Crono=0
 #while [[ $Crono -le 60 ]]; do

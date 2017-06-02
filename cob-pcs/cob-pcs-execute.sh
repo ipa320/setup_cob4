@@ -9,15 +9,9 @@ if [ "$#" -lt 1 ]; then
 	exit 1
 fi
 
-robot_name="${HOSTNAME//-b1}"
-
-client_list="
-$robot_name-b1
-$robot_name-t1
-$robot_name-t2
-$robot_name-t3
-$robot_name-s1
-$robot_name-h1"
+# get pcs in local network
+IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
+client_list=$(nmap --unprivileged $IP-98 --system-dns | grep report | awk '{print $5}')
 
 for client in $client_list; do
 	echo "-------------------------------------------"
