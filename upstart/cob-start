@@ -18,33 +18,23 @@ $ROBOT-t3
 $ROBOT-s1"
 
 for i in $pcs; do 
-    Alive=False
-    while [[ $Alive=False ]]
-    do
-        ping -qc 1 -w 3 $i > /dev/null
-        if [ $? -ne 0 ] ; then
-          Alive=False
-          echo $i not found
-        else
-          Alive=True
-          echo $i alive
-          break
-        fi
-        sleep 1
+    until ping -c1 $i &>/dev/null; do
+        echo $i not found
     done
+    echo $i alive
 done
 
 for i in $camera_client_list; do 
-    Check_cam=False
-    while [[ $Check_cam=False ]]
+    Check_cam=false
+    while [[ $Check_cam ]]
       do
         if ssh $i stat /tmp/check_done \> /dev/null 2\>\&1
           then
-            echo "File exists"
-            Check_cam=True
+            echo "$i File exists"
+            Check_cam=true
             break
           else
-            echo "File still does not exist"
+            echo "$i File still does not exist"
         fi
       sleep 1
     done
