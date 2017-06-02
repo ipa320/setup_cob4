@@ -49,7 +49,7 @@ for client in $client_list; do
 done
 
 for client in $client_list; do
-    if [ $client == $HOSTNAME ] ; then
+    if [ $client == $IP ] ; then
         echo "skipping $client"
         continue
     fi
