@@ -26,8 +26,9 @@ done
 
 for i in $camera_client_list; do 
     Check_cam=false
-    while [[ $Check_cam ]]
+    while [[ !$Check_cam ]]
       do
+	echo $(date)
         if ssh $i stat /tmp/check_done \> /dev/null 2\>\&1
           then
             echo "$i File exists"
