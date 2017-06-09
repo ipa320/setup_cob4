@@ -77,7 +77,7 @@ wpa_passphrase cob4-X-direct YourNetworkPassword
 
 ##### Hand Pcs:
 
-Add a rule (*/etc/udev/rules/98-bluetooth*) to identify the bluetooth device as a serial port:
+Add a rule (*/etc/udev/rules/98-bluetooth.rules*) to identify the bluetooth device as a serial port:
 
 ```
 KERNEL=="rfcomm*",GROUP="dialout",MODE="0666",SYMLINK+="ttyBridge"
@@ -103,6 +103,11 @@ sudo systemctl enable cob_hand_bridge.service
 Uninstall the modemmanager package to avoid any bluetooth interference:
 ```
 sudo apt-get purge modemmanager
+```
+And add a rule (*/etc/udev/rules/99-gripper.rules*) :
+
+```
+KERNEL=="rfcomm[0-9]*", ENV{ID_MM_DEVICE_IGNORE}="1"
 ```
 Setup the bluetooth configuration (*/etc/bluetooth/rfcomm.conf*):
 
