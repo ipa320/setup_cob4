@@ -26,7 +26,7 @@ function BasicInstallation {
   if grep -q GRUB_RECORDFAIL_TIMEOUT= /etc/default/grub ; then
     echo "found GRUB_RECORD_FAIL flag already, skipping update-grub call"
   else
-    grep -q -F 'GRUB_RECORDFAIL_TIMEOUT=10' /etc/default/grub || sudo sh -c '(echo "GRUB_RECORDFAIL_TIMEOUT=10") > /etc/default/grub'
+    grep -q -F 'GRUB_RECORDFAIL_TIMEOUT=10' /etc/default/grub || sudo sh -c '(echo "GRUB_RECORDFAIL_TIMEOUT=10") >> /etc/default/grub'
     sudo update-grub
   fi
 
@@ -38,7 +38,7 @@ function BasicInstallation {
   sleep 5
   sudo apt-get install openssh-server -y --force-yes
   echo -e "\n${green}INFO:Let the server send a alive interval to clients to not get a broken pipe${NC}\n"
-  grep -q -F 'ClientAliveInterval 60' /etc/ssh/sshd_config || sudo sh -c '(echo "ClientAliveInterval 60") > /etc/ssh/sshd_config'
+  grep -q -F 'ClientAliveInterval 60' /etc/ssh/sshd_config || sudo sh -c '(echo "ClientAliveInterval 60") >> /etc/ssh/sshd_config'
   sudo sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/g' /etc/ssh/sshd_config
 
   echo -e "\n${green}INFO:Checkout the setup repository${NC}\n"
@@ -49,7 +49,7 @@ function BasicInstallation {
 
   echo -e "\n${green}INFO:Allow robot user to execute sudo command without password${NC}\n"
   sleep 5
-  grep -q -F 'robot ALL=(ALL) NOPASSWD: ALL' /etc/sudoers || sudo sh -c '(echo "robot ALL=(ALL) NOPASSWD: ALL") > /etc/sudoers'
+  grep -q -F 'robot ALL=(ALL) NOPASSWD: ALL' /etc/sudoers || sudo sh -c '(echo "robot ALL=(ALL) NOPASSWD: ALL") >> /etc/sudoers'
   sudo adduser robot dialout
   sudo adduser robot audio
   sudo adduser robot pulse
@@ -61,7 +61,7 @@ function BasicInstallation {
   echo -e "\n${green}INFO: Install ROS${NC}\n"
   sleep 5
   echo -e "\n${green}   INFO: Setup your source.list${NC}\n"
-  sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu trusty main" > /etc/apt/sources.list.d/ros-latest.list'
+  sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu trusty main" >> /etc/apt/sources.list.d/ros-latest.list'
   echo -e "\n${green}   INFO: Set up your keys${NC}\n"
   wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
   echo -e "\n${green}   INFO: Install ROS${NC}\n"
@@ -123,7 +123,7 @@ function BasicInstallation {
   echo -e "\n${green}INFO:  Define users rights${NC}\n"
   sleep 5
   sudo cp ~/git/setup_cob4/scripts/cob-shutdown /usr/sbin/cob-shutdown
-  grep -q -F '%users ALL=NOPASSWD:/usr/sbin/cob-shutdown' /etc/sudoers || sudo sh -c '(echo "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown") > /etc/sudoers'
+  grep -q -F '%users ALL=NOPASSWD:/usr/sbin/cob-shutdown' /etc/sudoers || sudo sh -c '(echo "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown") >> /etc/sudoers'
   sudo sed -i 's/etc\/acpi\/powerbtn.sh/usr\/sbin\/cob-shutdown/g' /etc/acpi/events/powerbtn
 
 }
@@ -160,7 +160,7 @@ function NFSSetup
     then
       sudo cp -f ~/git/setup_cob4/cob-pcs/ntp_client /etc/ntp.conf
       sudo sed -i "s/server_ip/$server/g" /etc/ntp.conf
-      grep -q -F 'Acquire::http::Proxy \""http://'$server':3142"\";' /etc/apt/apt.conf.d/01proxy || sudo sh -c '(echo "Acquire::http::Proxy \""http://'$server':3142"\";") > /etc/apt/apt.conf.d/01proxy'
+      grep -q -F 'Acquire::http::Proxy \""http://'$server':3142"\";' /etc/apt/apt.conf.d/01proxy || sudo sh -c '(echo "Acquire::http::Proxy \""http://'$server':3142"\";") >> /etc/apt/apt.conf.d/01proxy'
   fi
 
   echo -e "\n${green}INFO:  Install NFS${NC}\n"
@@ -169,10 +169,10 @@ function NFSSetup
   sudo mkdir /u
   if [[ "$MODE" == "master" ]]
     then
-      grep -q -F '/home /u none bind 0 0' /etc/fstab || sudo sh -c '(echo "/home /u none bind 0 0") > /etc/fstab'
+      grep -q -F '/home /u none bind 0 0' /etc/fstab || sudo sh -c '(echo "/home /u none bind 0 0") >> /etc/fstab'
       sudo mount /u
       sudo sed -i 's/NEED_STADT\=/NEED_STADT\=yes/g' /etc/default/nfs-common
-      grep -q -F '/u *(rw,fsid=0,sync,no_subtree_check)' /etc/exports || sudo sh -c '(echo "/u *(rw,fsid=0,sync,no_subtree_check)") > /etc/exports'
+      grep -q -F '/u *(rw,fsid=0,sync,no_subtree_check)' /etc/exports || sudo sh -c '(echo "/u *(rw,fsid=0,sync,no_subtree_check)") >> /etc/exports'
       if [ -d "/u/robot/git" ]
         then
           sudo sed -i 's/home\/robot/u\/robot/g' /etc/passwd
@@ -193,8 +193,8 @@ function NFSSetup
       sudo sed -i 's/NEED_STADT\=/NEED_STADT\=yes/g' /etc/default/nfs-common
       
       sudo touch /etc/auto.direct
-      grep -q -F '/-  /etc/auto.direct' /etc/auto.master || sudo sh -c '(echo "/-  /etc/auto.direct") > /etc/auto.master'
-      grep -q -F '/u  -fstype=nfs4    '$server':/' /etc/auto.direct || sudo sh -c '(echo "/u  -fstype=nfs4    '$server':/") > /etc/auto.direct'
+      grep -q -F '/-  /etc/auto.direct' /etc/auto.master || sudo sh -c '(echo "/-  /etc/auto.direct") >> /etc/auto.master'
+      grep -q -F '/u  -fstype=nfs4    '$server':/' /etc/auto.direct || sudo sh -c '(echo "/u  -fstype=nfs4    '$server':/") >> /etc/auto.direct'
       sudo update-rc.d autofs defaults
       sudo service autofs restart
       sudo modprobe nfs
