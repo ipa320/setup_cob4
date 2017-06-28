@@ -1,9 +1,9 @@
-<a id="top"/> 
-# cob4 Installation automatically with USB/CD/DVD
 
+# cob4 Installation automatically with USB/CD/DVD
+<a id="top"/> 
 ### Contents
 
-1. <a href="#Installation">Automatic installation</a>
+1. <a href="#Introduction">Introduction</a>
 2. <a href="#Create Kickstart Configuration file">Create Kickstart Configuration file</a>
 3. <a href="#Adding packages, pre-installation, post-installation for Master and Slave configuration files.">Adding packages, pre-installation, post-installation for Master and Slave configuration files.</a>
      a.<a href="#Packages">Packages</a>
@@ -33,40 +33,59 @@ After the installation process is completed, open Kickstart Configuration using 
 ```
 in terminal.
 When the Kickstart opens, choose the settings you need for your installation. Here is the configuration used.
-![alt text](https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png "Logo Title Text 1")
-### image0
-Very basic and self explanatory settings here.
-### image1
-### image2
-We can install it from ISO file stored on FTP, HTTP serves of hard drive, choose appropriate options. As we are using CD-ROM or USB like devices we have choose CD-ROM.
-### image3
+
+![alt text](https://github.com/ipa-nhg-dd/setup_cob4/raw/NewDocu/images_config/images/kickstart-0.png "Logo Title Text 0")
+Very basic and self explanatory settings here. We have used x86 architecture, because our devices had less than 4 GB of RAM. 
+
+
+![alt text](https://github.com/ipa-nhg-dd/setup_cob4/raw/NewDocu/images_config/images/kickstart-1.png "Logo Title Text 1")
+If you want to install Ubuntu from CD-ROM or USB like we did, choose CD-ROM. If you want to install it from ISO file stored on FTP, HTTP servers or hard drive, choose appropriate options. 
+
+
+![alt text](https://github.com/ipa-nhg-dd/setup_cob4/raw/NewDocu/images_config/images/kickstart-2.png "Logo Title Text 2")
 Keep boot loader options to default.
-### image4
+
+
+![alt text](https://github.com/ipa-nhg-dd/setup_cob4/raw/NewDocu/images_config/images/kickstart-3.png "Logo Title Text 3")
 Be careful on this step and set the right partitioning information, because it can completely delete your current system. We have installed Ubuntu on machines that had the same size HDDs with existing partitions. 
 
 Make sure to create /boot, / ,and swap partitions. In this example the first two partitions are in fixed size and the last one is set to fill all remaining space for swap .
 
 Note:  We make some small changes in the partition information in the further settings of kick-start file.
-### image5
-Choose Static or DHCP.
-### image6
-Keep it default settings.
-### image7
+
+
+![alt text](https://github.com/ipa-nhg-dd/setup_cob4/raw/NewDocu/images_config/images/kickstart-4.png "Logo Title Text 4")
+Choose Static or DHCP. 
+
+
+![alt text](https://github.com/ipa-nhg-dd/setup_cob4/raw/NewDocu/images_config/images/kickstart-5.png "Logo Title Text 5")
+Kept the default settings. 
+
+
+![alt text](https://github.com/ipa-nhg-dd/setup_cob4/raw/NewDocu/images_config/images/kickstart-6.png "Logo Title Text 6")
 Enter your credentials. You can later change the password in ks.cfg file manually. If you chose to encrypt your password, the supported hash in Kickstart configuration is MD5. Use Open SSL command
 ```
 openssl passwd -1 yourpassword 
 ```
 in Terminal to generate the new password. Place the generated new password in the place of Password and Confirm Password.
-### image8
-Keep it disabled. Ubuntu doesn't support firewall settings.
-### image9
+
+![alt text](https://github.com/ipa-nhg-dd/setup_cob4/raw/NewDocu/images_config/images/kickstart-7.png "Logo Title Text 7")
+Keep it disabled. Ubuntu doesn't support firewall settings. 
+
+
+![alt text](https://github.com/ipa-nhg-dd/setup_cob4/raw/NewDocu/images_config/images/kickstart-8.png "Logo Title Text 8")
 Do not configure the X Window System here. Ubuntu automaticlly solves this one anyway.
-### image10
+
+
+![alt text](https://github.com/ipa-nhg-dd/setup_cob4/raw/NewDocu/images_config/images/kickstart-9.png "Logo Title Text 9")
 Ubuntu doesn't support Kickstart package selection. We will add them manually %packages section in ks.cfg file.
-### image11
+
+![alt text](https://github.com/ipa-nhg-dd/setup_cob4/raw/NewDocu/images_config/images/kickstart-10.png "Logo Title Text 10")
 We have some specific per-installation script, we will add manually in %pre section in ks.cfg file.
-### image12
+
+![alt text](https://github.com/ipa-nhg/setup_cob4/raw/NewDocu/images_config/images/kickstart-11.png "Logo Title Text 11")
 We have some specific post-installation script, we will add manually in %post section in ks.cfg file.
+
 
 Write anything that you need to do after kickstart installation. It executes the script in chroot environment, so you don't need to use sudo.
 
@@ -269,6 +288,7 @@ d-i partman-auto-lvm/no_boot            boolean true
 d-i partman-md/device_remove_md         boolean true 
 d-i partman-md/confirm                  boolean true 
 d-i partman-md/confirm_nooverwrite      boolean true 
+d-i netcfg/target_network_config string ifupdown
 ################################################################################
 ```
 
