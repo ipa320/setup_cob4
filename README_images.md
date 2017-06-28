@@ -1,183 +1,381 @@
 <a id="top"/> 
-# cob4 Auto-Installation with iso image 
+# cob4 Installation automatically with USB/CD/DVD
 
 ### Contents
 
-1. <a href="#Installation">Automatic installation with Bootable USB/CD</a>
-#2. <a href="#Extra-Installation">Extra installation</a>
-     #1. <a href="#Asus">Asus Xtion</a>
-     #2. <a href="#Hands">Hand configuration</a>
-     #3. <a href="#Mimic">Mimic</a>
-     #4. <a href="#Touch">Calibration touchscreen</a>
-     #5. <a href="#NetData">Netdata tool</a>
+1. <a href="#Installation">Automatic installation</a>
+2. <a href="#Create Kickstart Configuration file">Create Kickstart Configuration file</a>
+3. <a href="#Adding packages, pre-installation, post-installation for Master and Slave configuration files.">Adding packages, pre-installation, post-installation for Master and Slave configuration files.</a>
+     a.<a href="#Packages">Packages</a>
+     b.<a href="#Pre - Installation Script">Pre - Installation Script</a>
+     c.<a href="#Pre - Installation Script">Pre - Installation Script</a>
+4. <a href="#Create Preseed files for Master and Slave configuration files">Create Preseed files for Master and Slave configuration files</a>
+5. <a href="#Extract original ISO file">Extract original ISO file</a>
+6. <a href="#Edit contents of ISO">Edit contents of ISO</a>
+7. <a href="#Recreate ISO file and make bootable USB media">Recreate ISO file and make bootable USB media</a>
+8. <a href="#Instructions">Instructions</a>
+9. <a href="#Usage">Usage</a>
 
+### 1. Introduction <a id="Introduction"/> 
+Automatic software setup for service robots which is also defined as Unattended Installation which is performed on Ubuntu 14.04 Server. The most commonly used methods when it comes to automating Ubuntu installation: Kickstart. The Kickstart is really easy to start with because Ubuntu supports most of the RedHat's Kickstart options and we are going to use some Preseed commands.
 
-### 1. Automatic installation with Bootable USB/CD <a id="Installation"/> 
+In this document we are going to create Kickstart and Preseed configuration files, modify original Ubuntu ISO (Server 14.04) files, save our modified ISO and make USB Startup Disk or CD from it.
 
-+ **Full Installation** A full installation means the combination of (Basic Installation + Setup NTP and NFS)
+### 2. Create Kickstart Configuration file <a id="Create Kickstart Configuration file"/> 
 
-+ **Basic Installation** It is composed by the following steps:
-
-  * Install basic tools (vim, meld, terminator ...)
-  * Install and configure openssh
-  * Allow robot user to execute sudo command without password
-  * Setup root user (in this step the user will be asked for a password)
-  * Install ROS
-  * Setup udev rules
-  * Setup bash environment 
-
-+ **Setup NTP and NFS** 
-Full installation can be done with the help of bootable USB/CD with ethernet connection.
-(Note: If you're starting with a new computer (NUC) bootable CD is suggested)
-Plugin the bootable USB to computer press F10 to get the menu select Master Auto installation if your using cob4 master USB , select Slave Auto installation if your using cob4 slave
-In case of using bootable CD no need to press F10 it boot directly to the Master/Slave installation.
-
-After few seconds you need to enter your hostname and press enter.
-
-To compleate the full installation it takes some time after that its ready to use for further configuration.
-
-
-### 2. Extra Installation <a id="Extra-Installation"/>
-
-#### 2.1. Asus Xtion <a id="Asus"/>
-
-The Asus Xtion cameras are only properly supported by USB 2.0 , it is recommended to force the bios of the Computer to disable the xHCI driver. For the NUCs (5th generation) open the bios Menu go to "Advanced" -->  Devices --> USB --> xHCI Mode and choose the option "Auto", save your configuration, boot linux and disable the usbhid module:
+Install Kickstart by typing command into the terminal:
 ```
-sudo rmmod  usbhid
+sudo apt-get install system-config-kickstart
 ```
-And save this configuration as default:
+After the installation process is completed, open Kickstart Configuration using Unity search or just by typing   
 ```
-sudo update-initramfs -u 
+ sudo system-config-kickstart
 ```
+in terminal.
+When the Kickstart opens, choose the settings you need for your installation. Here is the configuration used.
+![alt text](https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png "Logo Title Text 1")
+### image0
+Very basic and self explanatory settings here.
+### image1
+### image2
+We can install it from ISO file stored on FTP, HTTP serves of hard drive, choose appropriate options. As we are using CD-ROM or USB like devices we have choose CD-ROM.
+### image3
+Keep boot loader options to default.
+### image4
+Be careful on this step and set the right partitioning information, because it can completely delete your current system. We have installed Ubuntu on machines that had the same size HDDs with existing partitions. 
 
+Make sure to create /boot, / ,and swap partitions. In this example the first two partitions are in fixed size and the last one is set to fill all remaining space for swap .
 
-#### 2.2. Hands configuration <a id="Hands"/>
+Note:  We make some small changes in the partition information in the further settings of kick-start file.
+### image5
+Choose Static or DHCP.
+### image6
+Keep it default settings.
+### image7
+Enter your credentials. You can later change the password in ks.cfg file manually. If you chose to encrypt your password, the supported hash in Kickstart configuration is MD5. Use Open SSL command
+```
+openssl passwd -1 yourpassword 
+```
+in Terminal to generate the new password. Place the generated new password in the place of Password and Confirm Password.
+### image8
+Keep it disabled. Ubuntu doesn't support firewall settings.
+### image9
+Do not configure the X Window System here. Ubuntu automaticlly solves this one anyway.
+### image10
+Ubuntu doesn't support Kickstart package selection. We will add them manually %packages section in ks.cfg file.
+### image11
+We have some specific per-installation script, we will add manually in %pre section in ks.cfg file.
+### image12
+We have some specific post-installation script, we will add manually in %post section in ks.cfg file.
 
-The hands use a bluetooth connection to receive the commands and send the link positions to ROS. This requires the configuration of the bluetooth devices on the hands (Raspberry pcs) and on the torso pc, also some upstart jobs are needed to launch the hand driver on boot. An image of the operative system can be copied to a new SD card and changing the hostname of the pc and the network configuration the hand pc is installed.
+Write anything that you need to do after kickstart installation. It executes the script in chroot environment, so you don't need to use sudo.
 
-To change the hostname please modify the files */etc/hosts* and */etc/hostname* and to connect the pc to the robot router add following lines to */etc/network/interfaces*:
-```
-auto wlan0
-iface wlan0 inet dhcp
-	wpa-ssid cob4-X-direct
-	wpa-psk AAAAAAAAAAAAABBBBBBBBBBBBBBBBBBCCCCCCCCCCCCCCCCCCCDDDDDDDDDDDDDDD
-```
+When you are finished with the configuration, press File > Save File in the top menu. Keep default name as ks.cfg and save it to your Desktop.
 
-To obtain the wpa-psk key use the command:
+In ks.cfg search for #Disk partitioning information where we are going make small changes in the partition according to our requirement. Remove the lines of partition and paste below mentioned lines.
 ```
-wpa_passphrase cob4-X-direct YourNetworkPassword
-```
+#Disk partitioning information 
+##################################################### 
+clearpart --all --initlabel 
+part /boot --fstype ext4 --size 200 --asprimary 
+part swap --size 1024 
+part pv.01 --size 1 --grow 
+volgroup rootvg pv.01 
+logvol / --fstype ext4 --vgname=rootvg --size=1 --grow --name=rootvol 
+# needed to answer the 'do you want to write changes to disk" 
+preseed partman-lvm/confirm_nooverwrite boolean true 
 
-##### Hand Pcs:
+# needed to answer the question about not having a separate /boot 
+preseed partman-auto-lvm/no_boot boolean true 
+#####################################################
+```
+In automatic installation of Care-O-bot we are making two ISO images, one for Slave and one for Master.
+Master Machine: cob4-X-b1
+Slave Machines: cob4-X-t1, cob4-X-t2, cob4-X-t3, cob4-X-s1, cob4-X-h1
 
-Add a rule (*/etc/udev/rules/98-bluetooth.rules*) to identify the bluetooth device as a serial port:
+The ks.cfg which is saved on Desktop make copy of same file, name one with ks-robot-slave.cfg and other with ks-robot-master.cfg. Now we have two configuration file by which we can extract two image files one for Master and one for Slave.
+### 3. Adding packages, pre-installation, post-installation for Master and Slave configuration files. <a id="Adding packages, pre-installation, post-installation for Master and Slave configuration files"/> 
+### a. Packages: <a id="Packages"/> 
+Use the %packages command to begin a Kickstart section which describes the software packages to be installed. 
+```
+Packages for ks-robot-master.cfg:
+################################################################################
+# Additional packages to install. 
+%packages 
+vim 
+gnome 
+tree 
+gitg 
+git-gui 
+meld 
+openjdk-6-jdk 
+zsh 
+terminator 
+language-pack-de 
+language-pack-en 
+ipython
+################################################################################
+```
+```
+Packages for ks-robot-slave.cfg:
+################################################################################
+# Additional packages to install. 
+%packages 
+vim 
+gnome 
+tree 
+gitg 
+git-gui 
+meld 
+openjdk-6-jdk 
+zsh 
+terminator 
+language-pack-de 
+language-pack-en 
+ipython 
+################################################################################
 
-```
-KERNEL=="rfcomm*",GROUP="dialout",MODE="0666",SYMLINK+="ttyBridge"
-```
-
-Create the *cob_hand_bridge* service (*/etc/systemd/system/cob_hand_bridge.service*):
-```
-[Unit]
-Description=Virtual Distributed Ethernet
-
-[Service]
-ExecStart=/usr/bin/rfcomm watch rfcomm0 1 cob_hand_bridge /dev/ttyBridge
-
-[Install]
-WantedBy=multi-user.target
-```
-And enable the service with the command:
-```
-sudo systemctl enable cob_hand_bridge.service
-```
-##### Torso Pcs:
-
-Uninstall the modemmanager package to avoid any bluetooth interference:
-```
-sudo apt-get purge modemmanager
-```
-And add a rule (*/etc/udev/rules/99-gripper.rules*) :
-
-```
-KERNEL=="rfcomm[0-9]*", ENV{ID_MM_DEVICE_IGNORE}="1"
-```
-Setup the bluetooth configuration (*/etc/bluetooth/rfcomm.conf*):
-
-```
-rfcomm0 {
-bind no;
-device **B8:27:EB:67:31:B4**; (hand hci device address)
-channel	1;
-comment "Bluetooth hand right";
-}
-```
-Add the following upstart job (*/etc/init/cob_hand.conf*):
-```
-# auto connect cob hand
-
-start on started bluetooth
-stop on runlevel [!2345]
-
-respawn
-respawn limit 0 10
-
-script
-  rfcomm connect rfcomm0 
-end script
-```
-
-#### 2.4. Mimic <a id="Mimic"/>
-
-The mimic should be installed on head pc. A special user "mimic" has to be created to control the display. After create the user add the following lines to */etc/lightdm/lightdm.conf* :
-
-```
-[SeatDefaults]
-autologin-user=mimic
-autologin-user-timeout=60
-```
-
-And also the following autostart job to */u/mimic/.config/autostart/xhost.desktop* :
-```
-[Desktop Entry]
-Type=Application
-Exec=xhost +
-Hidden=false
-NoDisplay=false
-X-GNOME-Autostart-enabled=true
-Name[en_US]=mimic
-Name=mimic
-Comment[en_US]=
-Comment=
 ```
 
-#### 2.4. Calibration touchscreen <a id="Touch"/>
 
-The touchscreen driver can be found under http://zytronic.co.uk/support/downloads/# , after install the driver use the following command to invert the axis and calibrate the panel:
+### b. Pre-installation Script <a id="Pre-installation Script"/> 
+We can add commands to run on the system immediately after the kick-start configuration file has been parsed. One must start with %pre command and end with the %end command. The pre-installation script section of kick-start cannot manage multiple installation trees or sources media. This information must be included for each created kick-start configuration file, as the pre – installation script occurs duing the second stage of the installation process.
+
+Here we are using pre-installation script to fetch host name of the machine 
+Master Machine: cob4-X-b1
+Slave Machines: cob4-X-t1, cob4-X-t2, cob4-X-t3, cob4-X-s1, cob4-X-h1
 ```
- sudo ZyConfig
-```
-or from a remote PC:
-```
-export DISPLAY=:0 && sudo ZyConfig
+Pre-installation Script for ks-robot-master.cfg:
+################################################################################
+%pre 
+#!/bin/bash 
+
+###Request for hostname######################################### 
+exec < /dev/tty6 > /dev/tty6 
+chvt 6 
+clear 
+echo "################################" 
+echo "# A Small Request ! #" 
+echo "################################" 
+echo -n "Enter the name of the machine (hostname): " 
+read hostn 
+hostname $hostn 
+echo -e "NETWORKING=yes\nHOSTNAME=$hostn" > /etc/sysconfig/network 
+echo "You have chosen $hostn. Press enter to continue or Ctrl Alt Del to restart" 
+read 
+###Go back to tty1## 
+exec < /dev/tty1 > /dev/tty1 
+chvt 1 
+################################################################ 
+%end
+################################################################################
+
+
 ```
 
-#### 2.5. Netdata tool <a id="NetData"/>
-
-Install the dependencies:
 ```
-sudo apt-get install zlib1g-dev uuid-dev libmnl-dev gcc make git autoconf autoconf-archive autogen automake pkg-config curl
+Pre-installation Script for ks-robot-slave.cfg:
+
+################################################################################
+
+%pre --interpreter=/bin/sh 
+#!/bin/sh 
+
+exec < /dev/tty6 > /dev/tty6 2>&1 
+chvt 6 
+LOGFILE=/tmp/ks-pre.log 
+
+echo "################################" 
+echo "# Running Pre Configuration    #" 
+echo "################################" 
+#presetup script 
+CONFIRM=no 
+while [ "$CONFIRM" != "y" ] 
+do 
+echo -n "Give hostname:" 
+read HOSTNAME 
+if [ "$HOSTNAME" == "" ] 
+then 
+HOSTLINE="network --device=etho --bootproto=dhcp" 
+echo -e -n "\e[00;31mConfigure OS to use DHCP?(y/n): \e[00m" 
+read CONFIRM 
+else 
+echo -n "Give servername:" 
+read SERVERNAME 
+echo -e -n "Hostname: \e[01;36m$HOSTNAME \e[00m" 
+echo -e -n "Servername: \e[01;36m$SERVERNAME \e[00m" 
+HOSTLINE="network --device=eth0 --bootproto=static --netmask= --gateway= --nameserver=$SERVERNAME --hostname=$HOSTNAME localhost.localdomain" 
+sleep 5 
+echo -e -n "Is the above configuration correct?(y/n): " 
+read CONFIRM 
+fi 
+done 
+echo $HOSTLINE > /tmp/test.ks 
+hostname $HOSTNAME 
+2>&1 | /usr/bin/tee $LOGFILE 
+chvt 1 
+exec < /dev/tty1 > /dev/tty1 
+%end
+################################################################################
+
+```
+### c. Post-installation Script <a id="Post-installation Script"/> 
+We have the option of adding commands to run on the system once the installation is complete. This section must be placed towards the end of the kick-start file, and must start with the %post command and end with the %end command. This section is useful for functions such as installing additional software and configuring an additional name server , editing the files according to our requirement in file system. The post-install script is run in a chroot environment; therefore, performing tasks such as copying scripts or RPMs from the installation media do not work. There can be multiple post installation scripts in one kick-start configuration file.
+
+We are using post-installation to install following list:
+1. Install basic tools (vim, meld, terminator, lightdm configuration)
+2. Install and configuration openssh
+3. Allow robot user to execute sudo command without password
+4. Setup root user (in this step the user will be asked for a password)
+5. Installing ROS
+6. Setup udev rules
+7. Setup bash environment
+8. Setup NTP
+9. Setup NFS
+### 4. Create Preseed files for Master and Slave configuration files <a id="Create Preseed files for Master and Slave configuration files"/> 
+
+Preseeding provides a way to set answers to questions asked during the installation process, without having to manually enter the answers while the installation is running. This makes it possible to fully automate most types of installation and even offers some features not available during normal installations.
+
+Pressed commands work when they are directly written inside the kick-start file, but we want to separate the two methods for to see clear boundaries between them. Create new file names ubuntu-auto-robot-master.seed and ubuntu-auto-robot-slave.seed and include following contents in the both the files and save on Desktop.
+```
+ubuntu-auto-robot-master.seed
+################################################################################
+# Unmount drives with active partitions. Without this command all the installation process would stop and require confirmation to unmount drives that are already mounted. 
+d-i preseed/early_command string umount /media || true 
+
+# Don't install recommended items 
+d-i preseed base-installer/install-recommends boolean false 
+
+# Install only security updates automatically 
+d-i preseed pkgsel/update-policy select unattended-upgrades 
+
+#d-i live-installer/net-image string http://10.1.1.2/trusty-server-amd64/install/filesystem.squashfs 
+
+d-i partman-auto/method string lvm 
+d-i partman-auto-lvm/guided_size string max 
+d-i partman-auto/choose_recipe select atomic 
+d-i partman-partitioning/confirm_write_new_label boolean true 
+d-i partman/confirm_write_new_label     boolean true 
+d-i partman/choose_partition            select  finish 
+d-i partman/confirm_nooverwrite         boolean true 
+d-i partman/confirm                     boolean true 
+d-i partman-auto/purge_lvm_from_device  boolean true 
+d-i partman-lvm/device_remove_lvm       boolean true 
+d-i partman-lvm/confirm                 boolean true 
+d-i partman-lvm/confirm_nooverwrite     boolean true 
+d-i partman-auto/init_automatically_partition       select      Guided - use entire disk and set up LVM 
+d-i partman/choose_partition                select      Finish partitioning and write changes to disk 
+d-i partman-auto-lvm/no_boot            boolean true 
+d-i partman-md/device_remove_md         boolean true 
+d-i partman-md/confirm                  boolean true 
+d-i partman-md/confirm_nooverwrite      boolean true 
+################################################################################
 ```
 
-Install from netdata from source:
 ```
-git clone https://github.com/firehol/netdata.git --depth=1
-cd netdata
-sudo ./netdata-installer.sh
+ubuntu-auto-robot-slave.seed
+################################################################################
+# Unmount drives with active partitions. Without this command all the installation process would stop and require confirmation to unmount drives that are already mounted. 
+d-i preseed/early_command string umount /media || true 
+
+# Don't install recommended items 
+d-i preseed base-installer/install-recommends boolean false 
+
+# Install only security updates automatically 
+d-i preseed pkgsel/update-policy select unattended-upgrades 
+
+#d-i live-installer/net-image string http://10.1.1.2/trusty-server-amd64/install/filesystem.squashfs 
+
+d-i partman-auto/method string lvm 
+d-i partman-auto-lvm/guided_size string max 
+d-i partman-auto/choose_recipe select atomic 
+d-i partman-partitioning/confirm_write_new_label boolean true 
+d-i partman/confirm_write_new_label     boolean true 
+d-i partman/choose_partition            select  finish 
+d-i partman/confirm_nooverwrite         boolean true 
+d-i partman/confirm                     boolean true 
+d-i partman-auto/purge_lvm_from_device  boolean true 
+d-i partman-lvm/device_remove_lvm       boolean true 
+d-i partman-lvm/confirm                 boolean true 
+d-i partman-lvm/confirm_nooverwrite     boolean true 
+d-i partman-auto/init_automatically_partition       select      Guided - use entire disk and set up LVM 
+d-i partman/choose_partition                select      Finish partitioning and write changes to disk 
+d-i partman-auto-lvm/no_boot            boolean true 
+d-i partman-md/device_remove_md         boolean true 
+d-i partman-md/confirm                  boolean true 
+d-i partman-md/confirm_nooverwrite      boolean true 
+# Primary network interface: 
+d-i netcfg/choose_interface select auto 
+################################################################################
 ```
+### 5. Extract original ISO file <a id="Extract original ISO file"/> 
+Download Ubuntu Server 14.04.5 from Ubuntu website. It is necessary to use server version, because desktop version doesn't support unattested installations. Desktop functionality will be achieved after we install ubuntu-desktop or activate lightdm package in %package section or install in %post installation script.
 
-The tool is available under the address http://*hostname*:19999
+Mount .iso file to Ubuntu filesystem using terminal. The command below will mount .iso file to the folders named ubuntu_iso_master and ubuntu_iso_slave on our desktop.
+```
+cd Desktop
+mkdir ubuntu_iso_master
+mkdir ubuntu_iso_slave
+sudo  mount -o loop ~/Downloads/ubuntu-14.04.5-server-amd64.iso ubuntu_iso_master
+sudo  mount -o loop ~/Downloads/ubuntu-14.04.5-server-amd64.iso ubuntu_iso_slave
+```
+Copy .iso contents to another folder on your desktop so we can edit the files. Don't forget to set the right permissions to be able to make changes.
+```
+mkdir ubuntu_files_master
+sudo rsync -a ubuntu_iso_master/ ubuntu_files_master/
+sudo chmod -R 755 ubuntu_files_master
+sudo chown -R ernestas:ernestas ubuntu_files_master
+mkdir ubuntu_files_slave
+sudo rsync -a ubuntu_iso_slave/ ubuntu_files_slave/
+sudo chmod -R 755 ubuntu_files_slave
+sudo chown -R ernestas:ernestas ubuntu_files_slave
 
-For further information take a look at the official installation guide: https://github.com/firehol/netdata/wiki/Installation
+```
+Note: ernestas is the systems host name , the system which your using to make unattended installation (cat /etc/hostname)
+### 6. Edit contents of ISO <a id="Edit contents of ISO"/>
+Copy ks-robot-master.cfg and ubuntu-auto-master.seed files to newly created ubuntu_files_slave folder. Copy ks-robot-slave.cfg and ubuntu-auto-slave.seed files to newly created ubutu_files_slave folder.
+Now we need to make the installer read kickstart and preseed files by including new menu selection for automatic Ubuntu installation. 
+To do this, open file named txt.cfg in Desktop/ubuntu_files_master/isolinux folder using your favorite text editor and copy this block of text after the line default install
+```
+label autoinstall 
+  	menu label ^Automatically install of Care-O-bot MASTER 
+	kernel /install/vmlinuz 
+	append file=/cdrom/preseed/ubuntu-server.seed vga=788 initrd=/install/initrd.gz ks=cdrom:/ks-robot-master.cfg preseed/file=/cdrom/ubuntu-auto-robot-master.seed quiet --
+```
+Now same with slave , open file named txt.cfg in  Desktop/ubuntu_files_slave/isolinux folder using your favorite text editor and copy this block of text after the line default install
+```
+label autoinstall 
+	menu label ^Automatically install of Care-O-bot SLAVE 
+  	kernel /install/vmlinuz 
+  	append file=/cdrom/preseed/ubuntu-server.seed vga=788 initrd=/install/initrd.gz ks=cdrom:/ks-robot-slave.cfg preseed/file=/cdrom/ubuntu-auto-robot-slave.seed quiet --
+```
+Turn off language choice menu and specify your desired language:
+```
+echo en >> ubuntu_files_master/isolinux/lang
+echo en >> ubuntu_files_slave/isolinux/lang
+```
+We can also use text editor for this. Just create the file named lang with the contents en and save it to isolinux folder.
+### 7. Recreate ISO file and make bootable USB media <a id="Recreate ISO file and make bootable USB media"/>
+Create new ISO:
+For Master:
+```
+cd ubuntu_files_master
+mkisofs -D -r -V "Ubuntu-Auto-Care-O-bot-MASTER" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o ~/Desktop/Ubuntu-Auto-Care-O-bot-MASTER.iso .
+```
+For Slave:
+```
+cd ubuntu_files_slave
+mkisofs -D -r -V "Ubuntu-Auto-Care-O-bot-SLAVE" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o ~/Desktop/Ubuntu-Auto-Care-O-bot-SLAVE.iso .
+```
+We can find iso images named Ubuntu-Auto-Care-O-bot-MASTER.iso and Ubuntu-Auto-Care-O-bot-SLAVE.iso on Desktop for Master and slave machines.
+### 8. Instructions  <a id="Instructions"/>
 
-<a href="#top">top</a>
+1. Create bootable USB media using Ubuntu Startup Disk Creator from newly created Ubuntu-Auto-Care-O-bot-MASTER.iso and Ubuntu-Auto-Care-O-bot-SLAVE.iso files in two different USB sticks.
+2. After creating bootable USB media, check the files and folders compare with ubuntu_files folder. For example After creating Master bootable USB media check the files and folders of USB media with ubuntu_files_master folder, due to few permissions isolinux folder will be missing in USB media, we suggest you to copy from the ubuntu_files-master folder and paste in USB media.
+3. We can use Disc Burner or k3b applications to burn images in to the CD/DVD to make bootable CD/DVD
+4. If you are using new NUC machine  we suggest you to start with CD/DVD. Which creates CD-ROM folder.
+### 9. Usage  <a id="Usage"/>
+
+1. After creating USB media plug in USB to the NUC and restart the NUC, press F10 to get bootable option. For example if you are using Master USB stick in bootable option, select USB bootable mode and then the first option would be Automatically install of Care-O-bot MASTER .
+2. After creating CD /DVD no need to press any keys it directly directs to bootabe options.
+3. While booting per-instaliting script poops up asking for host name. For Master (cob4-X-b1) Slave(cob4-X-t1, cob4-X-t2, cob4-X-t3, cob4-X-s1, cob4-X-h1)

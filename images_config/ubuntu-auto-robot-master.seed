@@ -1,0 +1,40 @@
+# Unmount drives with active partitions. Without this command all the installation process would stop and require confirmation to unmount drives that are already mounted.
+d-i preseed/early_command string umount /media || true
+
+# Don't install recommended items
+d-i preseed base-installer/install-recommends boolean false
+
+# Install only security updates automatically
+d-i preseed pkgsel/update-policy select unattended-upgrades
+
+#d-i live-installer/net-image string http://10.1.1.2/trusty-server-amd64/install/filesystem.squashfs
+
+d-i partman-auto/method string lvm
+d-i partman-auto-lvm/guided_size string max
+d-i partman-auto/choose_recipe select atomic
+d-i partman-partitioning/confirm_write_new_label boolean true
+d-i partman/confirm_write_new_label     boolean true
+d-i partman/choose_partition            select  finish
+d-i partman/confirm_nooverwrite         boolean true
+d-i partman/confirm                     boolean true
+d-i partman-auto/purge_lvm_from_device  boolean true
+d-i partman-lvm/device_remove_lvm       boolean true
+d-i partman-lvm/confirm                 boolean true
+d-i partman-lvm/confirm_nooverwrite     boolean true
+d-i partman-auto/init_automatically_partition       select      Guided - use entire disk and set up LVM
+d-i partman/choose_partition                select      Finish partitioning and write changes to disk
+d-i partman-auto-lvm/no_boot            boolean true
+d-i partman-md/device_remove_md         boolean true
+d-i partman-md/confirm                  boolean true
+d-i partman-md/confirm_nooverwrite      boolean true
+
+
+#################################################################
+
+d-i netcfg/target_network_config string ifupdown
+
+#################################################################
+
+
+
+
