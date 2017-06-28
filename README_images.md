@@ -58,7 +58,7 @@ Make sure to create /boot, / ,and swap partitions. In this example the first two
 Note:  We make some small changes in the partition information in the further settings of kick-start file.
 
 
-![alt text](https://github.com/ipa-nhg-dd/setup_cob4/raw/NewDocu/images_config/images/kickstart-4.png "Logo Title Text 4")
+![alt text](https://github.com/ipa320/setup_cob4/raw/master/images_config/images/kickstart-4.png "Logo Title Text 4")
 Choose Static or DHCP. 
 
 
