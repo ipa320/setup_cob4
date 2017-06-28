@@ -8,9 +8,7 @@
 3. <a href="#Adding packages, pre-installation, post-installation for Master and Slave configuration files.">Adding packages, pre-installation, post-installation for Master and Slave configuration files.</a>
 
      a.<a href="#Packages">Packages</a>
-     
      b.<a href="#Pre-Installation Script">Pre-Installation Script</a>
-     
      c.<a href="#Pre-Installation Script">Pre-Installation Script</a>
      
 4. <a href="#Create Preseed files for Master and Slave configuration files">Create Preseed files for Master and Slave configuration files</a>
