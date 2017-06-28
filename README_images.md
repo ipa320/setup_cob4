@@ -6,9 +6,11 @@
 1. <a href="#Introduction">Introduction</a>
 2. <a href="#Create Kickstart Configuration file">Create Kickstart Configuration file</a>
 3. <a href="#Adding packages, pre-installation, post-installation for Master and Slave configuration files.">Adding packages, pre-installation, post-installation for Master and Slave configuration files.</a>
+
      a.<a href="#Packages">Packages</a>
-     b.<a href="#Pre - Installation Script">Pre - Installation Script</a>
-     c.<a href="#Pre - Installation Script">Pre - Installation Script</a>
+     b.<a href="#Pre-Installation Script">Pre-Installation Script</a>
+     c.<a href="#Pre-Installation Script">Pre-Installation Script</a>
+     
 4. <a href="#Create Preseed files for Master and Slave configuration files">Create Preseed files for Master and Slave configuration files</a>
 5. <a href="#Extract original ISO file">Extract original ISO file</a>
 6. <a href="#Edit contents of ISO">Edit contents of ISO</a>
@@ -235,7 +237,7 @@ hostname $HOSTNAME
 chvt 1 
 exec < /dev/tty1 > /dev/tty1 
 %end
-################################################################################
+###############################################################################
 
 ```
 ### c. Post-installation Script <a id="Post-installation Script"/> 
