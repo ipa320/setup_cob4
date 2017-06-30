@@ -1,17 +1,11 @@
 #!/bin/bash
-ROBOT=myrobotname
+ROBOT=myrobot
 pcs="
 $ROBOT-b1
-$ROBOT-t1
-$ROBOT-t2
-$ROBOT-t3
-$ROBOT-s1
-$ROBOT-h1"
+"
 
 pcs_cameras="
-$ROBOT-t1
-$ROBOT-t3
-$ROBOT-s1"
+"
 
 for i in $pcs; do 
     Alive=False
