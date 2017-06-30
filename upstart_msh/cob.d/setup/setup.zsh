@@ -1,1 +1,0 @@
-../../../upstart/cob.d/setup/setup.zsh
