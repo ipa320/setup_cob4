@@ -1,33 +1,9 @@
 #!/bin/bash
-#
-# Author: Mike Purvis <mpurvis@clearpathrobotics.com>
-#         Copyright (c) 2013, Clearpath Robotics, Inc.
-# 
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#    * Redistributions of source code must retain the above copyright
-#       notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright
-#       notice, this list of conditions and the following disclaimer in the
-#       documentation and/or other materials provided with the distribution.
-#    * Neither the name of Clearpath Robotics, Inc. nor the
-#       names of its contributors may be used to endorse or promote products
-#       derived from this software without specific prior written permission.
-# 
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL CLEARPATH ROBOTICS, INC. BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
-# Please send comments, questions, or patches to code@clearpathrobotics.com 
+
+set -e
 ROBOT=myrobot
-DISTRO=mydistro
+
+# TODO: make this a robot specific configuration in a yaml file
 pcs="
 $ROBOT-b1
 $ROBOT-t1
@@ -36,51 +12,32 @@ $ROBOT-t3
 $ROBOT-s1
 $ROBOT-h1"
 
-
-pcs_cameras="
-$ROBOT-t2
+# define ASUS camera pcs
+# TODO: make this a robot specific configuration in a yaml file
+camera_client_list="
+$ROBOT-t1
 $ROBOT-t3
 $ROBOT-s1"
 
 for i in $pcs; do 
-    Alive=False
-    Crono=0
-    while [[ $Alive=False && $Crono -le 40 ]]
-    do
-        ping -c 1 -w 3 $i
-        if [ $? -ne 0 ] ; then
-          Crono=$((Crono+1))
-          Timeout=True
-          Alive=False
-          echo $i not found
-        else
-          Alive=True
-          Timeout=False
-          echo $i alive
-          break
-        fi
-        sleep 1
+    until ping -c1 $i &>/dev/null; do
+        echo $i not found
     done
-    if [ $Crono -ge 40 ] ; then
-      Timeout=True
-      echo $i timeout
-      break
-    else
-      Timeout=False
-    fi  
+    echo $i alive
 done
 
-for i in $pcs_cameras; do 
-    Check_cam=False
-    while [[ $Check_cam=False ]]
+for i in $camera_client_list; do 
+    Check_cam=false
+    while [[ !$Check_cam ]]
       do
+	echo $(date)
         if ssh $i stat /tmp/check_done \> /dev/null 2\>\&1
           then
-            echo "File exists"
-            Check_cam=True
+            echo "$i File exists"
+            Check_cam=true
             break
           else
-            echo "File still does not exist"
+            echo "$i File still does not exist"
         fi
       sleep 1
     done
@@ -90,50 +47,4 @@ function log() {
   logger -s -p user.$1 ${@:2}
 }
 
-log info "robot.launch: Using workspace setup file /etc/ros/$DISTRO/cob.d/setup/setup.sh"
-source /etc/ros/$DISTRO/cob.d/setup/setup.sh
-
-if [ $Crono -ge 40 ] ; then
-  JOB_FOLDER=/etc/ros/$DISTRO/cob.d/launch/base_solo
-  echo base_solo
-else
-  JOB_FOLDER=/etc/ros/$DISTRO/cob.d/launch/robot
-fi
-
-log info "Provided the following robot:=$ROBOT"
-
-export ROS_IP=`rosrun robot_upstart getifip eth0`
-export ROS_MASTER_URI=http://$ROS_IP:11311
-if [ "$ROS_IP" = "" ]; then
-  log err "robot.launch: No IP address on eth0, cannot roslaunch."
-  exit 1
-fi
-log info "robot.launch: Launching on interface eth0, ROS_IP=$ROS_IP, ROS_MASTER_URI=$ROS_MASTER_URI"
-
-
-# Assemble amalgamated launchfile.
-LAUNCH_FILENAME=/tmp/robot.launch.launch
-rosrun robot_upstart mklaunch $JOB_FOLDER robot:=$ROBOT > $LAUNCH_FILENAME
-if [[ "$?" != "0" ]]; then
-  log err "robot.launch: Unable to generate amalgamated launchfile."
-  exit 1
-fi
-log info "robot.launch: Generated launchfile: $LAUNCH_FILENAME"
-
-# Warn and exit if setuidgid is missing from the system.
-which setuidgid > /dev/null
-if [ "$?" != "0" ]; then
-  log err "robot.launch: Can't launch as unprivileged user without setuidgid. Please install daemontools package."
-  exit 1
-fi
-
-# Punch it.
-export ROS_HOME=$(echo ~robot)/.ros
-export ROS_LOG_DIR=/tmp
-setuidgid robot roslaunch $LAUNCH_FILENAME robot:=$ROBOT &
-PID=$!
-
-log info "robot.launch: Started roslaunch as background process, PID $PID"
-echo "$PID" > /tmp/robot.launch.pid
-
-wait "$PID"
+/usr/sbin/cob-command start
