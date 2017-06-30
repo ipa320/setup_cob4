@@ -3,6 +3,7 @@
 set -e
 ROBOT=myrobot
 
+# TODO: make this a robot specific configuration in a yaml file
 pcs="
 $ROBOT-b1
 $ROBOT-t1
@@ -12,6 +13,7 @@ $ROBOT-s1
 $ROBOT-h1"
 
 # define ASUS camera pcs
+# TODO: make this a robot specific configuration in a yaml file
 camera_client_list="
 $ROBOT-t1
 $ROBOT-t3

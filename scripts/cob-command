@@ -9,14 +9,10 @@ standard_user="robot"
 ProgName=$(basename $0)
 upstart_file_path="/etc/ros/cob.yaml"
 
-get_clients_list(){
-  IFS=$'\n'
+get_client_and_user_list(){
   IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
-  client_list=$(nmap --unprivileged $IP-98 --system-dns | grep report | awk '{print $6}' | sed 's/(//g;s/)//g')
-}
+  client_list=$(nmap --unprivileged $IP-98 --system-dns | grep report | awk '{print $6}' | sed 's/(//g;s/)//g') 
 
-get_users_list(){
-  get_clients_list
   pos=0
   for i in $client_list
   do
@@ -31,11 +27,11 @@ get_users_list(){
 
 get_pid(){
   pid="$1"
-	for child in $(ps -o pid --no-headers --ppid $pid)
-		do 
-		  [[ "$$" -eq "$child" ]] 
-		  echo $(ps -o pid= -p $child)
-		done
+  for child in $(ps -o pid  --no-headers --ppid $pid)
+    do 
+      [[ "$$" -eq "$child" ]] 
+      echo $(ps -o pid= -p $child)
+  done
 }
 
 parse_yaml(){
@@ -56,7 +52,7 @@ parse_yaml(){
 }
 
 list_sessions(){
-  get_users_list
+  get_client_and_user_list
   pos=0
   for i in $client_list
   do
@@ -103,7 +99,8 @@ list_sessions(){
 
 find_session(){
   SESSION_NAME="$1"
-  get_users_list
+  get_client_and_user_list
+
   pos=0
   for i in $client_list
   do
@@ -210,7 +207,7 @@ start_session(){
     echo -e "${red}ERROR: only ros commands are allow${NC}"
     echo -e "${black} ${NC}"
   elif ! [ -z "$session_found" ]; then
-    echo -e "${red}ERROR: $arg_session_name session already exist${NC}"
+    echo -e "${red}ERROR: $arg_session_name session already exists${NC}"
     echo -e "${black} ${NC}"
   else
     if ! [ -z $arg_pre_condition ]; then
