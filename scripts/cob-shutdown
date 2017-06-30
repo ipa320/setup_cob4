@@ -6,7 +6,7 @@ if [[ $HOSTNAME != *"b"* ]]; then
 fi
 
 # get pcs in local network
-IP=$(`hostname -I | awk '{print $1}'`)
+IP=$(hostname -I | awk '{print $1}')
 client_list=$(nmap --unprivileged $IP-98 --system-dns | grep report | awk '{print $6}' | sed 's/(//g;s/)//g')
 
 ##### uncomment the following lines if Windows runs as a Virtual Machine
@@ -49,7 +49,7 @@ for client in $client_list; do
 done
 
 for client in $client_list; do
-    if [ $client == $HOSTNAME ] ; then
+    if [ $client == $IP ] ; then
         echo "skipping $client"
         continue
     fi
