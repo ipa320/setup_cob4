@@ -74,4 +74,4 @@ for client in $client_list; do
     echo "done"
 done
 
-sudo shutdown now -P 0
+sudo poweroff -f
