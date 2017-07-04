@@ -6,15 +6,14 @@
 1. <a href="#Introduction">Introduction</a>
 2. <a href="#Create Kickstart Configuration file">Create Kickstart Configuration file</a>
 3. <a href="#Adding packages, pre-installation, post-installation for Master and Slave configuration files.">Adding packages, pre-installation, post-installation for Master and Slave configuration files.</a>
-     a.<a href="#Packages">Packages</a>
-     b.<a href="#Pre-Installation Script">Pre-Installation Script</a>
-     c.<a href="#Pre - Installation Script">Pre - Installation Script</a>
+     1. <a href="#Packages">Packages</a>
+     2. <a href="#Pre-Installation Script">Pre-Installation Script</a>
+     3. <a href="#Post-Installation Script">Post-Installation Script</a>
 4. <a href="#Create Preseed files for Master and Slave configuration files">Create Preseed files for Master and Slave configuration files</a>
 5. <a href="#Extract original ISO file">Extract original ISO file</a>
 6. <a href="#Edit contents of ISO">Edit contents of ISO</a>
 7. <a href="#Recreate ISO file and make bootable USB media">Recreate ISO file and make bootable USB media</a>
 8. <a href="#Instructions">Instructions</a>
-9. <a href="#Usage">Usage</a>
 
 ### 1. Introduction <a id="Introduction"/> 
 Automatic software setup for service robots which is also defined as Unattended Installation which is performed on Ubuntu 14.04 Server. The most commonly used methods when it comes to automating Ubuntu installation: Kickstart. The Kickstart is really easy to start with because Ubuntu supports most of the RedHat's Kickstart options and we are going to use some Preseed commands.
@@ -113,7 +112,7 @@ Master Machine: cob4-X-b1
 Slave Machines: cob4-X-t1, cob4-X-t2, cob4-X-t3, cob4-X-s1, cob4-X-h1
 
 The ks.cfg which is saved on Desktop make copy of same file, name one with ks-robot-slave.cfg and other with ks-robot-master.cfg. Now we have two configuration file by which we can extract two image files one for Master and one for Slave.
-### 3. Adding packages, pre-installation, post-installation for Master and Slave configuration files. <a id="Adding packages, pre-installation, post-installation for Master and Slave configuration files"/> 
+### 3. Adding packages, pre-installation, post-installation for Master and Slave configuration files. <a id="Adding packages, pre-installation, post-installation for Master and Slave configuration files."/> 
 ### a. Packages: <a id="Packages"/> 
 Use the %packages command to begin a Kickstart section which describes the software packages to be installed. 
 ```
@@ -157,7 +156,7 @@ ipython
 ```
 
 
-### b. Pre-installation Script <a id="Pre-installation Script"/> 
+### b. Pre-installation Script <a id="Pre-Installation Script"/> 
 We can add commands to run on the system immediately after the kick-start configuration file has been parsed. One must start with %pre command and end with the %end command. The pre-installation script section of kick-start cannot manage multiple installation trees or sources media. This information must be included for each created kick-start configuration file, as the pre – installation script occurs duing the second stage of the installation process.
 
 Here we are using pre-installation script to fetch host name of the machine 
@@ -238,7 +237,7 @@ exec < /dev/tty1 > /dev/tty1
 ################################################################################
 
 ```
-### c. Post-installation Script <a id="Post-installation Script"/> 
+### c. Post-installation Script <a id="Post-Installation Script"/> 
 We have the option of adding commands to run on the system once the installation is complete. This section must be placed towards the end of the kick-start file, and must start with the %post command and end with the %end command. This section is useful for functions such as installing additional software and configuring an additional name server , editing the files according to our requirement in file system. The post-install script is run in a chroot environment; therefore, performing tasks such as copying scripts or RPMs from the installation media do not work. There can be multiple post installation scripts in one kick-start configuration file.
 
 We are using post-installation to install following list:
