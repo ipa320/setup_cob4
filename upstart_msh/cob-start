@@ -1,52 +1,41 @@
 #!/bin/bash
-ROBOT=myrobot
+ROBOT=myrobotname
 DISTRO=mydistro
+USER=myuser
 pcs="
-myrobotname-b1
-myrobotname-t1
-myrobotname-t2
-myrobotname-t3
-myrobotname-s1
-myrobotname-h1"
+$ROBOT-b1
+$ROBOT-t1
+$ROBOT-t2
+$ROBOT-t3
+$ROBOT-s1
+$ROBOT-h1"
 
 pcs_cameras="
-myrobotname-t2
-myrobotname-t3
-myrobotname-s1"
+$ROBOT-t1
+$ROBOT-t3
+$ROBOT-s1"
 
-if [ -e /tmp/robot.launch.pid ]; then
-  PID=$(cat /tmp/robot.launch.pid)
-  logger -p user.info "Attempting to stop robot.launch (PID $PID)"
-  kill $PID
-  wait $!
+if (su $USER -l -c "tmux has-session -t 'bringup' 2> /dev/null"); then
+  logger -p user.info "Bringup already running. Exiting"
+  echo "Bringup already running. Exiting"
+  exit
 fi
 
 for i in $pcs; do 
     Alive=False
-    Crono=0
-    while [[ $Alive=False && $Crono -le 40 ]]
+    while [[ $Alive=False]]
     do
         ping -c 1 -w 3 $i
         if [ $? -ne 0 ] ; then
-          Crono=$((Crono+1))
-          Timeout=True
           Alive=False
           echo $i not found
         else
           Alive=True
-          Timeout=False
           echo $i alive
           break
         fi
         sleep 1
     done
-    if [ $Crono -ge 40 ] ; then
-      Timeout=True
-      echo $i timeout
-      break
-    else
-      Timeout=False
-    fi  
 done
 
 for i in $pcs_cameras; do 
@@ -68,21 +57,6 @@ done
 function log() {
   logger -s -p user.$1 ${@:2}
 }
-su msh -c "sh /etc/ros/indigo/cob.d/roscore_start.sh"&  
-
-sleep 30
-
-##### uncomment the following lines if Windows runs as a Virtual Machine
-#rm -rf /tmp/runningVMS
-#su mimic -c "ssh myrobotname-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
-
-#if grep -q myrobotname-win "/tmp/runningVMS"; then
-#  echo "VM already running"
-#else
-#  echo "starting VM..."
-#  su mimic -c "ssh myrobotname-h1 'export DISPLAY=:0 && virtualbox --startvm myrobotname-win --fullscreen'"&
-#fi
-#####
 
 source /etc/ros/$DISTRO/cob.d/setup/setup.sh
 JOB_FOLDER=/etc/ros/$DISTRO/cob.d/launch/robot
@@ -92,9 +66,20 @@ export ROS_IP=`rosrun robot_upstart getifip eth0`
 export ROS_MASTER_URI=http://$ROS_IP:11311
 export ROS_LOG_DIR=/tmp
 rosrun robot_upstart mklaunch $JOB_FOLDER robot:=$ROBOT > $LAUNCH_FILENAME
-su msh -c "sh /etc/ros/indigo/cob.d/robot_launch.sh" 
-PID=$!
 
-#log info "robot.launch: Started roslaunch as background process, PID $PID"
-echo "$PID" > /tmp/cob-start.pid
-#wait "$PID"
+#start roscore inside tmux sessiond2
+su $USER -l -c "tmux new -d -s roscore"
+su $USER -l -c "tmux send -t roscore.0 'sh /etc/ros/$DISTRO/cob.d/roscore_start.sh' ENTER"
+
+#wait for roscore
+until rostopic list; do sleep 1; done
+
+#start bringup inside tmux session
+su $USER -l -c "tmux new -d -s bringup"
+su $USER -l -c "tmux send -t bringup 'sh /etc/ros/$DISTRO/cob.d/robot_launch.sh' ENTER"
+
+until rosparam get /robot_description > /dev/null ; do sleep 1; done
+
+su $USER -l -c "ssh $ROBOT-t2 'tmux new -d -s sm'"
+roslaunch_command="roslaunch\ msh_statemachine\ machine.launch"
+su $USER -l -c "ssh $ROBOT-t2 'tmux send -t sm $roslaunch_command ENTER'"

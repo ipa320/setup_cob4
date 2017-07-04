@@ -1,30 +1,27 @@
 #!/usr/bin/env bash
 
-# Script for executing commands on all cob-pc's.
-robot_name="${HOSTNAME//-b1}"
-
-if [ "$HOSTNAME" != "$robot_name-b1" ]; then 
-	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC($robot_name-b1), current host is $HOSTNAME"
-	exit
+if [[ $HOSTNAME != *"b"* ]]; then 
+    echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC, current host is $HOSTNAME"
+    exit
 fi
 
-client_list="
-$robot_name-t1
-$robot_name-t2
-$robot_name-t3
-$robot_name-s1
-$robot_name-h1"
+# get pcs in local network
+IP=$(hostname -I | awk '{print $1}')
+client_list=$(nmap --unprivileged $IP-98 --system-dns | grep report | awk '{print $6}' | sed 's/(//g;s/)//g')
 
 ##### uncomment the following lines if Windows runs as a Virtual Machine
 #cob-stop-vm-win
-
-#while true; do
-#  rm -rf /tmp/runningVMS
-#  su mimic -c "ssh $robot_name-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
+#
+#rm -rf /tmp/runningVMS
+#Crono=0
+#while [[ $Crono -le 60 ]]; do
+#  su mimic -c "ssh -o ConnectTimeout=15 $robot_name-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
 #  if grep -q $robot_name-win "/tmp/runningVMS"; then
 #    echo "VM still running"
+#    Crono=$((Crono+1))
 #  else
 #    echo "VM not running"
+#    Crono=100
 #    break
 #  fi
 #  sleep 1
@@ -36,11 +33,15 @@ $robot_name-h1"
 #done
 
 for client in $client_list; do
+    if [ $client == $IP ] ; then
+        echo "skipping $client"
+        continue
+    fi
     echo "-------------------------------------------"
     echo "Executing <<"shutdown">> on $client"  
     echo "-------------------------------------------"
     echo ""
-    ssh $client "sudo shutdown now -P 0"
+    ssh -o ConnectTimeout=15 $client "sudo shutdown now -P 0"
     ret=${PIPESTATUS[0]}
     if [ $ret != 0 ] ; then
       echo "command return an error (error code: $ret), aborting..."
@@ -48,6 +49,10 @@ for client in $client_list; do
 done
 
 for client in $client_list; do
+    if [ $client == $IP ] ; then
+        echo "skipping $client"
+        continue
+    fi
     echo "-------------------------------------------"
     echo "Executing <<waiting for>> on" $client  
     echo "-------------------------------------------"
@@ -55,7 +60,7 @@ for client in $client_list; do
     shutdown=false
     Crono=0
     while [[ !$shutdown &&  $Crono -le 60 ]]; do
-      ping -c 1 -w 3 $client
+      ping -qc 1 -w 3 $client > /dev/null
       if [ $? -ne 0 ] ; then
         shutdown=true
         echo $client down

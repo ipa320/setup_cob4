@@ -1,2 +1,1 @@
-KERNEL=="ttyACM?", ATTRS{serial}=="314F0C472B001300", SYMLINK+="gripper_right"
-KERNEL=="ttyACM?", ATTRS{serial}=="314F0C4728000900", SYMLINK+="gripper_left"
+KERNEL=="rfcomm[0-9]*", ENV{ID_MM_DEVICE_IGNORE}="1"

@@ -1,34 +1,35 @@
 #!/bin/bash
-robot_name="${HOSTNAME//-b1}"
 
-if [ "$HOSTNAME" != "$robot_name-b1" ]; then 
-	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC"
-	exit
-fi
-
+# get installed packages
 packages=$(dpkg --get-selections | grep -v "deinstall" | awk '{print $1}')
 echo $packages > /tmp/package_list
 
-pcs="
-$robot_name-b1
-$robot_name-t1
-$robot_name-t2
-$robot_name-t3
-$robot_name-s1
-$robot_name-h1"
+# get pcs in local network
+IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
+client_list=$(nmap --unprivileged $IP-98 --system-dns | grep report | awk '{print $5}')
 
-for i in $pcs; do 
+declare -a commands=(
+"sudo apt-get update > /dev/null"
+"sudo apt-get install -y $packages"
+"sudo apt-get upgrade -y"
+"sudo apt-get autoremove -y"
+)
+
+
+for client in $client_list; do 
   echo "-------------------------------------------"
-  echo "Installing packages on $i"
+  echo "Installing packages on $client"
   echo "-------------------------------------------"
   echo ""
-  ssh $i "sudo apt-get update"
-  ssh $i "xargs sudo apt-get install -y" <<< $packages
-  ret=${PIPESTATUS[0]}
-  if [ $ret != 0 ] ; then
-    echo -t "apt-get return an error (error code: $ret), aborting..."
-    exit 1
-  fi
+  for command in "${commands[@]}"; do
+    echo "----> executing: $command"
+    ssh $client $command
+    ret=${PIPESTATUS[0]}
+    if [ $ret != 0 ] ; then
+      echo -t "$command return an error in $client (error code: $ret), aborting..."
+      exit 1
+    fi
+  done
   echo ""
 done
 
