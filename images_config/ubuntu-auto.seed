@@ -31,10 +31,7 @@ d-i partman-md/confirm_nooverwrite      boolean true
 
 #################################################################
 
-d-i netcfg/target_network_config string ifupdown
-
-#################################################################
-
-
+# If we're booting using the backported Vivid kernel, install it too.
+d-i	base-installer/kernel/altmeta	string lts-xenial
 
 
