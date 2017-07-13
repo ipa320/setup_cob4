@@ -41,6 +41,7 @@ if [ "$1" != "" ]; then
 
 	echo "copying ssh-keys to other pcs, please enter password of new user"
 	sudo -u $1 cat /u/$1/.ssh/id_rsa.pub | ssh $1@$robot_name-b1 "cat >> /u/$1/.ssh/authorized_keys"
+	sudo -u $1 ssh $1@localhost 'exit'
 	sudo -u $1 ssh $1@$robot_name-b1 'exit'
 	sudo -u $1 ssh $1@$robot_name-t1 'exit'
 	sudo -u $1 ssh $1@$robot_name-t2 'exit'
