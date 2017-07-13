@@ -26,9 +26,19 @@
 
 - Press `start` to start the flash progress <br>
   Accept the upcomming warings and restart the Router once the process is finished
+  
+### 3. Generate DDWRT config for Robot <a id="ConfigGen"/>
+- clone setup_cob4 repo: <br>
+  `git clone https://github.com/ipa320/setup_cob4`
+- cd to script folder: <br>
+  `cd setup_cob4/scripts`
+- execute script to generate a ddwrt config
+  - `./create_ddwrt_script.sh`
+  - enter all required values and double check them (if you are unshure how to get the VPN Certificates look at the [README_Openvpn](README_Openvpn.md)
+  - the generated config can be found under `setup_cob4/ddwrt_backup/ROBOTNAME_wrt3200_config.bin`
  
-### 3. Setup DDWRT <a id="DDWRT"/>
-- After the Router restartet got to the Adress `192.168.1.1` by entering it in the Address Bar of you web browser
+### 4. Setup DDWRT <a id="DDWRT"/>
+- After the Router restartet got to the Address `192.168.1.1` by entering it in the Address Bar of you web browser
 - Now enter a new username and password <br>
   user: admin
   password: root
@@ -36,22 +46,9 @@
 
 ![ddwrt1](doc/ddwrt1.PNG)
 
-- Download the ddwrt template config: <br>
-  https://github.com/ipa320/setup_cob4/blob/master/ddwrt_backup/cob4-x_wrt3200_backup.bin?raw=true
 - Go to Administration -> Backup <br>
-  Select the downloaded file under Restore Settings and click `Restore`.
+  Select the in Step 3 generated config file and click `Restore`.
   
 ![ddwrt2](doc/ddwrt2.PNG)
 
 - Now reboot the Router.
-
-### 4. Customize DDWRT Settings <a id="Custom"/>
-- The DDWRT WEB Admin page is now under `10.4.1.1` accessible. Open `10.4.1.1` with your web browser.
-- Got to `Setup -> Basic-Setup` and change the following settings according to your robot.<br>
-  - Router Name
-  - Hostname
-  - Domain Name
-  - Router IP (Remember that you have to reopen the web admin page with new new IP Address)
-- Go to `Wireless -> Basic Settings` and change the following settings acccording to your robot. <br>
-  - Wireless Network Name SSID
-  - 
