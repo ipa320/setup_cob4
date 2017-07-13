@@ -334,6 +334,8 @@ Mount .iso file to Ubuntu filesystem using terminal. The command below will moun
 And copy .iso contents to another folder on your desktop so we can edit the files. Don't forget to set the right permissions to be able to make changes.
 Copy ks-robot-master.cfg and ubuntu-auto-master.seed files to newly created ubuntu_files_slave folder. Copy ks-robot-slave.cfg and ubuntu-auto-slave.seed files to newly created ubutu_files_slave folder.
 And Turn off language choice menu and specify your desired language.
+And make the installer read kickstart and preseed files by including new menu selection for automatic Ubuntu installation. To do this, copy ```~/git/setup_cob4/images_config/txt.cfg``` to ```~/ubuntu_files_master/isolinux/txt.cfg``` or ```~/ubuntu_files_slave/isolinux/txt.cfg```
+
 
 For the Master:
 ```
@@ -344,6 +346,7 @@ chmod +w -R ~/ubuntu_files_master
 cp ~/git/setup_cob4/images_config/ks-robot-master.cfg ~/ubuntu_files_master/ks-robot.cfg
 cp ~/git/setup_cob4/images_config/ubuntu-auto.seed ~/ubuntu_files_master
 echo en >> ~/ubuntu_files_master/isolinux/lang
+cp ~/git/setup_cob4/images_config/txt.cfg ~/ubuntu_files_master/isolinux/txt.cfg
 ```
 
 For the Slave:
@@ -351,14 +354,6 @@ For the Slave:
 TDB
 ```
 
-Now we need to make the installer read kickstart and preseed files by including new menu selection for automatic Ubuntu installation. 
-To do this, open file ```~/ubuntu_files_master/isolinux/txt.cfg``` or ```~/ubuntu_files_slave/isolinux/txt.cfg``` and copy this block of text after the line default install
-```
-label autoinstall 
-  menu label ^Automatically install of Care-O-bot MASTER 
-  kernel /install/vmlinuz 
-  append file=/cdrom/preseed/ubuntu-server.seed vga=788 initrd=/install/initrd.gz ks=cdrom:/ks-robot.cfg preseed/file=/cdrom/ubuntu-auto.seed quiet --
-```
 
 ### 6. Recreate ISO file and make bootable USB media <a id="Recreate ISO file and make bootable USB media"/>
 Create new ISO:
