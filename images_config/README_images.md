@@ -13,6 +13,7 @@
 5. <a href="#Extract and modify original ISO file">Extract and modify original ISO file</a>
 6. <a href="#Recreate ISO file and make bootable USB media">Recreate ISO file and make bootable USB media</a>
 7. <a href="#Instructions">Instructions</a>
+8. <a href="#Cleanup">Cleanup</a>
 
 ### 1. Introduction <a id="Introduction"/> 
 Automatic software setup for service robots which is also defined as Unattended Installation which is performed on Ubuntu 14.04 Server. The most commonly used methods when it comes to automating Ubuntu installation: Kickstart. The Kickstart is really easy to start with because Ubuntu supports most of the RedHat's Kickstart options and we are going to use some Preseed commands.
@@ -359,20 +360,30 @@ label autoinstall
   append file=/cdrom/preseed/ubuntu-server.seed vga=788 initrd=/install/initrd.gz ks=cdrom:/ks-robot.cfg preseed/file=/cdrom/ubuntu-auto.seed quiet --
 ```
 
-### 7. Recreate ISO file and make bootable USB media <a id="Recreate ISO file and make bootable USB media"/>
+### 6. Recreate ISO file and make bootable USB media <a id="Recreate ISO file and make bootable USB media"/>
 Create new ISO:
 For Master:
 ```
-mkisofs -D -r -V "Ubuntu-Auto-Care-O-bot-MASTER" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o ~/Ubuntu-Auto-Care-O-bot-MASTER.iso ~/ubuntu_files_master
+mkisofs -D -r -V "Ubuntu-Auto-Care-O-bot-MASTER" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o ~/ubuntu-care-o-bot-master.iso ~/ubuntu_files_master
 ```
 For Slave:
 ```
 TBD
 ```
 
-### 8. Instructions  <a id="Instructions"/>
+### 7. Instructions <a id="Instructions"/>
 
 1. Create bootable USB media using Ubuntu Startup Disk Creator from newly created Ubuntu-Auto-Care-O-bot-MASTER.iso and Ubuntu-Auto-Care-O-bot-SLAVE.iso files in two different USB sticks.
 2. After creating bootable USB media, check the files and folders compare with ubuntu_files folder. For example After creating Master bootable USB media check the files and folders of USB media with ubuntu_files_master folder, due to few permissions isolinux folder will be missing in USB media, we suggest you to copy from the ubuntu_files-master folder and paste in USB media.
 3. We can use Disc Burner or k3b applications to burn images in to the CD/DVD to make bootable CD/DVD
 4. If you are using new NUC machine we suggest you to start with CD/DVD. Which creates CD-ROM folder.
+
+
+### 8. Cleanup <a id="Cleanup"/>
+To cleanup you local system run the following commands
+```
+sudo umount ~/ubuntu_iso_master
+rm -rf ~/ubuntu*
+```
+
+
