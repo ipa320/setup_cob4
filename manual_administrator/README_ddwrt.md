@@ -4,6 +4,8 @@
 - Connect Ethernetcable with PC and Router
 - Connect Powercable with Router
 
+![WRT3200](doc/linksys_wrt3200_custom.jpg)
+
 ### 2. Flash DDWRT <a id="Flash"/>
 - Download ddwrt image for wrt3200: <br>
   http://download1.dd-wrt.com/dd-wrtv2/downloads/betas/2017/07-08-2017-r32597/linksys-wrt3200acm/factory-to-ddwrt.bin
