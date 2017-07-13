@@ -10,10 +10,9 @@
      2. <a href="#Pre-Installation Script">Pre-Installation Script</a>
      3. <a href="#Post-Installation Script">Post-Installation Script</a>
 4. <a href="#Create Preseed files for Master and Slave configuration files">Create Preseed files for Master and Slave configuration files</a>
-5. <a href="#Extract original ISO file">Extract original ISO file</a>
-6. <a href="#Edit contents of ISO">Edit contents of ISO</a>
-7. <a href="#Recreate ISO file and make bootable USB media">Recreate ISO file and make bootable USB media</a>
-8. <a href="#Instructions">Instructions</a>
+5. <a href="#Extract and modify original ISO file">Extract and modify original ISO file</a>
+6. <a href="#Recreate ISO file and make bootable USB media">Recreate ISO file and make bootable USB media</a>
+7. <a href="#Instructions">Instructions</a>
 
 ### 1. Introduction <a id="Introduction"/> 
 Automatic software setup for service robots which is also defined as Unattended Installation which is performed on Ubuntu 14.04 Server. The most commonly used methods when it comes to automating Ubuntu installation: Kickstart. The Kickstart is really easy to start with because Ubuntu supports most of the RedHat's Kickstart options and we are going to use some Preseed commands.
@@ -327,69 +326,53 @@ d-i partman-md/confirm_nooverwrite      boolean true
 d-i netcfg/choose_interface select auto 
 ################################################################################
 ```
-### 5. Extract original ISO file <a id="Extract original ISO file"/> 
+### 5. Extract and modify original ISO file <a id="Extract and modify original ISO file"/> 
 Download Ubuntu Server 14.04.5 from Ubuntu website. It is necessary to use server version, because desktop version doesn't support unattested installations. Desktop functionality will be achieved after we install ubuntu-desktop or activate lightdm package in %package section or install in %post installation script.
 
 Mount .iso file to Ubuntu filesystem using terminal. The command below will mount .iso file to the folders named ubuntu_iso_master and ubuntu_iso_slave on our desktop.
-```
-cd Desktop
-mkdir ubuntu_iso_master
-mkdir ubuntu_iso_slave
-sudo  mount -o loop ~/Downloads/ubuntu-14.04.5-server-amd64.iso ubuntu_iso_master
-sudo  mount -o loop ~/Downloads/ubuntu-14.04.5-server-amd64.iso ubuntu_iso_slave
-```
-Copy .iso contents to another folder on your desktop so we can edit the files. Don't forget to set the right permissions to be able to make changes.
-```
-mkdir ubuntu_files_master
-sudo rsync -a ubuntu_iso_master/ ubuntu_files_master/
-sudo chmod -R 755 ubuntu_files_master
-sudo chown -R ernestas:ernestas ubuntu_files_master
-mkdir ubuntu_files_slave
-sudo rsync -a ubuntu_iso_slave/ ubuntu_files_slave/
-sudo chmod -R 755 ubuntu_files_slave
-sudo chown -R ernestas:ernestas ubuntu_files_slave
-
-```
-Note: ernestas is the systems host name , the system which your using to make unattended installation (cat /etc/hostname)
-### 6. Edit contents of ISO <a id="Edit contents of ISO"/>
+And copy .iso contents to another folder on your desktop so we can edit the files. Don't forget to set the right permissions to be able to make changes.
 Copy ks-robot-master.cfg and ubuntu-auto-master.seed files to newly created ubuntu_files_slave folder. Copy ks-robot-slave.cfg and ubuntu-auto-slave.seed files to newly created ubutu_files_slave folder.
+And Turn off language choice menu and specify your desired language.
+
+For the Master:
+```
+mkdir ~/ubuntu_iso_master
+sudo  mount -o loop ~/Downloads/ubuntu-14.04.5-server-amd64.iso ~/ubuntu_iso_master
+cp -r ~/ubuntu_iso_master ~/ubuntu_files_master
+chmod +w -R ~/ubuntu_files_master
+cp ~/git/setup_cob4/images_config/ks-robot-master.cfg ~/ubuntu_files_master/ks-robot.cfg
+cp ~/git/setup_cob4/images_config/ubuntu-auto.seed ~/ubuntu_files_master
+echo en >> ~/ubuntu_files_master/isolinux/lang
+```
+
+For the Slave:
+```
+TDB
+```
+
 Now we need to make the installer read kickstart and preseed files by including new menu selection for automatic Ubuntu installation. 
-To do this, open file named txt.cfg in Desktop/ubuntu_files_master/isolinux folder using your favorite text editor and copy this block of text after the line default install
+To do this, open file ```~/ubuntu_files_master/isolinux/txt.cfg``` or ```~/ubuntu_files_slave/isolinux/txt.cfg``` and copy this block of text after the line default install
 ```
 label autoinstall 
-  	menu label ^Automatically install of Care-O-bot MASTER 
-	kernel /install/vmlinuz 
-	append file=/cdrom/preseed/ubuntu-server.seed vga=788 initrd=/install/initrd.gz ks=cdrom:/ks-robot-master.cfg preseed/file=/cdrom/ubuntu-auto-robot-master.seed quiet --
+  menu label ^Automatically install of Care-O-bot MASTER 
+  kernel /install/vmlinuz 
+  append file=/cdrom/preseed/ubuntu-server.seed vga=788 initrd=/install/initrd.gz ks=cdrom:/ks-robot.cfg preseed/file=/cdrom/ubuntu-auto.seed quiet --
 ```
-Now same with slave , open file named txt.cfg in  Desktop/ubuntu_files_slave/isolinux folder using your favorite text editor and copy this block of text after the line default install
-```
-label autoinstall 
-	menu label ^Automatically install of Care-O-bot SLAVE 
-  	kernel /install/vmlinuz 
-  	append file=/cdrom/preseed/ubuntu-server.seed vga=788 initrd=/install/initrd.gz ks=cdrom:/ks-robot-slave.cfg preseed/file=/cdrom/ubuntu-auto-robot-slave.seed quiet --
-```
-Turn off language choice menu and specify your desired language:
-```
-echo en >> ubuntu_files_master/isolinux/lang
-echo en >> ubuntu_files_slave/isolinux/lang
-```
-We can also use text editor for this. Just create the file named lang with the contents en and save it to isolinux folder.
+
 ### 7. Recreate ISO file and make bootable USB media <a id="Recreate ISO file and make bootable USB media"/>
 Create new ISO:
 For Master:
 ```
-cd ubuntu_files_master
-mkisofs -D -r -V "Ubuntu-Auto-Care-O-bot-MASTER" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o ~/Desktop/Ubuntu-Auto-Care-O-bot-MASTER.iso .
+mkisofs -D -r -V "Ubuntu-Auto-Care-O-bot-MASTER" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o ~/Ubuntu-Auto-Care-O-bot-MASTER.iso ~/ubuntu_files_master
 ```
 For Slave:
 ```
-cd ubuntu_files_slave
-mkisofs -D -r -V "Ubuntu-Auto-Care-O-bot-SLAVE" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o ~/Desktop/Ubuntu-Auto-Care-O-bot-SLAVE.iso .
+TBD
 ```
-We can find iso images named Ubuntu-Auto-Care-O-bot-MASTER.iso and Ubuntu-Auto-Care-O-bot-SLAVE.iso on Desktop for Master and slave machines.
+
 ### 8. Instructions  <a id="Instructions"/>
 
 1. Create bootable USB media using Ubuntu Startup Disk Creator from newly created Ubuntu-Auto-Care-O-bot-MASTER.iso and Ubuntu-Auto-Care-O-bot-SLAVE.iso files in two different USB sticks.
 2. After creating bootable USB media, check the files and folders compare with ubuntu_files folder. For example After creating Master bootable USB media check the files and folders of USB media with ubuntu_files_master folder, due to few permissions isolinux folder will be missing in USB media, we suggest you to copy from the ubuntu_files-master folder and paste in USB media.
 3. We can use Disc Burner or k3b applications to burn images in to the CD/DVD to make bootable CD/DVD
-4. If you are using new NUC machine  we suggest you to start with CD/DVD. Which creates CD-ROM folder.
+4. If you are using new NUC machine we suggest you to start with CD/DVD. Which creates CD-ROM folder.
