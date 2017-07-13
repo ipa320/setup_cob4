@@ -37,7 +37,7 @@
 ![ddwrt1](doc/ddwrt1.PNG)
 
 - Download the ddwrt template config: <br>
-  https://github.com/ipa320/setup_cob4/blob/master/ddwrt_backup/linksys_wrt3200_initial_config.bin?raw=true
+  https://github.com/ipa320/setup_cob4/blob/master/ddwrt_backup/cob4-x_wrt3200_backup.bin?raw=true
 - Go to Administration -> Backup <br>
   Select the downloaded file under Restore Settings and click `Restore`.
   
