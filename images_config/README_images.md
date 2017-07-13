@@ -352,7 +352,7 @@ cp ~/git/setup_cob4/images_config/initrd.gz ~/ubuntu_files_master/install
 
 For the Slave:
 ```
-TDB
+TBD
 ```
 
 
