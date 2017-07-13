@@ -347,6 +347,7 @@ cp ~/git/setup_cob4/images_config/ks-robot-master.cfg ~/ubuntu_files_master/ks-r
 cp ~/git/setup_cob4/images_config/ubuntu-auto.seed ~/ubuntu_files_master
 echo en >> ~/ubuntu_files_master/isolinux/lang
 cp ~/git/setup_cob4/images_config/txt.cfg ~/ubuntu_files_master/isolinux/txt.cfg
+cp ~/git/setup_cob4/images_config/initrd.gz ~/ubuntu_files_master/install
 ```
 
 For the Slave:
