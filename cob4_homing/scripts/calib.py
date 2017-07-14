@@ -16,10 +16,18 @@ WHEEL1 = 'fl_caster_rotation_joint'
 WHEEL2 =  'b_caster_rotation_joint'
 WHEEL3 = 'fr_caster_rotation_joint'
 
+# old FDMs
+#tests = {
+#    ('please align wheels 1 and 2',  30000, (WHEEL1, -30000), (WHEEL2, -150000)),
+#    ('please align wheels 2 and 3', 150000, (WHEEL2, -30000), (WHEEL3, -150000)),
+#    ('please align wheels 3 and 1', -90000, (WHEEL3, -30000), (WHEEL1, -150000)),
+#}
+
+# new FDMs
 tests = {
-    ('please align wheels 1 and 2',  30000, (WHEEL1, -30000), (WHEEL2, -150000)),
-    ('please align wheels 2 and 3', 150000, (WHEEL2, -30000), (WHEEL3, -150000)),
-    ('please align wheels 3 and 1', -90000, (WHEEL3, -30000), (WHEEL1, -150000)),
+    ('please align wheels 1 and 2', -150000, (WHEEL1, -120000), (WHEEL2, 120000)),
+    ('please align wheels 2 and 3',  -30000, (WHEEL2, -120000), (WHEEL3, 135000)),
+    ('please align wheels 3 and 1',   90000, (WHEEL3, -120000), (WHEEL1, 135000)),
 }
 
 joint_states = {}
@@ -98,7 +106,7 @@ for t in tests:
 
   with js_cv:
     got_js = False
-    while not got_js:
+    while not got_js and not rospy.is_shutdown():
       js_cv.wait()
     v1 = joint_states[w1[0]]
     v2 = joint_states[w2[0]]
