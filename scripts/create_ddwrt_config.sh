@@ -150,6 +150,7 @@ if echo "$decision" | grep -iq "^y" ;then
 
   #copy scripts to router
   echo "copy scripts to router"
+  ssh root@192.168.1.1 "ls"
   sshpass -p 'admin' scp "$tmp_essential" root@192.168.1.1:/tmp
   sshpass -p 'admin' scp "$tmp_preferred" root@192.168.1.1:/tmp
   echo "make scripts executable"
