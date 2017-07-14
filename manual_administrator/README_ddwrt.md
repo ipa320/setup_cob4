@@ -27,7 +27,16 @@
 - Press `start` to start the flash progress <br>
   Accept the upcomming warings and restart the Router once the process is finished
   
-### 3. Generate DDWRT config for Robot <a id="ConfigGen"/>
+### 3. Setup DDWRT <a id="DDWRT"/>
+- After the Router restartet got to the Address `192.168.1.1` by entering it in the Address Bar of you web browser
+- Now enter a new username and password <br>
+  user: root
+  password: admin
+- You should now see the ddwrt admin web page
+
+![ddwrt1](doc/ddwrt1.PNG)
+  
+### 4. Configure DDWRT for Robot <a id="ConfigGen"/>
 - clone setup_cob4 repo: <br>
   `git clone https://github.com/ipa320/setup_cob4`
 - cd to script folder: <br>
@@ -37,18 +46,3 @@
   - enter all required values and double check them (if you are unshure how to get the VPN Certificates look at the [README_Openvpn](README_Openvpn.md)
   - the generated config can be found under `setup_cob4/ddwrt_backup/ROBOTNAME_wrt3200_config.bin`
  
-### 4. Setup DDWRT <a id="DDWRT"/>
-- After the Router restartet got to the Address `192.168.1.1` by entering it in the Address Bar of you web browser
-- Now enter a new username and password <br>
-  user: admin
-  password: root
-- You should now see the ddwrt admin web page
-
-![ddwrt1](doc/ddwrt1.PNG)
-
-- Go to Administration -> Backup <br>
-  Select the in Step 3 generated config file and click `Restore`.
-  
-![ddwrt2](doc/ddwrt2.PNG)
-
-- Now reboot the Router.
