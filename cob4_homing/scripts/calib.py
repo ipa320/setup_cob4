@@ -26,8 +26,8 @@ WHEEL3 = 'fr_caster_rotation_joint'
 # new FDMs
 tests = {
     ('please align wheels 1 and 2', -150000, (WHEEL1, -120000), (WHEEL2, 120000)),
-    ('please align wheels 2 and 3',  -30000, (WHEEL2, -120000), (WHEEL3, 135000)),
-    ('please align wheels 3 and 1',   90000, (WHEEL3, -120000), (WHEEL1, 135000)),
+    ('please align wheels 2 and 3',  -30000, (WHEEL2, -120000), (WHEEL3, 120000)),
+    ('please align wheels 3 and 1',   90000, (WHEEL3, -120000), (WHEEL1, 120000)),
 }
 
 joint_states = {}
