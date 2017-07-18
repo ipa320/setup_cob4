@@ -17,6 +17,24 @@ function valid_ip()
     return $stat
 }
 
+function read_cert_from_file()
+{
+    local file=$1
+    local stat=1
+    local str=""
+    certificate=$str
+    if ! [ -f $file ];then
+        echo "Error opening File $file"
+        stat=0
+    else
+        str=`cat "$file"`
+        idx=`expr index "$str" -----BEGIN`
+        certificate=${str:$idx}
+        echo $certificate
+    fi
+    return $stat
+}
+
 #check if template file is inside the same directory
 FILE_ESSENTIAL=ddwrt.config.essential.sh
 FILE_PREFERRED=ddwrt.config.preferred.sh
@@ -30,9 +48,9 @@ if ! [ -f $FILE_ESSENTIAL ];then
   exit
 fi
 
-echo ==================================================
-echo This Script configures a ddwrt route for a new robot
-echo ==================================================
+echo =====================================================
+echo This Script configures a ddwrt router for a new robot
+echo =====================================================
 echo
 echo Please insert the robot number. Eg. 7 for cob4-7 or 2 for cob4-2:
 read robotnumber
@@ -43,17 +61,17 @@ stty raw -echo
 static_leases=$( while ! head -c 1 | grep -i '[ny]' ;do true ;done )
 stty $old_stty_cfg
 if echo "$static_leases" | grep -iq "^y" ;then
-    echo Please insert MAC from b1 PC:
+    echo "Please insert MAC from b1 PC:"
     read mac_b_one
-    echo Please insert MAC from t1 PC:
+    echo "Please insert MAC from t1 PC:"
     read mac_t_one
-    echo Please insert MAC from t2 PC:
+    echo "Please insert MAC from t2 PC:"
     read mac_t_two
-    echo Please insert MAC from t3 PC:
+    echo "Please insert MAC from t3 PC:"
     read mac_t_three
-    echo Please insert MAC from s1 PC:
+    echo "Please insert MAC from s1 PC:"
     read mac_s_one
-    echo Please insert MAC from h1 PC:
+    echo "Please insert MAC from h1 PC:"
     read mac_h_one
 fi
 echo "Do you like to add vpn certs (y/n):"
@@ -62,12 +80,18 @@ stty raw -echo
 vpn_certs=$( while ! head -c 1 | grep -i '[ny]' ;do true ;done )
 stty $old_stty_cfg
 if echo "$vpn_certs" | grep -iq "^y" ;then
-    echo Please insert VPN ca_cert:
-    read ca_cert
-    echo Please insert VPN Public Client Cert:
-    read pub_cert
-    echo Please insert VPN Private Client Cert:
-    read priv_cert
+    echo "Please insert Path to VPN ca_cert (cacert.pem):"
+    read ca_cert_path
+    read_cert_from_file $ca_cert_path
+    ca_cert=$certificate
+    echo "Please insert Path to VPN Public Client Cert (xxxxxxxxxx.pem):"
+    read pub_cert_path
+    read_cert_from_file $pub_cert_path
+    pub_cert=$certificate
+    echo "Please insert Path to VPN Private Client Cert: (user.pem)"
+    read priv_cert_path
+    read_cert_from_file $priv_cert_path
+    priv_cert=$certificate
 fi
 
 robotname='cob4-'$robotnumber
@@ -151,7 +175,8 @@ if echo "$decision" | grep -iq "^y" ;then
   #copy scripts to router
   echo "copy scripts to router"
   ssh-keygen -f "$HOME/.ssh/known_hosts" -R 192.168.1.1
-  ssh root@192.168.1.1 "ls"
+  ssh-keyscan -H 192.168.1.1 >> ~/.ssh/known_hosts
+  ssh root@192.168.1.1 "echo"
   sshpass -p 'admin' scp "$tmp_essential" root@192.168.1.1:/tmp
   sshpass -p 'admin' scp "$tmp_preferred" root@192.168.1.1:/tmp
   echo "make scripts executable"
