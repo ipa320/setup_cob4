@@ -49,7 +49,6 @@
 - cd to script folder: <br>
   `cd setup_cob4/scripts`
 - execute script to generate a ddwrt config <br>
-  - `./create_ddwrt_script.sh`
+  - `./create_ddwrt_script.sh` <br>
   - enter all required values and double check them (if you are unshure how to get the VPN Certificates look at the [README_Openvpn](README_Openvpn.md)
-  - the generated config can be found under `setup_cob4/ddwrt_backup/ROBOTNAME_wrt3200_config.bin`
  
