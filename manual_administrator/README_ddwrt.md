@@ -30,18 +30,25 @@
 ### 3. Setup DDWRT <a id="DDWRT"/>
 - After the Router restartet got to the Address `192.168.1.1` by entering it in the Address Bar of you web browser
 - Now enter a new username and password <br>
-  user: root
+  user: root <br>
   password: admin
 - You should now see the ddwrt admin web page
 
 ![ddwrt1](doc/ddwrt1.PNG)
+- Go to Services -> Services and active SSHd Deamon
+
+![ddwrt3](doc/ddwrt3.png)<br>
+![ddwrt4](doc/ddwrt4.png)<br>
   
 ### 4. Configure DDWRT for Robot <a id="ConfigGen"/>
+- install sshpass on your pc <br>
+  `sudo apt-get update`
+  `sudo apt-get install sshpass`
 - clone setup_cob4 repo: <br>
   `git clone https://github.com/ipa320/setup_cob4`
 - cd to script folder: <br>
   `cd setup_cob4/scripts`
-- execute script to generate a ddwrt config
+- execute script to generate a ddwrt config <br>
   - `./create_ddwrt_script.sh`
   - enter all required values and double check them (if you are unshure how to get the VPN Certificates look at the [README_Openvpn](README_Openvpn.md)
   - the generated config can be found under `setup_cob4/ddwrt_backup/ROBOTNAME_wrt3200_config.bin`
