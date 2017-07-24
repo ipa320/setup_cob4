@@ -6,7 +6,7 @@
     <arg name="can_device" default="can0"/>
 
     <!-- upload robot_description -->
-    <include file="$(arg pkg_hardware_config)/common/upload_robot.launch" >
+    <include file="$(arg pkg_hardware_config)/upload_robot.launch" >
       <arg name="robot" value="$(arg robot)" />
     </include>
     <include file="$(find cob_default_robot_config)/upload_param.launch" >
