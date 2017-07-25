@@ -14,35 +14,13 @@
 
 ### 1. Automatic installation <a id="Installation"/> 
 
-The full Care-O-bot installation can be done using a bash script. The script is in the setup repository, get it using the following command:
+The Care-O-bot pcs can be installed using a pre-created image via a bootable USB media:
 
-```
-wget https://raw.githubusercontent.com/ipa320/setup_cob4/master/InstallCob4.sh
-chmod +x InstallCob4.sh
-```
+1. Plug in USB to the NUC and restart the NUC, press F10 to get bootable option. For example if you are using Master USB stick in bootable option, select USB bootable mode and then the first option would be Automatically install of Care-O-bot MASTER .
+2. After creating CD /DVD no need to press any keys it directly directs to bootabe options.
+3. While booting per-installiting script poops up asking for host name.
 
-The installation script needs the parameters robot, ip address and installation mode, where:
-
- * -r robot: is the robot name (cob4-X)
- * -ip :ip address for your actual installation pc, for example *10.4.IP.11* for base pc.
- * -m installation mode: on Care-O-bot there are two different types of computers, the master pc and the slave. The master PC has a large hard disk, and works as a NFS system server, the other computers will be the clients
-
-The script allow different types of installation:
-
-+ **Basic Installation** It is composed by the following steps:
-
-  * Install basic tools (vim, meld, terminator ...)
-  * Install and configure openssh
-  * Allow robot user to execute sudo command without password
-  * Setup root user (in this step the user will be asked for a password)
-  * Install ROS
-  * Setup udev rules
-  * Setup bash environment 
-
-+ **Setup NTP and NFS** This option will configure the NFS system depending on the installation mode, it is important that the master pc is already installed and per network reachable before install the slave computers, otherwise the installation process will be cancelled. After this installation it is necessary restart the computer.
- 
-+ **Full Installation** A full installation means the combination of 1 and 2 (Basic Installation + Setup NTP and NFS)
-+ **Cob setup** This step holds the recommended configuration of the robot home directory. This step can only be execute after a full installation.
+Fur further information about the creation and customization of images please see the following link: [Image configuration manual](images_config/README_images.md)
 
 ### 2. Extra Installation <a id="Extra-Installation"/>
 
