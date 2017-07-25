@@ -2,8 +2,8 @@
 
 function valid_ip()
 {
-    local  ip=$1
-    local  stat=1
+    local ip=$1
+    local stat=1
 
     if [[ $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
         OIFS=$IFS
@@ -15,6 +15,38 @@ function valid_ip()
         stat=$?
     fi
     return $stat
+}
+
+function valid_mac()
+{
+    local mac=$1
+    local stat=1
+
+    #capitalize it
+    mac=${mac^^}
+    if ! [ `echo $mac | egrep "^([0-9A-F]{2}:){5}[0-9A-F]{2}$"` ]; then
+        stat=0
+    fi
+
+    return $stat
+}
+
+function read_mac()
+{
+    local pc_name=$1
+    local mac_addr="$2"
+
+    echo "Please insert MAC for $pc_name:"
+    read mac
+    valid_mac $mac
+
+    while [[ $? -ne 1 ]];do
+        echo "Wrong MAC format. Please insert MAC in format 00:11:22:33:44:55"
+        read mac
+        valid_mac $mac
+    done
+    eval $mac_addr=$mac
+    return 1
 }
 
 function read_cert_from_file()
@@ -55,30 +87,26 @@ echo
 echo Please insert the robot number. Eg. 7 for cob4-7 or 2 for cob4-2:
 read robotnumber
 
-echo "Do you like to add static leases (y/n):"
-old_stty_cfg=$(stty -g)
-stty raw -echo
-static_leases=$( while ! head -c 1 | grep -i '[ny]' ;do true ;done )
-stty $old_stty_cfg
+echo
+read -p "Do you like to add static leases (y/n):" static_leases
 if echo "$static_leases" | grep -iq "^y" ;then
-    echo "Please insert MAC from b1 PC:"
-    read mac_b_one
-    echo "Please insert MAC from t1 PC:"
-    read mac_t_one
-    echo "Please insert MAC from t2 PC:"
-    read mac_t_two
-    echo "Please insert MAC from t3 PC:"
-    read mac_t_three
-    echo "Please insert MAC from s1 PC:"
-    read mac_s_one
-    echo "Please insert MAC from h1 PC:"
-    read mac_h_one
+    mac_b_one=""
+    read_mac "b1" 'mac_b_one'
+    mac_t_one=""
+    read_mac "t1" 'mac_t_one'
+    mac_t_two=""
+    read_mac "t2" 'mac_t_two'
+    mac_t_three=""
+    read_mac "t3" 'mac_t_three'
+    mac_s_one=""
+    read_mac "s1" 'mac_s_one'
+    mac_h_one=""
+    read_mac "h1" 'mac_h_one'
+
 fi
-echo "Do you like to add vpn certs (y/n):"
-old_stty_cfg=$(stty -g)
-stty raw -echo
-vpn_certs=$( while ! head -c 1 | grep -i '[ny]' ;do true ;done )
-stty $old_stty_cfg
+
+echo
+read -p "Do you like to add vpn certs (y/n):" vpn_certs
 if echo "$vpn_certs" | grep -iq "^y" ;then
     echo "Please insert Path to VPN ca_cert (cacert.pem):"
     read ca_cert_path
@@ -97,9 +125,10 @@ fi
 robotname='cob4-'$robotnumber
 ipaddress='10.4.'$robotnumber
 
-echo Are you shure you like to create a new ddwrt config with the following settings
-echo RobotName: $robotname
-echo IPAddress: $ipaddress
+echo
+echo "Are you shure you like to create a new ddwrt config with the following settings"
+echo "RobotName: $robotname"
+echo "IPAddress: $ipaddress.1"
 if echo "$static_leases" | grep -iq "^y" ;then
     echo MAC b1: $mac_b_one
     echo MAC t1: $mac_t_one
@@ -113,17 +142,13 @@ if echo "$vpn_certs" | grep -iq "^y" ;then
     echo pub_cert: $pub_cert
     echo priv_cert: $priv_cert
 fi
+read -p "(y/n):" choice
 
-echo "(y/n):"
-old_stty_cfg=$(stty -g)
-stty raw -echo
-decision=$( while ! head -c 1 | grep -i '[ny]' ;do true ;done )
-stty $old_stty_cfg
+if echo "$choice" | grep -iq "^y" ;then
+  echo "generating shell scripts"
+  tmp_essential=tmp.config.essential.sh
+  tmp_preferred=tmp.config.preferred.sh
 
-tmp_essential=tmp.config.essential.sh
-tmp_preferred=tmp.config.preferred.sh
-echo "generating shell scripts"
-if echo "$decision" | grep -iq "^y" ;then
   cmd='s/cob4-x/'$robotname'/g'
   sed $cmd $FILE_ESSENTIAL > $tmp_essential
   sed $cmd $FILE_PREFERRED > $tmp_preferred
@@ -170,7 +195,6 @@ if echo "$decision" | grep -iq "^y" ;then
       sed -i "$cmd" "$tmp_essential"
       sed -i "$cmd" "$tmp_preferred"
   fi
-
 
   #copy scripts to router
   echo "copy scripts to router"
