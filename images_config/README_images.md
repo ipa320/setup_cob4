@@ -352,7 +352,15 @@ cp ~/git/setup_cob4/images_config/initrd.gz ~/ubuntu_files_master/install
 
 For the Slave:
 ```
-TBD
+mkdir ~/ubuntu_iso_slave
+sudo  mount -o loop ~/Downloads/ubuntu-14.04.5-server-amd64.iso ~/ubuntu_iso_slave
+cp -r ~/ubuntu_iso_slave ~/ubuntu_files_slave
+chmod +w -R ~/ubuntu_files_slave
+cp ~/git/setup_cob4/images_config/ks-robot-slave.cfg ~/ubuntu_files_slave/ks-robot.cfg
+cp ~/git/setup_cob4/images_config/ubuntu-auto.seed ~/ubuntu_files_slave
+echo en >> ~/ubuntu_files_slave/isolinux/lang
+cp ~/git/setup_cob4/images_config/txt.cfg ~/ubuntu_files_slave/isolinux/txt.cfg
+cp ~/git/setup_cob4/images_config/initrd.gz ~/ubuntu_files_slave/install
 ```
 
 
@@ -364,7 +372,7 @@ mkisofs -D -r -V "Ubuntu-Auto-Care-O-bot-MASTER" -cache-inodes -J -l -b isolinux
 ```
 For Slave:
 ```
-TBD
+mkisofs -D -r -V "Ubuntu-Auto-Care-O-bot-SLAVE" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o ~/ubuntu-care-o-bot-slave.iso ~/ubuntu_files_slave
 ```
 
 ### 7. Instructions <a id="Instructions"/>
@@ -379,6 +387,7 @@ TBD
 To cleanup you local system run the following commands
 ```
 sudo umount ~/ubuntu_iso_master
+sudo umount ~/ubuntu_iso_slave
 rm -rf ~/ubuntu*
 ```
 
