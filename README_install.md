@@ -167,12 +167,18 @@ The tool is available under the address http://*hostname*:19999
 
 For further information take a look at the official installation guide: https://github.com/firehol/netdata/wiki/Installation
 
-#### 2.6. Update CISCO Switch Firmware <a id="CiscoFirmware"/>
+#### 2.6. Update CISCO Switch Firmware (for old switches)<a id="CiscoFirmware"/>
 
 Issue: http://www.viktorious.nl/2013/11/05/cisco-sg200-08-nfs/
 
-Download firmware version 1.0.8.3: https://software.cisco.com/download/release.html?mdfid=283454003&softwareid=282463182&release=1.0.5.1
-IP address cisco management: http://192.168.1.254/ (check the manual of the switch, the address could change depending on the version)
+Download latest firmware version (e.g. 1.0.8.3): https://software.cisco.com/download/release.html?mdfid=283454003&softwareid=282463182&release=1.0.5.1
+
+Assign yourself a fixed IP adress, e.g. 192.168.1.250.
+
+IP address cisco management: http://192.168.1.254/ (User: cisco, pw: cisco, check the manual of the switch, the address and login might change depending on the version)
+
 Go to Administration -> File Management -> Upgrade/Backup Firmware and choose the downloaded file 
+
+This might take 10min.
 
 <a href="#top">top</a>
