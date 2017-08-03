@@ -11,6 +11,7 @@
      3. <a href="#Mimic">Mimic</a>
      4. <a href="#Touch">Calibration touchscreen</a>
      5. <a href="#NetData">Netdata tool</a>
+     6. <a href="#CiscoFirmware">Update CISCO Switch Firmware</a>
 
 
 ### 1. Automatic installation <a id="Installation"/> 
@@ -166,7 +167,7 @@ The tool is available under the address http://*hostname*:19999
 
 For further information take a look at the official installation guide: https://github.com/firehol/netdata/wiki/Installation
 
-#### 2.6. Update Switch Hardware
+#### 2.6. Update CISCO Switch Firmware <a id="CiscoFirmware"/>
 
 Issue: http://www.viktorious.nl/2013/11/05/cisco-sg200-08-nfs/
 
