@@ -9,22 +9,18 @@ iface lo inet loopback
 auto eth0
 iface eth0 inet dhcp
 
-auto can0
-iface can0 inet manual
-pre-up ifconfig $IFACE up
-post-down ifconfig $IFACE down
+allow-hotplug can0
+iface can0 can static
+    bitrate 500000
 
-auto can1
-iface can1 inet manual
-pre-up ifconfig $IFACE up
-post-down ifconfig $IFACE down
+allow-hotplug can1
+iface can1 can static
+    bitrate 500000
 
-auto can2
-iface can2 inet manual
-pre-up ifconfig $IFACE up
-post-down ifconfig $IFACE down
+allow-hotplug can2
+iface can2 can static
+    bitrate 500000
 
-auto can3
-iface can3 inet manual
-pre-up ifconfig $IFACE up
-post-down ifconfig $IFACE down
+allow-hotplug can3
+iface can3 can static
+    bitrate 500000
