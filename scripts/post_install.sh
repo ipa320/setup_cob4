@@ -30,14 +30,21 @@ echo -e "\nEnter your list of pcs of your robot::"
 fi
 
 #generate a ssh key for root user per pc
-sudo echo -e "unset SSH_ASKPASS" >> /root/.bashrc
-if [ ! -d "/root/.ssh" ]; then
+if sudo grep -q SSH_ASKPASS "/root/.bashrc"; then
+  echo -e "\n${green}INFO: Found SSH_ASKPASS${NC}\n"
+else
+  sudo sh -c "echo 'unset SSH_ASKPASS' >> /root/.bashrc"
+fi
+if sudo test -d "/root/.ssh";then
+  echo -e "\n${green}INFO:.ssh directory exist in /root${NC}\n"
+else
   echo "create new ssh key"
   sudo su - root -c "ssh-keygen -f /root/.ssh/id_rsa -N ''"
   sudo su - root -c "ssh-keyscan -H localhost >> /root/.ssh/known_hosts"
   sudo su - root -c "ssh-copy-id root@localhost"
   sudo su - root -c "ssh root@localhost 'exit'"
   sudo cat /root/.ssh/id_rsa.pub | \
+  ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
   ssh root@localhost \
   "sudo tee -a /root/.ssh/authorized_keys"
 fi
@@ -45,10 +52,8 @@ fi
 for i in $pc_list; do
   sudo su - root -c "ssh-keyscan -H $i >> /root/.ssh/known_hosts"
   sudo su - root -c "ssh-copy-id root@$i"
-  sudo su - root -c "ssh root@$i 'exit'"
-  sudo cat /root/.ssh/id_rsa.pub | \
-  ssh root@$i \
-  "sudo mkdir /root/.ssh; sudo tee -a /root/.ssh/authorized_keys"
+  sudo su - root -c "ssh root@$i 'exit'" 
+  sudo cat /root/.ssh/id_rsa.pub | sudo ssh root@$i "mkdir -p /root/.ssh && cat >>  /root/.ssh/authorized_keys"
 done
 
 # syncronize passwords
@@ -57,19 +62,26 @@ for i in $pc_list; do
 done
 
 #generate a ssh key for robot user per pc
-sudo echo -e "unset SSH_ASKPASS" >> /u/robot/.bashrc
-if [ ! -d "/robot/.ssh" ]; then
+if grep -q SSH_ASKPASS "/u/robot/.bashrc"; then
+  echo -e "\n${green}INFO: Found SSH_ASKPASS${NC}\n"
+else
+  sudo sh -c "echo 'unset SSH_ASKPASS' >> /u/robot/.bashrc"
+fi
+if sudo test -d "/u/robot/.ssh";then
+  echo -e "\n${green}INFO:.ssh directory exist in /u/robot${NC}\n"
+else
   echo "create new ssh key"
   ssh-keygen -f /u/robot/.ssh/id_rsa -N ''
   ssh-keyscan -H localhost >> /u/robot/.ssh/known_hosts
+  ssh-add /u/robot/.ssh/id_rsa
   ssh-copy-id robot@localhost
   ssh robot@localhost 'exit'
 fi
 
 for i in $pc_list; do
   ssh-keyscan -H $i >> /u/robot/.ssh/known_hosts
-  ssh-copy-id robot@$i
-  ssh robot@$i 'exit'
+  ssh-copy-id -o PubkeyAuthentication=no robot@$i
+  ssh -o PubkeyAuthentication=no robot@$i 'exit'
 done
 
 # Configure basrc
