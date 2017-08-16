@@ -5,7 +5,7 @@ packages=$(dpkg --get-selections | grep -v "deinstall" | awk '{print $1}')
 echo $packages > /tmp/package_list
 
 # get pcs in local network
-IP=$(`hostname -I | awk '{print $1}'`)
+IP=$(hostname -I | awk '{print $1}')
 client_list=$(nmap --unprivileged $IP-98 --system-dns | grep report | awk '{print $5}')
 
 declare -a commands=(
