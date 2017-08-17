@@ -125,16 +125,16 @@ export ROS_MASTER_URI=http://myrobot-b1:11311
 
 if [ -e $MY_CATKIN_WORKSPACE/devel/setup.bash ]; then
     source $MY_CATKIN_WORKSPACE/devel/setup.bash
-elif [ -e /u/robot/git/care-o-bot/install/setup.bash ]; then
-    source /u/robot/git/care-o-bot/install/setup.bash
+elif [ -e /u/robot/git/care-o-bot/devel/setup.bash ]; then
+    source /u/robot/git/care-o-bot/devel/setup.bash
 else
     source /opt/ros/mydistro/setup.bash
 fi
 
 case '$ROS_PACKAGE_PATH' in
-    */u/robot/git/care-o-bot/install*);;
+    */u/robot/git/care-o-bot/devel*);;
     *)
-    if [ -e /u/robot/git/care-o-bot/install/setup.bash ]; then
+    if [ -e /u/robot/git/care-o-bot/devel/setup.bash ]; then
         echo -e "***************************\nYour robot admin created an overlay for the robot user\n"
     fi
     ;;
