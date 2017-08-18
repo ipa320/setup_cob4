@@ -12,7 +12,11 @@ if [ "$HOSTNAME" != "$robot_name-b1" ]; then
 fi
 
 IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
-client_list=$(nmap --unprivileged $IP-50 --system-dns | grep report | awk '{print $6}' | sed 's/(//g;s/)//g' | tr '\n' ' ') 
+client_list_ip=$(nmap --unprivileged $IP-50 --system-dns | grep report | awk '{print $6}' | sed 's/(//g;s/)//g' | tr '\n' ' ')
+client_list_hostnames_withdomain=$(nmap --unprivileged $IP-50 --system-dns | grep report | awk '{print $5}' | sed 's/(//g;s/)//g' | tr '\n' ' ')
+client_list_hostnames=$(nmap --unprivileged $IP-50 --system-dns | grep report | awk '{print $5}' | sed 's/(//g;s/)//g' | tr '\n' ' ' | sed 's/.cob4.*//')
+client_list_all="$client_list_ip $client_list_hostnames_withdomain $client_list_hostnames"
+client_list=$(echo $client_list_all | xargs -n1 | sort -u | xargs)
 
 echo "Executing adduser"
 sudo /usr/sbin/adduser $1 --home /u/$1
@@ -25,7 +29,7 @@ sudo adduser $1 plugdev
 sudo adduser $1 users 
 
 echo "Syncing passwd file to other cob-pcs"
-for i in $client_list
+for i in $client_list_ip
 do
 	sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$i:/etc/
 done
