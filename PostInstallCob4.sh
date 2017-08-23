@@ -26,7 +26,7 @@ if [[ ${HOSTNAME} != *"b1"* ]];then
 fi
 
 
-#### FUNCTION TO DEFINE SPECIFIC LIST OF PCs
+#### DEFINE SPECIFIC LIST OF PCs
 function Entry {
 
   echo -e "\n${green}INFO:POST-INSTALLATION${NC}\n" 
@@ -45,7 +45,7 @@ function Entry {
 }
 
 
-#### FUNCTION TO UPDATE ROOT SSH KEYS 
+#### UPDATE ROOT SSH KEYS 
 function UpdateRootSSH {
 
   echo -e "\n${green}INFO:Update root ssh keys${NC}\n"
@@ -64,7 +64,7 @@ function UpdateRootSSH {
     echo "create new ssh key"
     sudo su - root -c "ssh-keygen -f /root/.ssh/id_rsa -N ''"
     sudo su - root -c "ssh-keyscan -H localhost >> /root/.ssh/known_hosts"
-    sudo su - root -c "ssh-copy-id root@localhost"
+    sudo su - root -c "ssh-copy-id -i /root/.ssh/id_rsa.pub root@localhost"
     sudo su - root -c "ssh root@localhost 'exit'"
     sudo cat /root/.ssh/id_rsa.pub | \
     ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
@@ -74,14 +74,14 @@ function UpdateRootSSH {
 
   for i in $pc_list; do
     sudo su - root -c "ssh-keyscan -H $i >> /root/.ssh/known_hosts"
-    sudo su - root -c "ssh-copy-id root@$i"
+    sudo su - root -c "ssh-copy-id -i /root/.ssh/id_rsa.pub root@$i"
     sudo su - root -c "ssh root@$i 'exit'" 
     sudo cat /root/.ssh/id_rsa.pub | sudo ssh root@$i "mkdir -p /root/.ssh && cat >>  /root/.ssh/authorized_keys"
   done
 
 }
 
-#### FUNCTION Syncronize Robot User
+#### SYNCRONIZE ROBOT USER
 function  SyncronizeRobotUser {
 
   echo -e "\n${green}INFO:Syncronize Robot User${NC}\n"
@@ -126,7 +126,7 @@ function  SyncronizeRobotUser {
 
 }
 
-#### FUNCTION Setup Robot Bashrc Workspace
+#### SETUP ROBOT WORKSPACE
 function SetupRobotBashrcWorkspace {
 
   echo -e "\n${green}INFO:Setup Robot Bashrc Workspace${NC}\n"
@@ -156,7 +156,7 @@ function SetupRobotBashrcWorkspace {
 
 }
 
-####Miminc##############
+#### SETUP MIMIC
 function SetupMimicUser {
 
   echo -e "\n${green}INFO:Setup Mimic User${NC}\n"
@@ -174,16 +174,19 @@ function SetupMimicUser {
   fi
 
   cob-adduser mimic
+
   GDM_PATH=/etc/gdm/custom.conf
   sudo ssh $pc_head "sed -i \"s/#  AutomaticLoginEnable=True'/AutomaticLoginEnable=True'/g\" $GDM_PATH"
   sudo ssh $pc_head "sed -i \"s/#  AutomaticLogin=user1'/AutomaticLogin=mimic'/g\" $GDM_PATH"
 
-  DESKTOP_PATH=/u/mimic/.config/autostart/xhost.desktop
-  if sudo ssh $pc_head stat $DESKTOP_PATH \> /dev/null 2\>\&1; then
-    echo "File $DESKTOP_PATH exists"
+  DESKTOP_PATH=/u/mimic/.config/autostart
+  if sudo test -d $DESKTOP_PATH; then
+    echo "Folder $DESKTOP_PATH exists"
   else
     sudo su mimic -c "mkdir -p /u/mimic/.config/autostart/"
-    sudo su mimic -c "cat <<EOF > $DESKTOP_PATH
+  fi
+
+  sudo su mimic -c "cat <<EOF > $DESKTOP_PATH/xhost.desktop
 [Desktop Entry]
 Type=Application
 Exec=xhost +
@@ -196,11 +199,20 @@ Comment[en_US]=
 Comment=
 EOF"
 
-  fi
+  sudo su mimic -c 'cat <<EOF > $DESKTOP_PATH/update-monitor-position.desktop
+[Desktop Entry]
+Type=Application
+Exec=update-monitor-position 5
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name[en_US]=Update Monitor Positon
+Name=Update Monitor Positon
+Comment=Force monitors position 5 seconds after login
+EOF'
+
   #Brightness and lock
   LOCK_PATH=/etc/default/acpi-support
-  echo $pc_head
-  echo $LOCK_PATH
   sudo ssh $pc_head 'sed -i "s/LOCK_SCREEN=true/LOCK_SCREEN=false/g" $LOCK_PATH'
 
   #inactive
@@ -210,13 +222,15 @@ EOF"
   sudo su mimic -c 'wget -O /u/mimic/mimic.jpg https://raw.githubusercontent.com/ipa320/setup_cob4/master/mimic.jpg'
   command_setbackground="dbus-launch gsettings set org.gnome.desktop.background picture-uri 'file:/u/mimic/mimic.jpg'"
   sudo su mimic -c 'ssh $pc_head $command_setbackground'
-
-  #rotate clockwise
-  sudo su mimic -c 'ssh $pc_head "xrandr -o right"'
+  sudo su mimic -c 'sed -i "s/<rotation>normal/<rotation>right/g" /u/mimic/.config/monitors.xml'
+  sudo ssh $pc_head 'sudo wget -O /usr/local/sbin/update-monitor-position https://raw.githubusercontent.com/NicolasBernaerts/ubuntu-scripts/master/ubuntugnome/update-monitor-position'
+  sudo ssh $pc_head 'sudo chmod +x /usr/local/sbin/update-monitor-position'
+  sudo ssh $pc_head 'sudo wget -O /usr/share/applications/update-monitor-position.desktop https://raw.githubusercontent.com/NicolasBernaerts/ubuntu-scripts/master/ubuntugnome/update-monitor-position.desktop'
+  sudo ssh $pc_head 'sudo chmod +x /usr/share/applications/update-monitor-position.desktop'
 
 }
 
-######## Install Upstart############
+#### INSTALL UPSTART
 function  InstallUpstart {
 
   echo -e "\n${green}INFO: Install Upstart${NC}\n"
@@ -234,8 +248,6 @@ function  InstallUpstart {
 
   set -e
 
-  sudo apt-get install ros-indigo-robot-upstart
-  sudo apt-get install tmux
   sudo apt-get install nmap
 
   sudo cp -f /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
@@ -263,7 +275,7 @@ function  InstallUpstart {
 
 }
 
-######## Update Upstart############
+#### UPDATE UPSTART
 function  UpdateUpstart {
 
   echo -e "\n${green}INFO: Update Upstart${NC}\n"
