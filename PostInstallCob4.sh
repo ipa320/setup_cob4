@@ -8,6 +8,7 @@ INFO: This script is a helper tool for the setup and installation of Care-O-bot:
   4.  Add and setup the mimic user configuration \n
   5.  Install Upstart software \n
   6.  Update Upstart software \n
+  7.  Setup the udev rules for the scanners 
 EOF
 )
 
@@ -222,11 +223,14 @@ EOF'
   sudo su mimic -c 'wget -O /u/mimic/mimic.jpg https://raw.githubusercontent.com/ipa320/setup_cob4/master/mimic.jpg'
   command_setbackground="dbus-launch gsettings set org.gnome.desktop.background picture-uri 'file:/u/mimic/mimic.jpg'"
   sudo su mimic -c 'ssh $pc_head $command_setbackground'
-  sudo su mimic -c 'sed -i "s/<rotation>normal/<rotation>right/g" /u/mimic/.config/monitors.xml'
+  sudo su mimic -c 'sed -i "s/\<rotation\>normal/\<rotation\>right/g" /u/mimic/.config/monitors.xml'
   sudo ssh $pc_head 'sudo wget -O /usr/local/sbin/update-monitor-position https://raw.githubusercontent.com/NicolasBernaerts/ubuntu-scripts/master/ubuntugnome/update-monitor-position'
   sudo ssh $pc_head 'sudo chmod +x /usr/local/sbin/update-monitor-position'
   sudo ssh $pc_head 'sudo wget -O /usr/share/applications/update-monitor-position.desktop https://raw.githubusercontent.com/NicolasBernaerts/ubuntu-scripts/master/ubuntugnome/update-monitor-position.desktop'
   sudo ssh $pc_head 'sudo chmod +x /usr/share/applications/update-monitor-position.desktop'
+  sudo su mimic -c 'sudo wget -O /u/mimic/.config/autostart/update-monitor-position.desktop https://raw.githubusercontent.com/NicolasBernaerts/ubuntu-scripts/master/ubuntugnome/update-monitor-position.desktop'
+
+
 
 }
 
@@ -307,6 +311,43 @@ function  UpdateUpstart {
   sudo sed -i "s/myrobot/$robot_name/g" /usr/sbin/cob-start
 
 }
+
+#### SETUP SCANNERS
+function  ScanSetup {
+
+  echo -e "\n${green}INFO: Setup udev rules for the scanners ${NC}\n"
+
+  results=()
+  count=0
+
+  for file in /tmp/usb*; do
+	  result=$(ls -l |grep -R 'ATTRS{serial}=="F' $file)
+	  results[$count]=$result
+	  count=$((count+1))
+  done
+
+  if [[ ${results[0]} == ${results[1]} ]]
+	  then
+		  ATTRSSerialFL=${results[0]}
+		  ATTRSSerialR=${results[2]}
+  elif [[ ${results[1]} == ${results[2]} ]]
+	  then
+		  ATTRSSerialFL=${results[1]}
+		  ATTRSSerialR=${results[0]}
+  elif [[ ${results[0]} == ${results[2]} ]]
+	  then
+		  ATTRSSerialFL=${results[0]}
+		  ATTRSSerialR=${results[1]}
+  fi
+
+  ATTRSSerialFL="$( echo "$ATTRSSerialFL" | sed 's/ //g' )"	
+  ATTRSSerialR="$( echo "$ATTRSSerialR" | sed 's/ //g' )"	
+
+  sudo sed -i -re "s/(ScanFrontAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh	
+  sudo sed -i -re "s/(ScanLeftAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
+  sudo sed -i -re "s/(ScanRightAttr2=).*/\1'${ATTRSSerialR}'/g" /etc/init.d/udev_cob.sh
+
+}
 ########################################################################
 ############################# INITIAL MENU #############################
 ########################################################################
@@ -325,7 +366,8 @@ read -p "Please select an installation option
 4. Setup mimic user
 5. Install upstart
 6. Update upstart
-7. Full installation
+7. Scanner Checker
+8. Full installation
 " choice 
 
 robot_name="${HOSTNAME//-b1}"
@@ -356,11 +398,16 @@ if [[ "$choice" == 6 ]]
 fi
 if [[ "$choice" == 7 ]]
   then
+    ScanSetup
+fi
+if [[ "$choice" == 8 ]]
+  then
     UpdateRootSSH
     SyncronizeRobotUser
     SetupRobotBashrcWorkspace
     SetupMimicUser
     InstallUpstart
+    ScanSetup
 fi
 
 
