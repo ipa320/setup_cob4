@@ -17,8 +17,8 @@ red='\e[0;31m'
 NC='\e[0m' # No Color
 
 if [ "$USER" != "robot" ]; then 
-	echo -e "\n${red}FATAL: CAN ONLY BE EXECUTED AS robot USER${NC}"
-	exit
+  echo -e "\n${red}FATAL: CAN ONLY BE EXECUTED AS robot USER${NC}"
+  exit
 fi
 
 if [[ ${HOSTNAME} != *"b1"* ]];then
@@ -133,27 +133,27 @@ function SetupRobotBashrcWorkspace {
   echo -e "\n${green}INFO:Setup Robot Bashrc Workspace${NC}\n"
   Entry
 
-    if grep -q ROBOT "/u/robot/.bashrc"; then  
-      echo ".bashrc already configured"
-    else
-      wget -O /u/robot/.bashrc https://raw.githubusercontent.com/ipa320/setup_cob4/master/cob-pcs/user.bashrc 
-      sed -i -e "s/myrobot/${robot_name}/g" ~/.bashrc
-      sed -i -e "s/mydistro/indigo/g" ~/.bashrc #only working for indigo!!!
-    fi
+  if grep -q ROBOT "/u/robot/.bashrc"; then  
+    echo ".bashrc already configured"
+  else
+    wget -O /u/robot/.bashrc https://raw.githubusercontent.com/ipa320/setup_cob4/master/cob-pcs/user.bashrc 
+    sed -i -e "s/myrobot/${robot_name}/g" ~/.bashrc
+    sed -i -e "s/mydistro/indigo/g" ~/.bashrc #only working for indigo!!!
+  fi
 
-    if [ -d /u/robot/git/care-o-bot/src ]; then 
-      echo "INFO: robot workspace already exits"
-    else
-      mkdir -p /u/robot/git/care-o-bot/src
-      source /u/robot/.bashrc
-      if [ ! -d /etc/ros/rosdep/sources.list.d ]; then
-        sudo rosdep init
-      fi
-      rosdep update
-      cd /u/robot/git/care-o-bot/ && catkin init
-      cd /u/robot/git/care-o-bot/ && catkin config -DCMAKE_BUILD_TYPE=Release
-      cd /u/robot/git/care-o-bot/ && catkin build
+  if [ -d /u/robot/git/care-o-bot/src ]; then 
+    echo "INFO: robot workspace already exits"
+  else
+    mkdir -p /u/robot/git/care-o-bot/src
+    source /u/robot/.bashrc
+    if [ ! -d /etc/ros/rosdep/sources.list.d ]; then
+      sudo rosdep init
     fi
+    rosdep update
+    cd /u/robot/git/care-o-bot/ && catkin init
+    cd /u/robot/git/care-o-bot/ && catkin config -DCMAKE_BUILD_TYPE=Release
+    cd /u/robot/git/care-o-bot/ && catkin build
+  fi
 
 }
 
@@ -321,23 +321,23 @@ function  ScanSetup {
   count=0
 
   for file in /tmp/usb*; do
-	  result=$(ls -l |grep -R 'ATTRS{serial}=="F' $file)
-	  results[$count]=$result
-	  count=$((count+1))
+    result=$(ls -l |grep -R 'ATTRS{serial}=="F' $file)
+    results[$count]=$result
+    count=$((count+1))
   done
 
   if [[ ${results[0]} == ${results[1]} ]]
-	  then
-		  ATTRSSerialFL=${results[0]}
-		  ATTRSSerialR=${results[2]}
+    then
+      ATTRSSerialFL=${results[0]}
+      ATTRSSerialR=${results[2]}
   elif [[ ${results[1]} == ${results[2]} ]]
-	  then
-		  ATTRSSerialFL=${results[1]}
-		  ATTRSSerialR=${results[0]}
+    then
+      ATTRSSerialFL=${results[1]}
+      ATTRSSerialR=${results[0]}
   elif [[ ${results[0]} == ${results[2]} ]]
-	  then
-		  ATTRSSerialFL=${results[0]}
-		  ATTRSSerialR=${results[1]}
+    then
+      ATTRSSerialFL=${results[0]}
+      ATTRSSerialR=${results[1]}
   fi
 
   ATTRSSerialFL="$( echo "$ATTRSSerialFL" | sed 's/ //g' )"	
