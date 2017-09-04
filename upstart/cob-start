@@ -3,21 +3,9 @@
 set -e
 ROBOT=myrobot
 
-# TODO: make this a robot specific configuration in a yaml file
-pcs="
-$ROBOT-b1
-$ROBOT-t1
-$ROBOT-t2
-$ROBOT-t3
-$ROBOT-s1
-$ROBOT-h1"
+pcs="pc_list"
 
-# define ASUS camera pcs
-# TODO: make this a robot specific configuration in a yaml file
-camera_client_list="
-$ROBOT-t1
-$ROBOT-t3
-$ROBOT-s1"
+camera_client_list="checkPc_list"
 
 for i in $pcs; do 
     until ping -c1 $i &>/dev/null; do
@@ -30,7 +18,7 @@ for i in $camera_client_list; do
     Check_cam=false
     while [[ !$Check_cam ]]
       do
-	echo $(date)
+        echo $(date)
         if ssh $i stat /tmp/check_done \> /dev/null 2\>\&1
           then
             echo "$i File exists"
