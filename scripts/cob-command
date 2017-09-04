@@ -11,7 +11,7 @@ upstart_file_path="/etc/ros/cob.yaml"
 
 get_client_and_user_list(){
   IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
-  client_list=$(nmap --unprivileged $IP-98 --system-dns | grep report | awk '{print $6}' | sed 's/(//g;s/)//g' | tr '\n' ' ') 
+  client_list=$(nmap --unprivileged $IP-50 --system-dns | grep report | awk '{print $6}' | sed 's/(//g;s/)//g' | tr '\n' ' ') 
   pos=0
   for i in $client_list
   do

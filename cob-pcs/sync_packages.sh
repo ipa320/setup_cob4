@@ -6,7 +6,7 @@ echo $packages > /tmp/package_list
 
 # get pcs in local network
 IP=$(hostname -I | awk '{print $1}')
-client_list=$(nmap --unprivileged $IP-98 --system-dns | grep report | awk '{print $5}')
+client_list=$(nmap --unprivileged $IP-50 --system-dns | grep report | awk '{print $5}')
 
 declare -a commands=(
 "sudo apt-get update > /dev/null"
