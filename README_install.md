@@ -38,9 +38,16 @@ sudo update-initramfs -u
 
 #### 2.2. Hands configuration <a id="Hands"/>
 
-The hands use a bluetooth connection to receive the commands and send the link positions to ROS. This requires the configuration of the bluetooth devices on the hands (Raspberry pcs) and on the torso pc, also some upstart jobs are needed to launch the hand driver on boot. An image of the operative system can be copied to a new SD card and changing the hostname of the pc and the network configuration the hand pc is installed.
+The hands use a bluetooth connection to receive the commands and send the link positions to ROS. This requires the configuration of the bluetooth devices on the hands (Raspberry pcs) and on the torso pc, also some upstart jobs are needed to launch the hand driver on boot. An image of the operation system can be copied to a new SD card and changing the hostname of the pc and the network configuration the hand pc is installed.
 
-To change the hostname please modify the files */etc/hosts* and */etc/hostname* and to connect the pc to the robot router add following lines to */etc/network/interfaces*:
+Copy image from ```smb://saturn.ipa.fhg.de/ipa_320/326/Projekte/Care-O-bot_4/Entwicklung/Hand/LinuxImage/hand16GB.img``` to your local home directory and the copy to the SD card (min 16GB, adapt your path to the imge and the SD card):
+```
+sudo dd if=hand16GB.img of=/dev/sde
+```
+
+To change the hostname please modify the files ```/etc/hosts``` and ```/etc/hostname```.
+
+Connect the pc to the robot router and add the following lines to ```/etc/network/interfaces```:
 ```
 auto wlan0
 iface wlan0 inet dhcp
