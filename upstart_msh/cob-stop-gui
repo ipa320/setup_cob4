@@ -1,5 +1,0 @@
-#!/bin/bash
-echo "------------------------------------------------"
-echo "Stopping the Windows VM...."
-su mimic -c "ssh -o ConnectTimeout=15 myrobot-h1 'export DISPLAY=:0 && vboxmanage controlvm myrobot-win acpipowerbutton'"
-echo "------------------------------------------------"
