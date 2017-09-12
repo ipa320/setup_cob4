@@ -161,7 +161,6 @@ stop_session(){
 				while su $standard_user -l -c "ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 "; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && sleep 1; done
 			fi
 			su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
-			su $standard_user -l -c "source /opt/ros/indigo/setup.bash && echo 'y' | rosnode cleanup"
 		fi
 	else
 		su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
@@ -169,9 +168,7 @@ stop_session(){
 		  while su $standard_user -l -c "ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 "; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && sleep 1; done
 		fi
 		su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
-		su $standard_user -l -c "source /opt/ros/indigo/setup.bash && echo 'y' | rosnode cleanup"
 	fi
-
 }
 
 start_session(){
@@ -350,6 +347,12 @@ sub_stop(){
       stop_session ${sessions[$choice]}
     fi
   fi
+  echo -e "${red}===========================================${NC}"
+  echo "              Calling rosnode cleanup               "
+  echo -e "${red}===========================================${NC}"
+  echo -e "${black}\n ${NC}"
+  sleep 1 # give tmux sessions and rosnodes a little time to properly shutdown before calling rosnode cleanup
+  su $standard_user -l -c "source /opt/ros/indigo/setup.bash && echo 'y' | rosnode cleanup"
 }
 
 sub_stop_core(){
