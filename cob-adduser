@@ -42,7 +42,7 @@ if [ "$1" != "" ]; then
 	fi
 	echo "copying ssh-keys to other pcs, please enter password of new user"
 	sudo -u $1 cat /u/$1/.ssh/id_rsa.pub | ssh $1@$robot_name-b1 "cat >> /u/$1/.ssh/authorized_keys"
-	sudo -u $1 ssh -o PubkeyAuthentication=no $1@localhost 'exit'
+	sudo -u $1 ssh $1@localhost 'exit'
 	for i in $client_list
 	do
 		sudo -u $1 ssh $1@$i 'exit'

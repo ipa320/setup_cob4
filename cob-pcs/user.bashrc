@@ -108,9 +108,6 @@ fi
 # use global color settings
 source /etc/cob.bash.bashrc
 
-# provide setup scripts for all users
-export PATH=/u/robot/git/setup_cob4:$PATH
-
 
 # ROS specific settings
 
