@@ -1,14 +1,16 @@
 #!/bin/bash
+set -e # force the script to exit if any error occurs
+
 #### COMMON PARAMETERS
 usage=$(cat <<"EOF"
 INFO: This script is a helper tool for the setup and installation of Care-O-bot: \n
-  1.  Create root ssh keys \n
-  2.  Synchronizes the passwords and robot user \n
-  3.  Setup the robot bashrc and workspace \n
-  4.  Add and setup the mimic user configuration \n
-  5.  Install Upstart software \n
-  6.  Update Upstart software \n
-  7.  Setup the udev rules for the scanners 
+1. Update root ssh keys\n
+2. Synchronize robot user\n
+3. Setup robot bashrc and Workspace\n
+4. Setup mimic user\n
+5. Install upstart\n
+6. Setup udev rules for sick s300 scanners\n
+7. Full installation\n
 EOF
 )
 
@@ -82,17 +84,17 @@ function UpdateRootSSH {
 
 }
 
-#### SYNCRONIZE ROBOT USER
-function  SyncronizeRobotUser {
+#### SYNCHRONIZE USERS
+function  SynchronizeRobotUser {
 
-  echo -e "\n${green}INFO:Syncronize Robot User${NC}\n"
+  echo -e "\n${green}INFO:Synchronize Robot User${NC}\n"
 
   mkdir /u/robot/git
   git clone https://github.com/ipa320/setup_cob4 /u/robot/git/setup_cob4
-  cob-adduser robot
+  /u/robot/git/setup_cob4/cob-adduser robot
 
   #Entry
-  # syncronize passwords
+  # synchronize passwords
   #for i in $pc_list; do
   #  sudo su root -c -l "rsync -avz -e ssh /etc/passwd /etc/shadow /etc/group root@$i:/etc/"
   #done
@@ -174,11 +176,11 @@ function SetupMimicUser {
     read pc_head  
   fi
 
-  cob-adduser mimic
+  /u/robot/git/setup_cob4/cob-adduser mimic
 
   GDM_PATH=/etc/gdm/custom.conf
-  sudo ssh $pc_head "sed -i \"s/#  AutomaticLoginEnable=True'/AutomaticLoginEnable=True'/g\" $GDM_PATH"
-  sudo ssh $pc_head "sed -i \"s/#  AutomaticLogin=user1'/AutomaticLogin=mimic'/g\" $GDM_PATH"
+  sudo ssh $pc_head "sed -i s/'#  AutomaticLoginEnable=True'/'AutomaticLoginEnable=True'/g $GDM_PATH"
+  sudo ssh $pc_head "sed -i s/'#  AutomaticLogin=user1'/'AutomaticLogin=mimic'/g $GDM_PATH"
 
   DESKTOP_PATH=/u/mimic/.config/autostart
   if sudo test -d $DESKTOP_PATH; then
@@ -200,7 +202,7 @@ Comment[en_US]=
 Comment=
 EOF"
 
-  sudo su mimic -c 'cat <<EOF > $DESKTOP_PATH/update-monitor-position.desktop
+  sudo su mimic -c "cat <<EOF > $DESKTOP_PATH/update-monitor-position.desktop
 [Desktop Entry]
 Type=Application
 Exec=update-monitor-position 5
@@ -210,62 +212,91 @@ X-GNOME-Autostart-enabled=true
 Name[en_US]=Update Monitor Positon
 Name=Update Monitor Positon
 Comment=Force monitors position 5 seconds after login
-EOF'
+EOF"
 
   #Brightness and lock
   LOCK_PATH=/etc/default/acpi-support
-  sudo ssh $pc_head 'sed -i "s/LOCK_SCREEN=true/LOCK_SCREEN=false/g" $LOCK_PATH'
+  sudo ssh $pc_head "sed -i 's/LOCK_SCREEN=true/LOCK_SCREEN=false/g' $LOCK_PATH"
 
   #inactive
-  sudo su mimic -c 'ssh $pc_head "dbus-launch gsettings set org.gnome.desktop.session idle-delay 0"'
+  # FIXME: we need to login manually from msh@b1 to msh@h1 once to setup ssh key access. without that the following line will fail
+  sudo su mimic -c "ssh $pc_head 'dbus-launch gsettings set org.gnome.desktop.session idle-delay 0'"
 
   #Background
-  sudo su mimic -c 'wget -O /u/mimic/mimic.jpg https://raw.githubusercontent.com/ipa320/setup_cob4/master/mimic.jpg'
-  command_setbackground="dbus-launch gsettings set org.gnome.desktop.background picture-uri 'file:/u/mimic/mimic.jpg'"
-  sudo su mimic -c 'ssh $pc_head $command_setbackground'
-  sudo su mimic -c 'sed -i "s/\<rotation\>normal/\<rotation\>right/g" /u/mimic/.config/monitors.xml'
-  sudo ssh $pc_head 'sudo wget -O /usr/local/sbin/update-monitor-position https://raw.githubusercontent.com/NicolasBernaerts/ubuntu-scripts/master/ubuntugnome/update-monitor-position'
-  sudo ssh $pc_head 'sudo chmod +x /usr/local/sbin/update-monitor-position'
-  sudo ssh $pc_head 'sudo wget -O /usr/share/applications/update-monitor-position.desktop https://raw.githubusercontent.com/NicolasBernaerts/ubuntu-scripts/master/ubuntugnome/update-monitor-position.desktop'
-  sudo ssh $pc_head 'sudo chmod +x /usr/share/applications/update-monitor-position.desktop'
-  sudo su mimic -c 'sudo wget -O /u/mimic/.config/autostart/update-monitor-position.desktop https://raw.githubusercontent.com/NicolasBernaerts/ubuntu-scripts/master/ubuntugnome/update-monitor-position.desktop'
-
-
-
+  sudo su mimic -c 'cp /u/robot/git/setup_cob4/mimic.jpg /u/mimic/mimic.jpg'
+  command_setbackground="dbus-launch gsettings set org.gnome.desktop.background picture-uri file:/u/mimic/mimic.jpg"
+  sudo su mimic -c "ssh $pc_head $command_setbackground"
+  #sudo su mimic -c 'touch /u/mimic/.config/monitors.xml'
+  #sudo su mimic -c 'sed -i "s/\<rotation\>normal/\<rotation\>right/g" /u/mimic/.config/monitors.xml'
+  #sudo ssh $pc_head 'sudo wget -O /usr/local/sbin/update-monitor-position https://raw.githubusercontent.com/NicolasBernaerts/ubuntu-scripts/master/ubuntugnome/update-monitor-position'
+  #sudo ssh $pc_head 'sudo chmod +x /usr/local/sbin/update-monitor-position'
+  #sudo ssh $pc_head 'sudo wget -O /usr/share/applications/update-monitor-position.desktop https://raw.githubusercontent.com/NicolasBernaerts/ubuntu-scripts/master/ubuntugnome/update-monitor-position.desktop'
+  #sudo ssh $pc_head 'sudo chmod +x /usr/share/applications/update-monitor-position.desktop'
+  #sudo su mimic -c 'sudo wget -O /u/mimic/.config/autostart/update-monitor-position.desktop https://raw.githubusercontent.com/NicolasBernaerts/ubuntu-scripts/master/ubuntugnome/update-monitor-position.desktop'
 }
 
 #### INSTALL UPSTART
 function  InstallUpstart {
+  path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/cob.yaml"
+  pc_list="myrobot-b1 myrobot-t1 myrobot-t2 myrobot-t3 myrobot-s1 myrobot-h1"
+  checkPc_list=""
 
   echo -e "\n${green}INFO: Install Upstart${NC}\n"
-
-  echo -e "\n${green}INFO:UPSTART DEFAULT CONFIGURATION:${NC}"
-  echo -e "${green}check pc list:${NC} $ROBOT-t1 $ROBOT-t3 $ROBOT-s1"
-  echo -e "\nDo you want to install the default configuration (y/n)?"
-  read answer
-  if echo "$answer" | grep -iq "^y" ;then
-    checkPc_list="myrobot-t1 myrobot-t3 myrobot-s1"
-  else
-    echo -e "\n${green}==>${NC} Please specify the list of pcs with a check condition of your robot (e.g. 'cob4-2-t1 cob4-2-t3 cob4-2-s1'): "
-    read checkPc_list
-  fi
-
-  set -e
 
   sudo apt-get install nmap
 
   sudo cp -f /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
   sudo cp -f /u/robot/git/setup_cob4/upstart/cob-start /usr/sbin/cob-start
-  sudo sed -i "s/myrobot/$robot_name/g" /usr/sbin/cob-start
   sudo cp -f /u/robot/git/setup_cob4/upstart/cob-stop /usr/sbin/cob-stop
-  sudo cp -f /u/robot/git/setup_cob4/upstart/cob.yaml /etc/ros/cob.yaml
-  sudo sed -i "s/myrobot/$robot_name/g" /etc/ros/cob.yaml
   sudo cp -f /u/robot/git/setup_cob4/scripts/cob-command /usr/sbin/cob-command
 
   sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-start"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-start|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-start||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-start" -e "}" /etc/sudoers 
   sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-stop|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-stop||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-stop" -e "}" /etc/sudoers 
   sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-command"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-command|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-command||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-command" -e "}" /etc/sudoers 
 
+
+  # install cob.yaml
+  echo -e "\n${green}INFO:UPSTART CONFIGURATION:${NC}"
+  cat $path_to_cob_yaml
+  echo -e "\nDo you want to install the default configuration from $path_to_cob_yaml (y/n)?"
+  read answer
+  if echo "$answer" | grep -iq "^y" ;then
+    echo "installing default upstart configuration"
+  else
+    echo -e "${green}==>${NC} Please specify the path of the scenario configuration file (e.g. /u/robot/git/setup_cob4/upstart/cob.yaml): "
+    read path_to_cob_yaml
+    echo "installing the following upstart configuration from $path_to_cob_yaml"
+    cat $path_to_cob_yaml
+  fi
+  sudo cp -f $path_to_cob_yaml /etc/ros/cob.yaml
+  sudo sed -i "s/myrobot/$robot_name/g" /etc/ros/cob.yaml
+
+  # get pc_list
+  echo -e "\n${green}INFO:PC LIST FOR UPSTART:${NC}"
+  echo -e "${green}pc list:${NC} $pc_list"
+  echo -e "\nDo you want to install upstart with the default pc configuration (y/n)?"
+  read answer
+  if echo "$answer" | grep -iq "^y" ;then
+    echo "installing upstart for default pc configuration"
+  else
+    echo -e "\n${green}==>${NC} Please specify the list of pcs (e.g. 'cob4-2-b1 cob4-2-t1 cob4-2-t2 cob4-2-t3 cob4-2-s1 cob4-2-h1'): "
+    read pc_list
+  fi
+  sudo sed -i "s/pc_list/$pc_list/g" /usr/sbin/cob-start
+  
+  # get checkPc_list
+  echo -e "\n${green}INFO:CHECK PC LIST:${NC}"
+  echo -e "${green}check pc list:${NC} $checkPc_list"
+  echo -e "\nDo you want to install the default check pc configuration (y/n)?"
+  read answer
+  if echo "$answer" | grep -iq "^y" ;then
+    echo "installing default check pc configuration"
+  else
+    echo -e "\n${green}==>${NC} Please specify the list of pcs with a check condition of your robot (e.g. 'cob4-2-t1 cob4-2-t3 cob4-2-s1'): "
+    read checkPc_list
+  fi  
+  
+  # install check scripts on pc
   for client in $checkPc_list; do
     echo "-------------------------------------------"
     echo "Executing on $client"
@@ -274,42 +305,8 @@ function  InstallUpstart {
     ssh $client "sudo cp -f /u/robot/git/setup_cob4/scripts/check_cameras.sh /etc/init.d/check_cameras.sh"
     ssh $client "sudo update-rc.d check_cameras.sh defaults"
   done
-
-  UpdateUpstart
-
-}
-
-#### UPDATE UPSTART
-function  UpdateUpstart {
-
-  echo -e "\n${green}INFO: Update Upstart${NC}\n"
-
-  echo -e "\n${green}INFO:UPSTART DEFAULT CONFIGURATION:${NC}"
-  echo -e "${green}Command:${NC} roslaunch cob_bringup robot.launch"
-  echo -e "${green}pc list:${NC} $ROBOT-b1 $ROBOT-t1 $ROBOT-t2 $ROBOT-t3 $ROBOT-s1 $ROBOT-h1"
-  echo -e "${green}check pc list:${NC} $ROBOT-t1 $ROBOT-t3 $ROBOT-s1"
-  echo -e "\nDo you want to install the default configuration (y/n)?"
-  read answer
-  if echo "$answer" | grep -iq "^y" ;then
-    sudo cp -f /u/robot/git/setup_cob4/upstart/cob.yaml /etc/ros/cob.yaml
-    pc_list="myrobot-b1 myrobot-t1 myrobot-t2 myrobot-t3 myrobot-s1 myrobot-h1"
-    checkPc_list="myrobot-t1 myrobot-t3 myrobot-s1"
-  else
-    echo -e "${green}==>${NC} Please specify the path of the scenario configuration file (e.g. /u/robot/git/setup_cob4/upstart/cob.yaml): "
-    read answer
-    sudo cp -f $answer /etc/ros/cob.yaml
-    echo -e "\n${green}==>${NC} Please specify the list of pcs of your robot (e.g. 'cob4-2-b1 cob4-2-t1 cob4-2-t2 cob4-2-t3 cob4-2-s1 cob4-2-h1'): "
-    read pc_list
-    echo -e "\n${green}==>${NC} Please specify the list of pcs with a check condition of your robot (e.g. 'cob4-2-t1 cob4-2-t3 cob4-2-s1'): "
-    read checkPc_list
-  fi
-
-  sudo sed -i "s/myrobot/$robot_name/g" /etc/ros/cob.yaml
-  sudo cp -f /u/robot/git/setup_cob4/upstart/cob-start /usr/sbin/cob-start
-  sudo sed -i "s/pc_list/$pc_list/g" /usr/sbin/cob-start
   sudo sed -i "s/checkPc_list/$checkPc_list/g" /usr/sbin/cob-start
   sudo sed -i "s/myrobot/$robot_name/g" /usr/sbin/cob-start
-
 }
 
 #### SETUP SCANNERS
@@ -359,16 +356,8 @@ echo -e "${green}===========================================${NC}"
 echo "                INITIAL MENU"
 echo -e "${green}===========================================${NC}"
 
-read -p "Please select an installation option 
-1. Update root ssh keys
-2. Syncronize robot user
-3. Setup robot bashrc and Workspace
-4. Setup mimic user
-5. Install upstart
-6. Update upstart
-7. Scanner Checker
-8. Full installation
-" choice 
+echo -e $usage
+read -p "Please select an installation option: " choice 
 
 robot_name="${HOSTNAME//-b1}"
 
@@ -378,7 +367,7 @@ if [[ "$choice" == 1 ]]
 fi
 if [[ "$choice" == 2 ]]
   then
-    SyncronizeRobotUser
+    SynchronizeRobotUser
 fi
 if [[ "$choice" == 3 ]]
   then
@@ -394,16 +383,12 @@ if [[ "$choice" == 5 ]]
 fi
 if [[ "$choice" == 6 ]]
   then
-    UpdateUpstart
+    ScanSetup
 fi
 if [[ "$choice" == 7 ]]
   then
-    ScanSetup
-fi
-if [[ "$choice" == 8 ]]
-  then
     UpdateRootSSH
-    SyncronizeRobotUser
+    SynchronizeRobotUser
     SetupRobotBashrcWorkspace
     SetupMimicUser
     InstallUpstart
