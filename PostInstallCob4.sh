@@ -89,8 +89,6 @@ function  SynchronizeRobotUser {
 
   echo -e "\n${green}INFO:Synchronize Robot User${NC}\n"
 
-  mkdir /u/robot/git
-  git clone https://github.com/ipa320/setup_cob4 /u/robot/git/setup_cob4
   /u/robot/git/setup_cob4/cob-adduser robot
 
   #Entry
@@ -138,7 +136,7 @@ function SetupRobotBashrcWorkspace {
   if grep -q ROBOT "/u/robot/.bashrc"; then  
     echo ".bashrc already configured"
   else
-    wget -O /u/robot/.bashrc https://raw.githubusercontent.com/ipa320/setup_cob4/master/cob-pcs/user.bashrc 
+    cp /u/robot/git/setup_cob4/cob-pcs/user.bashrc /u/robot/.bashrc
     sed -i -e "s/myrobot/${robot_name}/g" ~/.bashrc
     sed -i -e "s/mydistro/indigo/g" ~/.bashrc #only working for indigo!!!
   fi
@@ -360,6 +358,13 @@ echo -e $usage
 read -p "Please select an installation option: " choice 
 
 robot_name="${HOSTNAME//-b1}"
+
+if [ ! -d /u/robot/git/setup_cob4 ]; then
+  mkdir /u/robot/git
+  git clone https://github.com/ipa320/setup_cob4 /u/robot/git/setup_cob4
+else
+  git --work-tree=/u/robot/git/setup_cob4 --git-dir=/u/robot/git/setup_cob4/.git pull origin master
+fi
 
 if [[ "$choice" == 1 ]]
   then
