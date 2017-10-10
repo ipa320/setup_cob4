@@ -316,9 +316,11 @@ function  ScanSetup {
   count=0
 
   for file in /tmp/usb*; do
-    result=$(ls -l |grep -R 'ATTRS{serial}=="F' $file)
-    results[$count]=$result
-    count=$((count+1))
+    if grep --quiet 'ATTRS{serial}=="F' $file; then
+      result=$(ls -l |grep -R 'ATTRS{serial}=="F' $file)
+      results[$count]=$result
+      count=$((count+1))
+    fi
   done
 
   if [[ ${results[0]} == ${results[1]} ]]
