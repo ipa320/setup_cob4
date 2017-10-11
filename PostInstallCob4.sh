@@ -318,10 +318,13 @@ function  ScanSetup {
   for file in /tmp/usb*; do
     if grep --quiet 'ATTRS{serial}=="F' $file; then
       result=$(ls -l |grep -R 'ATTRS{serial}=="F' $file)
+      echo "found scanner with $result"
       results[$count]=$result
       count=$((count+1))
     fi
   done
+
+  echo "found $count scanners: $results"
 
   if [[ ${results[0]} == ${results[1]} ]]
     then
