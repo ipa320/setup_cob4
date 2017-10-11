@@ -34,7 +34,7 @@ done
 if [ "$1" != "" ]; then
 	echo "setup bash environment"
 	sudo cp /u/robot/git/setup_cob4/cob-pcs/user.bashrc /u/$1/.bashrc
-	sudo sed -i "s/myrobot/$ROBOT/g" /u/$1/.bashrc
+	sudo sed -i "s/myrobot/$robot_name/g" /u/$1/.bashrc
 	sudo sed -i "s/mydistro/$ROS_DISTRO/g" /u/$1/.bashrc
 
 	if [ ! -f /u/$1/.ssh/id_rsa ]; then
@@ -50,6 +50,9 @@ if [ "$1" != "" ]; then
 		sudo -u $1 ssh $1@$i 'exit'
 	done
 
+	if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then
+		sudo su -c "rosdep init"
+	fi
 	sudo su -c "rosdep update" $1
 	sudo su -c "mkdir -p ~/git/care-o-bot" $1
 fi
