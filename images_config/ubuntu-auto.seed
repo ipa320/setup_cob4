@@ -45,4 +45,5 @@ d-i partman/confirm_nooverwrite boolean true
 # If we're booting using the backported Vivid kernel, install it too.
 d-i	base-installer/kernel/altmeta	string lts-xenial
 
-
+#use cob kitchen server as apt cacher
+d-i mirror/http/proxy string http://10.0.1.1:3142/
