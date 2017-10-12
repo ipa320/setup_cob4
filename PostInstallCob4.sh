@@ -1,5 +1,7 @@
 #!/bin/bash
 set -e # force the script to exit if any error occurs
+#set -o xtrace # print all commands before executing
+
 
 #### COMMON PARAMETERS
 usage=$(cat <<"EOF"
@@ -131,14 +133,13 @@ function  SynchronizeRobotUser {
 function SetupRobotBashrcWorkspace {
 
   echo -e "\n${green}INFO:Setup Robot Bashrc Workspace${NC}\n"
-  Entry
+
+  source /opt/ros/indigo/setup.bash #FIXME only working for indigo!!!
 
   if grep -q ROBOT "/u/robot/.bashrc"; then  
     echo ".bashrc already configured"
   else
-    cp /u/robot/git/setup_cob4/cob-pcs/user.bashrc /u/robot/.bashrc
-    sed -i -e "s/myrobot/${robot_name}/g" ~/.bashrc
-    sed -i -e "s/mydistro/indigo/g" ~/.bashrc #only working for indigo!!!
+    /u/robot/git/setup_cob4/cob-adduser robot
   fi
 
   if [ -d /u/robot/git/care-o-bot/src ]; then 
@@ -146,10 +147,6 @@ function SetupRobotBashrcWorkspace {
   else
     mkdir -p /u/robot/git/care-o-bot/src
     source /u/robot/.bashrc
-    if [ ! -d /etc/ros/rosdep/sources.list.d ]; then
-      sudo rosdep init
-    fi
-    rosdep update
     cd /u/robot/git/care-o-bot/ && catkin init
     cd /u/robot/git/care-o-bot/ && catkin config -DCMAKE_BUILD_TYPE=Release
     cd /u/robot/git/care-o-bot/ && catkin build
@@ -318,10 +315,13 @@ function  ScanSetup {
   for file in /tmp/usb*; do
     if grep --quiet 'ATTRS{serial}=="F' $file; then
       result=$(ls -l |grep -R 'ATTRS{serial}=="F' $file)
+      echo "found scanner with $result"
       results[$count]=$result
       count=$((count+1))
     fi
   done
+
+  echo "found $count scanners: $results"
 
   if [[ ${results[0]} == ${results[1]} ]]
     then

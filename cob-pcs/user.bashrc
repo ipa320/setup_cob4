@@ -81,12 +81,12 @@ fi
 alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
-alias b1='ssh -X robot@myrobot-b1'
-alias t1='ssh -X robot@myrobot-t1'
-alias t2='ssh -X robot@myrobot-t2'
-alias t3='ssh -X robot@myrobot-t3'
-alias s1='ssh -X robot@myrobot-s1'
-alias h1='ssh -X robot@myrobot-h1'
+alias b1='ssh -XC myrobot-b1'
+alias t1='ssh -XC myrobot-t1'
+alias t2='ssh -XC myrobot-t2'
+alias t3='ssh -XC myrobot-t3'
+alias s1='ssh -XC myrobot-s1'
+alias h1='ssh -XC myrobot-h1'
 
 
 # Alias definitions.
