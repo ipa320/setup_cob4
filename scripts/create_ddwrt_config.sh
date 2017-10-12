@@ -102,6 +102,8 @@ if echo "$static_leases" | grep -iq "^y" ;then
     read_mac "s1" 'mac_s_one'
     mac_h_one=""
     read_mac "h1" 'mac_h_one'
+    mac_flexisoft_ninetynine=""
+    read_mac "flexisoft" 'mac_flexisoft_ninetynine'
 
 fi
 
@@ -136,6 +138,7 @@ if echo "$static_leases" | grep -iq "^y" ;then
     echo MAC t3: $mac_t_three
     echo MAC s1: $mac_s_one
     echo MAC h1: $mac_h_one
+    echo MAC flexisoft: $mac_flexisoft_ninetynine
 fi
 if echo "$vpn_certs" | grep -iq "^y" ;then
     echo ca_cert: $ca_cert
@@ -192,6 +195,10 @@ if echo "$choice" | grep -iq "^y" ;then
       sed -i "$cmd" "$tmp_preferred"
 
       cmd='s/00:00:00:00:00:66/'$mac_h_one'/g'
+      sed -i "$cmd" "$tmp_essential"
+      sed -i "$cmd" "$tmp_preferred"
+
+      cmd='s/00:00:00:00:00:99/'$mac_flexisoft_ninetynine'/g'
       sed -i "$cmd" "$tmp_essential"
       sed -i "$cmd" "$tmp_preferred"
   fi
