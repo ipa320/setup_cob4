@@ -69,8 +69,8 @@ function UpdateRootSSH {
     echo "create new ssh key"
     sudo su - root -c "ssh-keygen -f /root/.ssh/id_rsa -N ''"
     sudo su - root -c "ssh-keyscan -H localhost >> /root/.ssh/known_hosts"
-    sudo su - root -c "ssh-copy-id -i /root/.ssh/id_rsa.pub root@localhost"
-    sudo su - root -c "ssh root@localhost 'exit'"
+    sudo -u root -i ssh-copy-id -i /root/.ssh/id_rsa.pub root@localhost
+    sudo -u root -i ssh root@localhost 'exit'
     sudo cat /root/.ssh/id_rsa.pub | \
     ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
     ssh root@localhost \
@@ -79,8 +79,8 @@ function UpdateRootSSH {
 
   for i in $pc_list; do
     sudo su - root -c "ssh-keyscan -H $i >> /root/.ssh/known_hosts"
-    sudo su - root -c "ssh-copy-id -i /root/.ssh/id_rsa.pub root@$i"
-    sudo su - root -c "ssh root@$i 'exit'" 
+    sudo -u root -i ssh-copy-id -i /root/.ssh/id_rsa.pub root@$i
+    sudo -u root -i ssh root@$i 'exit'
     sudo cat /root/.ssh/id_rsa.pub | sudo ssh root@$i "mkdir -p /root/.ssh && cat >>  /root/.ssh/authorized_keys"
   done
 
