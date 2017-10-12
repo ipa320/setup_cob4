@@ -174,8 +174,8 @@ function SetupMimicUser {
   /u/robot/git/setup_cob4/cob-adduser mimic
 
   GDM_PATH=/etc/gdm/custom.conf
-  sudo ssh $pc_head "sed -i s/'#  AutomaticLoginEnable=True'/'AutomaticLoginEnable=True'/g $GDM_PATH"
-  sudo ssh $pc_head "sed -i s/'#  AutomaticLogin=user1'/'AutomaticLogin=mimic'/g $GDM_PATH"
+  sudo ssh $pc_head "sed -i s/'#  AutomaticLoginEnable = true'/'AutomaticLoginEnable = true'/g $GDM_PATH"
+  sudo ssh $pc_head "sed -i s/'#  AutomaticLogin = user1'/'AutomaticLogin = mimic'/g $GDM_PATH"
 
   DESKTOP_PATH=/u/mimic/.config/autostart
   if sudo test -d $DESKTOP_PATH; then
@@ -213,21 +213,13 @@ EOF"
   LOCK_PATH=/etc/default/acpi-support
   sudo ssh $pc_head "sed -i 's/LOCK_SCREEN=true/LOCK_SCREEN=false/g' $LOCK_PATH"
 
-  #inactive
-  # FIXME: we need to login manually from msh@b1 to msh@h1 once to setup ssh key access. without that the following line will fail
-  sudo su mimic -c "ssh $pc_head 'dbus-launch gsettings set org.gnome.desktop.session idle-delay 0'"
+  sudo -u mimic -i ssh $pc_head 'dbus-launch gsettings set org.gnome.desktop.session idle-delay 0'
 
   #Background
   sudo su mimic -c 'cp /u/robot/git/setup_cob4/mimic.jpg /u/mimic/mimic.jpg'
   command_setbackground="dbus-launch gsettings set org.gnome.desktop.background picture-uri file:/u/mimic/mimic.jpg"
   sudo su mimic -c "ssh $pc_head $command_setbackground"
-  #sudo su mimic -c 'touch /u/mimic/.config/monitors.xml'
-  #sudo su mimic -c 'sed -i "s/\<rotation\>normal/\<rotation\>right/g" /u/mimic/.config/monitors.xml'
-  #sudo ssh $pc_head 'sudo wget -O /usr/local/sbin/update-monitor-position https://raw.githubusercontent.com/NicolasBernaerts/ubuntu-scripts/master/ubuntugnome/update-monitor-position'
-  #sudo ssh $pc_head 'sudo chmod +x /usr/local/sbin/update-monitor-position'
-  #sudo ssh $pc_head 'sudo wget -O /usr/share/applications/update-monitor-position.desktop https://raw.githubusercontent.com/NicolasBernaerts/ubuntu-scripts/master/ubuntugnome/update-monitor-position.desktop'
-  #sudo ssh $pc_head 'sudo chmod +x /usr/share/applications/update-monitor-position.desktop'
-  #sudo su mimic -c 'sudo wget -O /u/mimic/.config/autostart/update-monitor-position.desktop https://raw.githubusercontent.com/NicolasBernaerts/ubuntu-scripts/master/ubuntugnome/update-monitor-position.desktop'
+
 }
 
 #### INSTALL UPSTART
