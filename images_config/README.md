@@ -337,47 +337,31 @@ And Turn off language choice menu and specify your desired language.
 And make the installer read kickstart and preseed files by including new menu selection for automatic Ubuntu installation. To do this, copy ```~/git/setup_cob4/images_config/txt.cfg``` to ```~/ubuntu_files_master/isolinux/txt.cfg``` or ```~/ubuntu_files_slave/isolinux/txt.cfg```
 
 
-For the Master:
+For the Master and Slave:
 ```
-mkdir ~/ubuntu_iso_master
-sudo  mount -o loop ~/Downloads/ubuntu-14.04.5-server-amd64.iso ~/ubuntu_iso_master
-cp -r ~/ubuntu_iso_master ~/ubuntu_files_master
-chmod +w -R ~/ubuntu_files_master
-cp ~/git/setup_cob4/images_config/ks-robot-master.cfg ~/ubuntu_files_master/ks-robot.cfg
-cp ~/git/setup_cob4/images_config/ubuntu-auto.seed ~/ubuntu_files_master
-echo en >> ~/ubuntu_files_master/isolinux/lang
-cp ~/git/setup_cob4/images_config/txt.cfg ~/ubuntu_files_master/isolinux/txt.cfg
-cp ~/git/setup_cob4/images_config/initrd.gz ~/ubuntu_files_master/install
+mkdir ~/ubuntu_iso
+sudo  mount -o loop ~/Downloads/ubuntu-14.04.5-server-amd64.iso ~/ubuntu_iso
+cp -r ~/ubuntu_iso ~/ubuntu_files
+chmod +w -R ~/ubuntu_files
+cp ~/git/setup_cob4/images_config/ks-robot-master.cfg ~/ubuntu_files
+cp ~/git/setup_cob4/images_config/ks-robot-slave.cfg ~/ubuntu_files
+cp ~/git/setup_cob4/images_config/ubuntu-auto.seed ~/ubuntu_files
+cp ~/git/setup_cob4/images_config/ubuntu-auto-cached.seed ~/ubuntu_files
+echo en >> ~/ubuntu_files/isolinux/lang
+cp ~/git/setup_cob4/images_config/txt.cfg ~/ubuntu_files/isolinux/txt.cfg
+cp ~/git/setup_cob4/images_config/initrd.gz ~/ubuntu_files/install
 ```
-
-For the Slave:
-```
-mkdir ~/ubuntu_iso_slave
-sudo  mount -o loop ~/Downloads/ubuntu-14.04.5-server-amd64.iso ~/ubuntu_iso_slave
-cp -r ~/ubuntu_iso_slave ~/ubuntu_files_slave
-chmod +w -R ~/ubuntu_files_slave
-cp ~/git/setup_cob4/images_config/ks-robot-slave.cfg ~/ubuntu_files_slave/ks-robot.cfg
-cp ~/git/setup_cob4/images_config/ubuntu-auto.seed ~/ubuntu_files_slave
-echo en >> ~/ubuntu_files_slave/isolinux/lang
-cp ~/git/setup_cob4/images_config/txt.cfg ~/ubuntu_files_slave/isolinux/txt.cfg
-cp ~/git/setup_cob4/images_config/initrd.gz ~/ubuntu_files_slave/install
-```
-
 
 ### 6. Recreate ISO file and make bootable USB media <a id="Recreate ISO file and make bootable USB media"/>
 Create new ISO:
-For Master:
+For Master and Slave:
 ```
-mkisofs -D -r -V "Ubuntu-Auto-Care-O-bot-MASTER" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o ~/ubuntu-care-o-bot-master.iso ~/ubuntu_files_master
-```
-For Slave:
-```
-mkisofs -D -r -V "Ubuntu-Auto-Care-O-bot-SLAVE" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o ~/ubuntu-care-o-bot-slave.iso ~/ubuntu_files_slave
+mkisofs -D -r -V "Ubuntu-14.04-Care-O-bot" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o ~/ubuntu-14.04-care-o-bot.iso ~/ubuntu_files
 ```
 
 ### 7. Instructions <a id="Instructions"/>
 
-1. Create bootable USB media using Ubuntu Startup Disk Creator from newly created Ubuntu-Auto-Care-O-bot-MASTER.iso and Ubuntu-Auto-Care-O-bot-SLAVE.iso files in two different USB sticks.
+1. Create bootable USB media using Ubuntu Startup Disk Creator from newly created Ubuntu-14.04-Care-O-bot.iso file.
 2. After creating bootable USB media, check the files and folders compare with ubuntu_files folder. For example After creating Master bootable USB media check the files and folders of USB media with ubuntu_files_master folder, due to few permissions isolinux folder will be missing in USB media, we suggest you to copy from the ubuntu_files-master folder and paste in USB media.
 3. We can use Disc Burner or k3b applications to burn images in to the CD/DVD to make bootable CD/DVD
 4. If you are using new NUC machine we suggest you to start with CD/DVD. Which creates CD-ROM folder.
@@ -386,8 +370,7 @@ mkisofs -D -r -V "Ubuntu-Auto-Care-O-bot-SLAVE" -cache-inodes -J -l -b isolinux/
 ### 8. Cleanup <a id="Cleanup"/>
 To cleanup you local system run the following commands
 ```
-sudo umount ~/ubuntu_iso_master
-sudo umount ~/ubuntu_iso_slave
+sudo umount ~/ubuntu_iso
 rm -rf ~/ubuntu*
 ```
 
