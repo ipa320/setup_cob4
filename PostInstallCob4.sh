@@ -6,13 +6,12 @@ set -e # force the script to exit if any error occurs
 #### COMMON PARAMETERS
 usage=$(cat <<"EOF"
 INFO: This script is a helper tool for the setup and installation of Care-O-bot: \n
-1. Update root ssh keys\n
-2. Synchronize robot user\n
-3. Setup robot bashrc and Workspace\n
-4. Setup mimic user\n
+1. Setup root user\n
+2. Setup robot user\n
+3. Setup mimic user\n
+4. Setup devices (e.g. udev for laser scanners)\n
 5. Install upstart\n
-6. Setup udev rules for sick s300 scanners\n
-7. Full installation\n
+99. Full installation\n
 EOF
 )
 
@@ -50,10 +49,10 @@ function Entry {
 }
 
 
-#### UPDATE ROOT SSH KEYS 
-function UpdateRootSSH {
+#### Setup root user
+function SetupRootUser {
 
-  echo -e "\n${green}INFO:Update root ssh keys${NC}\n"
+  echo -e "\n${green}INFO:setup root user${NC}\n"
 
   Entry
   #generate a ssh key for root user per pc
@@ -83,56 +82,15 @@ function UpdateRootSSH {
     sudo -u root -i ssh root@$i 'exit'
     sudo cat /root/.ssh/id_rsa.pub | sudo ssh root@$i "mkdir -p /root/.ssh && cat >>  /root/.ssh/authorized_keys"
   done
-
+  echo "setup root user done"
 }
 
-#### SYNCHRONIZE USERS
-function  SynchronizeRobotUser {
+#### Setup Robot user
+function  SetupRobotUser {
 
-  echo -e "\n${green}INFO:Synchronize Robot User${NC}\n"
+  echo -e "\n${green}INFO:Setup Robot User${NC}\n"
 
   /u/robot/git/setup_cob4/cob-adduser robot
-
-  #Entry
-  # synchronize passwords
-  #for i in $pc_list; do
-  #  sudo su root -c -l "rsync -avz -e ssh /etc/passwd /etc/shadow /etc/group root@$i:/etc/"
-  #done
-
-
-  #generate a ssh key for robot user per pc
-  #if sudo grep -q SSH_ASKPASS "/u/robot/.bashrc"; then
-  #  echo -e "\n${green}INFO: Found SSH_ASKPASS${NC}\n"
-  #else
-  #  sudo sh -c "echo 'unset SSH_ASKPASS' >> /u/robot/.bashrc"
-  #fi
-  #if sudo test -d "/u/robot/.ssh";then
-  #  echo -e "\n${green}INFO:.ssh directory exist in /u/robot${NC}\n"
-  #else
-  #  echo "create new ssh key"
-  #  ssh-keygen
-  #  ssh-copy-id -o PubkeyAuthentication=no robot@localhost
-  #  ssh -o PubkeyAuthentication=no robot@$i 'exit'
-  #fi
-
-
-  #for i in $pc_list; do
-  #  if [[ -s /u/robot/.ssh/known_hosts ]]; then 
-  #    echo "known_hosts file is full" 
-  #  else 
-  #    eval "$(ssh-agent -s)"
-  #    ssh-add
-  #    ssh-copy-id -o PubkeyAuthentication=no robot@$i
-  #    sudo ssh -o PubkeyAuthentication=no robot@$i 'exit'
-  #  fi
-  #done
-
-}
-
-#### SETUP ROBOT WORKSPACE
-function SetupRobotBashrcWorkspace {
-
-  echo -e "\n${green}INFO:Setup Robot Bashrc Workspace${NC}\n"
 
   source /opt/ros/indigo/setup.bash #FIXME only working for indigo!!!
 
@@ -151,7 +109,7 @@ function SetupRobotBashrcWorkspace {
     cd /u/robot/git/care-o-bot/ && catkin config -DCMAKE_BUILD_TYPE=Release
     cd /u/robot/git/care-o-bot/ && catkin build
   fi
-
+  echo "setup robot user done"
 }
 
 #### SETUP MIMIC
@@ -220,6 +178,7 @@ EOF"
   command_setbackground="dbus-launch gsettings set org.gnome.desktop.background picture-uri file:/u/mimic/mimic.jpg"
   sudo su mimic -c "ssh $pc_head $command_setbackground"
 
+  echo "setup mimic user done"
 }
 
 #### INSTALL UPSTART
@@ -294,10 +253,12 @@ function  InstallUpstart {
   done
   sudo sed -i "s/checkPc_list/$checkPc_list/g" /usr/sbin/cob-start
   sudo sed -i "s/myrobot/$robot_name/g" /usr/sbin/cob-start
+
+  echo "install upstart done"
 }
 
 #### SETUP SCANNERS
-function  ScanSetup {
+function  SetupDevices {
 
   echo -e "\n${green}INFO: Setup udev rules for the scanners ${NC}\n"
 
@@ -336,6 +297,7 @@ function  ScanSetup {
   sudo sed -i -re "s/(ScanLeftAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
   sudo sed -i -re "s/(ScanRightAttr2=).*/\1'${ATTRSSerialR}'/g" /etc/init.d/udev_cob.sh
 
+  echo "setup devices done"
 }
 ########################################################################
 ############################# INITIAL MENU #############################
@@ -362,36 +324,31 @@ fi
 
 if [[ "$choice" == 1 ]]
   then
-    UpdateRootSSH
+    SetupRootUser
 fi
 if [[ "$choice" == 2 ]]
   then
-    SynchronizeRobotUser
+    SetupRobotUser
 fi
 if [[ "$choice" == 3 ]]
   then
-    SetupRobotBashrcWorkspace
+    SetupMimicUser
 fi
 if [[ "$choice" == 4 ]]
   then
-    SetupMimicUser
+    SetupDevices
 fi
 if [[ "$choice" == 5 ]]
   then
     InstallUpstart
 fi
-if [[ "$choice" == 6 ]]
+if [[ "$choice" == 99 ]]
   then
-    ScanSetup
-fi
-if [[ "$choice" == 7 ]]
-  then
-    UpdateRootSSH
-    SynchronizeRobotUser
-    SetupRobotBashrcWorkspace
+    SetupRootUser
+    SetupRobotUser
     SetupMimicUser
+    SetupDevices
     InstallUpstart
-    ScanSetup
 fi
 
 
