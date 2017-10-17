@@ -167,6 +167,20 @@ Name=Update Monitor Positon
 Comment=Force monitors position 5 seconds after login
 EOF"
 
+  sudo su mimic -c "cat <<EOF > $DESKTOP_PATH/rotation.desktop
+[Desktop Entry]
+Type=Application
+Exec=xrandr -o right
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=2
+Name[en_US]=rotation
+Name=rotation
+Comment[en_US]=rotation
+Comment=rotation
+EOF"
+
   #Brightness and lock
   LOCK_PATH=/etc/default/acpi-support
   sudo ssh $pc_head "sed -i 's/LOCK_SCREEN=true/LOCK_SCREEN=false/g' $LOCK_PATH"
