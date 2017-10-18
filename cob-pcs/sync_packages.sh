@@ -10,10 +10,10 @@ IP=$(hostname -I | awk '{print $1}')
 client_list=$(nmap --unprivileged $IP-50 --system-dns | grep report | awk '{print $5}')
 
 declare -a commands=(
-"sudo apt-get update > /dev/null"
-"sudo apt-get install -y $packages > /dev/null"
-"sudo apt-get upgrade -y > /dev/null"
-"sudo apt-get autoremove -y > /dev/null"
+"sudo apt-get update"
+"sudo apt-get install -y $packages"
+"sudo apt-get upgrade -y"
+"sudo apt-get autoremove -y"
 )
 
 
