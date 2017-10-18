@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # get installed packages
 packages=$(dpkg --get-selections | grep -v "deinstall" | awk '{print $1}')
@@ -10,9 +11,9 @@ client_list=$(nmap --unprivileged $IP-50 --system-dns | grep report | awk '{prin
 
 declare -a commands=(
 "sudo apt-get update > /dev/null"
-"sudo apt-get install -y $packages"
-"sudo apt-get upgrade -y"
-"sudo apt-get autoremove -y"
+"sudo apt-get install -y $packages > /dev/null"
+"sudo apt-get upgrade -y > /dev/null"
+"sudo apt-get autoremove -y > /dev/null"
 )
 
 
@@ -32,4 +33,6 @@ for client in $client_list; do
   done
   echo ""
 done
+
+echo "syncing packages done."
 
