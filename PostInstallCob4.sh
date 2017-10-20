@@ -62,8 +62,8 @@ function SetupRootUser {
     sudo sh -c "echo 'unset SSH_ASKPASS' >> /root/.bashrc"
   fi
 
-  if sudo test -d "/root/.ssh";then
-    echo -e "\n${green}INFO:.ssh directory exist in /root${NC}\n"
+  if sudo test -f "/root/.ssh/id_rsa.pub";then
+    echo -e "\n${green}INFO:ssh key exists for root${NC}\n"
   else
     echo "create new ssh key"
     sudo su - root -c "ssh-keygen -f /root/.ssh/id_rsa -N ''"
