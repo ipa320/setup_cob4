@@ -52,3 +52,10 @@
   - `./create_ddwrt_script.sh` <br>
   - enter all required values and double check them (if you are unshure how to get the VPN Certificates look at the [README_Openvpn](README_Openvpn.md)
  
+### 5. (Optional) turn off direct wifi
+Go to `Administration/commands` and save
+```
+ifconfig ath0 down
+ifconfig ath1 down
+```
+and save as `Save Startup`.
