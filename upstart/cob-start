@@ -15,7 +15,7 @@ for i in $pcs; do
 done
 
 # fixes https://github.com/ipa320/msh/issues/887 to not hang on login screen but boot into desktop
-ssh $ROBOT-h1 -c "sudo service gdm restart"
+ssh $ROBOT-h1 sudo service gdm restart
 
 for i in $camera_client_list; do 
     Check_cam=false
