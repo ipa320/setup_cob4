@@ -2,9 +2,7 @@
 
 set -e
 ROBOT=myrobot
-
 pcs="pc_list"
-
 camera_client_list="checkPc_list"
 
 for i in $pcs; do 
@@ -13,9 +11,6 @@ for i in $pcs; do
     done
     echo $i alive
 done
-
-# fixes https://github.com/ipa320/msh/issues/887 to not hang on login screen but boot into desktop
-ssh $ROBOT-h1 sudo service gdm restart
 
 for i in $camera_client_list; do 
     Check_cam=false
@@ -33,6 +28,42 @@ for i in $camera_client_list; do
       sleep 1
     done
 done
+
+# fixes https://github.com/ipa320/msh/issues/887 to not hang on login screen but boot into desktop
+while [ true ]
+  do
+    if [[ -n $( ssh $ROBOT-h1 'ps -ef | grep "gdm$"' ) ]]
+    then
+      echo "running"
+      break
+    fi
+  sleep 1
+done
+echo "stopping"
+ssh $ROBOT-h1 'sudo service gdm stop'
+while [ true ]
+  do
+    if [[ -z $( ssh $ROBOT-h1 'ps -ef | grep "gdm$"' ) ]]
+    then
+      echo "stopped"
+      break
+    fi
+  sleep 1
+done
+echo "restarting"
+ssh $ROBOT-h1 'sudo service gdm restart'
+while [ true ]
+  do
+    if [[ -n $( ssh $ROBOT-h1 'ps -ef | grep "gdm$"' ) ]]
+    then
+      echo "running"
+      break
+    fi
+  sleep 1
+done
+sleep 10 # wait until screen is rotated
+echo "slept"
+
 
 function log() {
   logger -s -p user.$1 ${@:2}
