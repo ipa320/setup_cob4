@@ -109,6 +109,11 @@ function  SetupRobotUser {
     cd /u/robot/git/care-o-bot/ && catkin config -DCMAKE_BUILD_TYPE=Release
     cd /u/robot/git/care-o-bot/ && catkin build
   fi
+
+  for i in $pc_list; do
+    sudo -u root -i ssh-copy-id -i /u/robot/.ssh/id_rsa.pub robot@$i
+    sudo -u root -i ssh robot@$i 'exit'
+  done
   echo "setup robot user done"
 }
 
