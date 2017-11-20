@@ -90,6 +90,7 @@ function  SetupRobotUser {
 
   echo -e "\n${green}INFO:Setup Robot User${NC}\n"
 
+  Entry
   /u/robot/git/setup_cob4/cob-adduser robot
 
   source /opt/ros/indigo/setup.bash #FIXME only working for indigo!!!
@@ -111,7 +112,7 @@ function  SetupRobotUser {
   fi
 
   for i in $pc_list; do
-    sudo -u root -i ssh-copy-id -i /u/robot/.ssh/id_rsa.pub robot@$i
+    sudo -u root -i ssh-copy-id robot@$i
     sudo -u root -i ssh robot@$i 'exit'
   done
   echo "setup robot user done"
