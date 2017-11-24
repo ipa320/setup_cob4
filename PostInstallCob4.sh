@@ -90,6 +90,7 @@ function  SetupRobotUser {
 
   echo -e "\n${green}INFO:Setup Robot User${NC}\n"
 
+  Entry
   /u/robot/git/setup_cob4/cob-adduser robot
 
   source /opt/ros/indigo/setup.bash #FIXME only working for indigo!!!
@@ -109,6 +110,11 @@ function  SetupRobotUser {
     cd /u/robot/git/care-o-bot/ && catkin config -DCMAKE_BUILD_TYPE=Release
     cd /u/robot/git/care-o-bot/ && catkin build
   fi
+
+  for i in $pc_list; do
+    sudo -u root -i ssh-copy-id robot@$i
+    sudo -u root -i ssh robot@$i 'exit'
+  done
   echo "setup robot user done"
 }
 
@@ -132,8 +138,9 @@ function SetupMimicUser {
   /u/robot/git/setup_cob4/cob-adduser mimic
 
   GDM_PATH=/etc/gdm/custom.conf
-  sudo ssh $pc_head "sed -i s/'#  AutomaticLoginEnable = true'/'AutomaticLoginEnable = true'/g $GDM_PATH"
-  sudo ssh $pc_head "sed -i s/'#  AutomaticLogin = user1'/'AutomaticLogin = mimic'/g $GDM_PATH"
+  sudo ssh $pc_head "sed -i s/'#  TimedLoginEnable = true'/'TimedLoginEnable = true'/g $GDM_PATH"
+  sudo ssh $pc_head "sed -i s/'#  TimedLogin = user1'/'TimedLogin = mimic'/g $GDM_PATH"
+  sudo ssh $pc_head "sed -i s/'#  TimedLoginDelay = 10'/'TimedLoginDelay = 10'/g $GDM_PATH"
 
   DESKTOP_PATH=/u/mimic/.config/autostart
   if sudo test -d $DESKTOP_PATH; then
