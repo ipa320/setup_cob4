@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+# upgrade local pc
+sudo apt-get update
+sudo apt-get upgrade -y
+sudo apt-get autoremove -y
+
 # get installed packages
 packages=$(dpkg --get-selections | grep -v "deinstall" | awk '{print $1}')
 echo $packages > /tmp/package_list
