@@ -15,6 +15,15 @@ INFO: This script is a helper tool for the setup and installation of Care-O-bot:
 EOF
 )
 
+upstart_selection=$(cat << "EOF"
+INFO: The following upstart variants are available: \n
+1. cob_bringup\n
+2. unity_bringup\n
+3. msh_all\n
+4. custom upstart\n
+EOF
+)
+
 green='\e[0;32m'
 red='\e[0;31m'
 NC='\e[0m' # No Color
@@ -43,7 +52,7 @@ function query_pc_list {
     LIST=$1
   else
     echo -e "\n${green}==>${NC} Please specify your custom pc list (using the hostnames):"
-  echo -e "\nEnter your list of pcs of your robot::"
+    echo -e "\nEnter your list of pcs of your robot::"
     read LIST
   fi
 }
@@ -62,7 +71,7 @@ function SetupRootUser {
     sudo sh -c "echo 'unset SSH_ASKPASS' >> /root/.bashrc"
   fi
 
-  if sudo test -f "/root/.ssh/id_rsa.pub";then
+  if sudo test -f "/root/.ssh/id_rsa.pub"; then
     echo -e "\n${green}INFO:ssh key exists for root${NC}\n"
   else
     echo "create new ssh key"
@@ -197,8 +206,6 @@ EOF"
 function InstallUpstart {
   echo -e "\n${green}INFO: Install Upstart${NC}\n"
 
-  path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/cob.yaml"
-
   sudo apt-get install nmap
 
   sudo cp -f /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
@@ -212,17 +219,20 @@ function InstallUpstart {
 
   # install cob.yaml
   echo -e "\n${green}INFO:UPSTART CONFIGURATION:${NC}"
-  cat $path_to_cob_yaml
-  echo -e "\nDo you want to install the default configuration from $path_to_cob_yaml (y/n)?"
-  read answer
-  if echo "$answer" | grep -iq "^y" ;then
-    echo "installing default upstart configuration"
+  echo -e $upstart_selection
+  read -p "Please select an upstart option: " choice
+  if [[ "$choice" == 1 ]] ; then
+    path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/cob_bringup.yaml"
+  elif [[ "$choice" == 2 ]] ; then
+    path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/unity_bringup.yaml"
+  elif [[ "$choice" == 3 ]] ; then
+    path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/msh_all.yaml"
   else
-    echo -e "${green}==>${NC} Please specify the path of the scenario configuration file (e.g. /u/robot/git/setup_cob4/upstart/cob.yaml): "
+    echo -e "${green}==>${NC} Please specify the path of your custom upstart configuration file (fully quantified filename): "
     read path_to_cob_yaml
-    echo "installing the following upstart configuration from $path_to_cob_yaml"
-    cat $path_to_cob_yaml
   fi
+  echo "installing the following upstart configuration: $path_to_cob_yaml"
+  cat $path_to_cob_yaml
   sudo cp -f $path_to_cob_yaml /etc/ros/cob.yaml
   sudo sed -i "s/myrobot/$robot_name/g" /etc/ros/cob.yaml
 
@@ -269,18 +279,15 @@ function SetupDevices {
 
   echo "found $count scanners: $results"
 
-  if [[ ${results[0]} == ${results[1]} ]]
-    then
-      ATTRSSerialFL=${results[0]}
-      ATTRSSerialR=${results[2]}
-  elif [[ ${results[1]} == ${results[2]} ]]
-    then
-      ATTRSSerialFL=${results[1]}
-      ATTRSSerialR=${results[0]}
-  elif [[ ${results[0]} == ${results[2]} ]]
-    then
-      ATTRSSerialFL=${results[0]}
-      ATTRSSerialR=${results[1]}
+  if [[ ${results[0]} == ${results[1]} ]]; then
+    ATTRSSerialFL=${results[0]}
+    ATTRSSerialR=${results[2]}
+  elif [[ ${results[1]} == ${results[2]} ]]; then
+    ATTRSSerialFL=${results[1]}
+    ATTRSSerialR=${results[0]}
+  elif [[ ${results[0]} == ${results[2]} ]]; then
+    ATTRSSerialFL=${results[0]}
+    ATTRSSerialR=${results[1]}
   fi
 
   ATTRSSerialFL="$( echo "$ATTRSSerialFL" | sed 's/ //g' )"
@@ -315,31 +322,22 @@ else
   git --work-tree=/u/robot/git/setup_cob4 --git-dir=/u/robot/git/setup_cob4/.git pull origin master
 fi
 
-if [[ "$choice" == 1 ]]
-  then
-    SetupRootUser
-fi
-if [[ "$choice" == 2 ]]
-  then
-    SetupRobotUser
-fi
-if [[ "$choice" == 3 ]]
-  then
-    SetupMimicUser
-fi
-if [[ "$choice" == 4 ]]
-  then
-    SetupDevices
-fi
-if [[ "$choice" == 5 ]]
-  then
-    InstallUpstart
-fi
-if [[ "$choice" == 99 ]]
-  then
-    SetupRootUser
-    SetupRobotUser
-    SetupMimicUser
-    SetupDevices
-    InstallUpstart
+if [[ "$choice" == 1 ]]; then
+  SetupRootUser
+elif [[ "$choice" == 2 ]]; then
+  SetupRobotUser
+elif [[ "$choice" == 3 ]]; then
+  SetupMimicUser
+elif [[ "$choice" == 4 ]]; then
+  SetupDevices
+elif [[ "$choice" == 5 ]]; then
+  InstallUpstart
+elif [[ "$choice" == 99 ]]; then
+  SetupRootUser
+  SetupRobotUser
+  SetupMimicUser
+  SetupDevices
+  InstallUpstart
+else
+  echo -e "\n${red}INFO: Invalid install option. Exiting. ${NC}\n"
 fi
