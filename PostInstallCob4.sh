@@ -29,29 +29,32 @@ if [[ ${HOSTNAME} != *"b1"* ]];then
   exit
 fi
 
+#### retrieve client_list variables
+source ./helper_client_list.sh
 
 #### DEFINE SPECIFIC LIST OF PCs
-function Entry {
-  echo -e "\n${green}INFO:POST-INSTALLATION${NC}\n"
-  echo -e "${green} Default pc list:${NC}  $robot_name-b1  $robot_name-t1  $robot_name-t2  $robot_name-t3  $robot_name-s1  $robot_name-h1"
-  echo -e "\nDo you want to install the default configuration (y/n)?"
+function query_pc_list {
+  echo -e "\n${green}INFO:QUERY_PC_LIST${NC}\n"
+  echo -e "${green} PC_LIST:${NC} $1"
+  echo -e "\nDo you want to use the suggested pc list (y/n)?"
   read answer
 
   if echo "$answer" | grep -iq "^y" ;then
-    pc_list="$robot_name-b1 $robot_name-t1 $robot_name-t2 $robot_name-t3 $robot_name-s1 $robot_name-h1"
+    LIST=$1
   else
-    echo -e "\n${green}==>${NC} Please specify the list of pcs of your robot (e.g. 'cob4-2-b1 cob4-2-t1 cob4-2-t2 cob4-2-t3 cob4-2-s1 cob4-2-h1'):"
+    echo -e "\n${green}==>${NC} Please specify your custom pc list (using the hostnames):"
   echo -e "\nEnter your list of pcs of your robot::"
-    read pc_list
+    read LIST
   fi
 }
-
 
 #### Setup root user
 function SetupRootUser {
   echo -e "\n${green}INFO:setup root user${NC}\n"
 
-  Entry
+  query_pc_list $client_list_hostnames
+  pc_list=$LIST
+
   #generate a ssh key for root user per pc
   if sudo grep -q SSH_ASKPASS "/root/.bashrc"; then
     echo -e "\n${green}INFO: Found SSH_ASKPASS${NC}\n"
@@ -83,10 +86,12 @@ function SetupRootUser {
 }
 
 #### Setup Robot user
-function  SetupRobotUser {
+function SetupRobotUser {
   echo -e "\n${green}INFO:Setup Robot User${NC}\n"
 
-  Entry
+  query_pc_list $client_list_hostnames
+  pc_list=$LIST
+
   /u/robot/git/setup_cob4/cob-adduser robot
 
   source /opt/ros/indigo/setup.bash #FIXME only working for indigo!!!
@@ -118,17 +123,8 @@ function  SetupRobotUser {
 function SetupMimicUser {
   echo -e "\n${green}INFO:Setup Mimic User${NC}\n"
 
-  echo -e "${green} default pc head:${NC} $robot_name-h1"
-  echo -e "\nDo you want to install the default configuration in the pc head (y/n)?"
-  read answer
-
-  if echo "$answer" | grep -iq "^y" ;then
-    pc_head="$robot_name-h1"
-  else
-    echo -e "\n${green}==>${NC} Please specify the head pc of your robot (e.g. 'cob4-2-h1'):"
-  echo -e "\nEnter your head pc of your robot::"
-    read pc_head
-  fi
+  query_pc_list $robot_name-h1
+  pc_head=$LIST
 
   /u/robot/git/setup_cob4/cob-adduser mimic
 
@@ -198,12 +194,10 @@ EOF"
 }
 
 #### INSTALL UPSTART
-function  InstallUpstart {
-  path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/cob.yaml"
-  pc_list="myrobot-b1 myrobot-t1 myrobot-t2 myrobot-t3 myrobot-s1 myrobot-h1"
-  checkPc_list=""
-
+function InstallUpstart {
   echo -e "\n${green}INFO: Install Upstart${NC}\n"
+
+  path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/cob.yaml"
 
   sudo apt-get install nmap
 
@@ -232,33 +226,19 @@ function  InstallUpstart {
   sudo cp -f $path_to_cob_yaml /etc/ros/cob.yaml
   sudo sed -i "s/myrobot/$robot_name/g" /etc/ros/cob.yaml
 
-  # get pc_list
-  echo -e "\n${green}INFO:PC LIST FOR UPSTART:${NC}"
-  echo -e "${green}pc list:${NC} $pc_list"
-  echo -e "\nDo you want to install upstart with the default pc configuration (y/n)?"
-  read answer
-  if echo "$answer" | grep -iq "^y" ;then
-    echo "installing upstart for default pc configuration"
-  else
-    echo -e "\n${green}==>${NC} Please specify the list of pcs (e.g. 'cob4-2-b1 cob4-2-t1 cob4-2-t2 cob4-2-t3 cob4-2-s1 cob4-2-h1'): "
-    read pc_list
-  fi
-  sudo sed -i "s/pc_list/$pc_list/g" /usr/sbin/cob-start
+  # get client_list
+  echo -e "\n${green}INFO:CLIENT LIST:${NC}"
+  query_pc_list $client_list_hostnames
+  client_list=$LIST
+  sudo sed -i "s/CLIENT_LIST/$client_list/g" /usr/sbin/cob-start
 
-  # get checkPc_list
-  echo -e "\n${green}INFO:CHECK PC LIST:${NC}"
-  echo -e "${green}check pc list:${NC} $checkPc_list"
-  echo -e "\nDo you want to install the default check pc configuration (y/n)?"
-  read answer
-  if echo "$answer" | grep -iq "^y" ;then
-    echo "installing default check pc configuration"
-  else
-    echo -e "\n${green}==>${NC} Please specify the list of pcs with a check condition of your robot (e.g. 'cob4-2-t1 cob4-2-t3 cob4-2-s1'): "
-    read checkPc_list
-  fi
+  # get camera_client_list
+  echo -e "\n${green}INFO:CAMERA CLIENT LIST:${NC}"
+  query_pc_list ""
+  camera_client_list=$LIST
 
   # install check scripts on pc
-  for client in $checkPc_list; do
+  for client in $camera_client_list; do
     echo "-------------------------------------------"
     echo "Executing on $client"
     echo "-------------------------------------------"
@@ -266,14 +246,13 @@ function  InstallUpstart {
     ssh $client "sudo cp -f /u/robot/git/setup_cob4/scripts/check_cameras.sh /etc/init.d/check_cameras.sh"
     ssh $client "sudo update-rc.d check_cameras.sh defaults"
   done
-  sudo sed -i "s/checkPc_list/$checkPc_list/g" /usr/sbin/cob-start
-  sudo sed -i "s/myrobot/$robot_name/g" /usr/sbin/cob-start
+  sudo sed -i "s/CAMERA_CLIENT_LIST/$camera_client_list/g" /usr/sbin/cob-start
 
   echo "install upstart done"
 }
 
 #### SETUP SCANNERS
-function  SetupDevices {
+function SetupDevices {
   echo -e "\n${green}INFO: Setup udev rules for the scanners ${NC}\n"
 
   results=()

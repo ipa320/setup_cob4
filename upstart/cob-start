@@ -2,10 +2,10 @@
 
 set -e
 ROBOT=myrobot
-pcs="pc_list"
-camera_client_list="checkPc_list"
+client_list="CLIENT_LIST"
+camera_client_list="CAMERA_CLIENT_LIST"
 
-for i in $pcs; do
+for i in $client_list; do
     while [ true ]
       do
         if ping -c1 $i &>/dev/null

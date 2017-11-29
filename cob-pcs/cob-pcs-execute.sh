@@ -9,11 +9,10 @@ if [ "$#" -lt 1 ]; then
 	exit 1
 fi
 
-# get pcs in local network
-IP=$(hostname -I | awk '{print $1}')
-client_list=$(nmap --unprivileged $IP-50 --system-dns | grep report | awk '{print $6}' | sed 's/(//g;s/)//g' | tr '\n' ' ')
+#### retrieve client_list variables
+source ../helper_client_list.sh
 
-for client in $client_list; do
+for client in $client_list_hostnames; do
 	echo "-------------------------------------------"
 	echo "Executing <<"$*">> on $client"
 	echo "-------------------------------------------"
