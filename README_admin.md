@@ -1,4 +1,4 @@
-<a id="top"/> 
+<a id="top"/>
 # cob4 Administrator manual
 
 ### Contents
@@ -14,7 +14,7 @@
 
 Inside the robot there’s a router which connects the pcs and acts as gateway to the building network. Setup the router with the following configuration.
 The ip address of the router should be 10.4.X.1 and for the internal network dhcp should be activated. Use cob4-X as hostname for the router. Register the
-MAC addresses of the pcs that they get a fixed ip address over dhcp. 
+MAC addresses of the pcs that they get a fixed ip address over dhcp.
 
 | Hostname      | IP            |
 | ------------- |:-------------:|

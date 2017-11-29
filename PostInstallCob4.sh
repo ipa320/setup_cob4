@@ -19,7 +19,7 @@ green='\e[0;32m'
 red='\e[0;31m'
 NC='\e[0m' # No Color
 
-if [ "$USER" != "robot" ]; then 
+if [ "$USER" != "robot" ]; then
   echo -e "\n${red}FATAL: CAN ONLY BE EXECUTED AS robot USER${NC}"
   exit
 fi
@@ -33,7 +33,7 @@ fi
 #### DEFINE SPECIFIC LIST OF PCs
 function Entry {
 
-  echo -e "\n${green}INFO:POST-INSTALLATION${NC}\n" 
+  echo -e "\n${green}INFO:POST-INSTALLATION${NC}\n"
   echo -e "${green} Default pc list:${NC}  $robot_name-b1  $robot_name-t1  $robot_name-t2  $robot_name-t3  $robot_name-s1  $robot_name-h1"
   echo -e "\nDo you want to install the default configuration (y/n)?"
   read answer
@@ -43,7 +43,7 @@ function Entry {
   else
     echo -e "\n${green}==>${NC} Please specify the list of pcs of your robot (e.g. 'cob4-2-b1 cob4-2-t1 cob4-2-t2 cob4-2-t3 cob4-2-s1 cob4-2-h1'):"
   echo -e "\nEnter your list of pcs of your robot::"
-    read pc_list  
+    read pc_list
   fi
 
 }
@@ -95,13 +95,13 @@ function  SetupRobotUser {
 
   source /opt/ros/indigo/setup.bash #FIXME only working for indigo!!!
 
-  if grep -q ROBOT "/u/robot/.bashrc"; then  
+  if grep -q ROBOT "/u/robot/.bashrc"; then
     echo ".bashrc already configured"
   else
     /u/robot/git/setup_cob4/cob-adduser robot
   fi
 
-  if [ -d /u/robot/git/care-o-bot/src ]; then 
+  if [ -d /u/robot/git/care-o-bot/src ]; then
     echo "INFO: robot workspace already exits"
   else
     mkdir -p /u/robot/git/care-o-bot/src
@@ -132,7 +132,7 @@ function SetupMimicUser {
   else
     echo -e "\n${green}==>${NC} Please specify the head pc of your robot (e.g. 'cob4-2-h1'):"
   echo -e "\nEnter your head pc of your robot::"
-    read pc_head  
+    read pc_head
   fi
 
   /u/robot/git/setup_cob4/cob-adduser mimic
@@ -217,9 +217,9 @@ function  InstallUpstart {
   sudo cp -f /u/robot/git/setup_cob4/upstart/cob-stop /usr/sbin/cob-stop
   sudo cp -f /u/robot/git/setup_cob4/scripts/cob-command /usr/sbin/cob-command
 
-  sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-start"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-start|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-start||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-start" -e "}" /etc/sudoers 
-  sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-stop|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-stop||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-stop" -e "}" /etc/sudoers 
-  sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-command"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-command|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-command||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-command" -e "}" /etc/sudoers 
+  sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-start"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-start|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-start||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-start" -e "}" /etc/sudoers
+  sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-stop|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-stop||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-stop" -e "}" /etc/sudoers
+  sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-command"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-command|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-command||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-command" -e "}" /etc/sudoers
 
 
   # install cob.yaml
@@ -250,7 +250,7 @@ function  InstallUpstart {
     read pc_list
   fi
   sudo sed -i "s/pc_list/$pc_list/g" /usr/sbin/cob-start
-  
+
   # get checkPc_list
   echo -e "\n${green}INFO:CHECK PC LIST:${NC}"
   echo -e "${green}check pc list:${NC} $checkPc_list"
@@ -261,8 +261,8 @@ function  InstallUpstart {
   else
     echo -e "\n${green}==>${NC} Please specify the list of pcs with a check condition of your robot (e.g. 'cob4-2-t1 cob4-2-t3 cob4-2-s1'): "
     read checkPc_list
-  fi  
-  
+  fi
+
   # install check scripts on pc
   for client in $checkPc_list; do
     echo "-------------------------------------------"
@@ -311,10 +311,10 @@ function  SetupDevices {
       ATTRSSerialR=${results[1]}
   fi
 
-  ATTRSSerialFL="$( echo "$ATTRSSerialFL" | sed 's/ //g' )"	
-  ATTRSSerialR="$( echo "$ATTRSSerialR" | sed 's/ //g' )"	
+  ATTRSSerialFL="$( echo "$ATTRSSerialFL" | sed 's/ //g' )"
+  ATTRSSerialR="$( echo "$ATTRSSerialR" | sed 's/ //g' )"
 
-  sudo sed -i -re "s/(ScanFrontAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh	
+  sudo sed -i -re "s/(ScanFrontAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
   sudo sed -i -re "s/(ScanLeftAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
   sudo sed -i -re "s/(ScanRightAttr2=).*/\1'${ATTRSSerialR}'/g" /etc/init.d/udev_cob.sh
 
@@ -332,7 +332,7 @@ echo "                INITIAL MENU"
 echo -e "${green}===========================================${NC}"
 
 echo -e $usage
-read -p "Please select an installation option: " choice 
+read -p "Please select an installation option: " choice
 
 robot_name="${HOSTNAME//-b1}"
 

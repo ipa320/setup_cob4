@@ -14,7 +14,7 @@
      6. <a href="#CiscoFirmware">Update CISCO Switch Firmware</a>
 
 
-### 1. Automatic installation <a id="Installation"/> 
+### 1. Automatic installation <a id="Installation"/>
 
 The Care-O-bot pcs can be installed using a pre-created image via a bootable USB media:
 
@@ -34,7 +34,7 @@ sudo rmmod  usbhid
 ```
 And save this configuration as default:
 ```
-sudo update-initramfs -u 
+sudo update-initramfs -u
 ```
 
 
@@ -110,7 +110,7 @@ respawn
 respawn limit 0 10
 
 script
-  rfcomm connect rfcomm0 
+  rfcomm connect rfcomm0
 end script
 ```
 
@@ -177,7 +177,7 @@ Assign yourself a fixed IP adress, e.g. 192.168.1.250.
 
 IP address cisco management: http://192.168.1.254/ (User: cisco, pw: cisco, check the manual of the switch, the address and login might change depending on the version)
 
-Go to Administration -> File Management -> Upgrade/Backup Firmware and choose the downloaded file 
+Go to Administration -> File Management -> Upgrade/Backup Firmware and choose the downloaded file
 
 This might take 10min.
 

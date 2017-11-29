@@ -26,7 +26,7 @@
 # \brief
 # Implements helper script for working with git and the care-o-bot stacks.
 #
-# copy this executable into /etc/init.d 
+# copy this executable into /etc/init.d
 # chmod +x udev_cob.sh
 # sudo cp udev_cob.sh /etc/init.d/
 # sudo update-rc.d udev_cob.sh defaults
@@ -78,7 +78,7 @@ fi
 
 sudo chmod 666 /dev/input/js1
 sudo udevadm info -a -p $(udevadm info -q path -n /dev/input/js1) > /tmp/js1
-if grep -qs $JoyAttr1 /tmp/js1 
+if grep -qs $JoyAttr1 /tmp/js1
 then
     sudo ln -s input/js1 /dev/joypad
     sudo chown :dialout /dev/joypad

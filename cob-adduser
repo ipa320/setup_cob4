@@ -1,12 +1,12 @@
 #!/bin/bash
 robot_name="${HOSTNAME//-b1}"
 
-if [ "$USER" != "robot" ]; then 
+if [ "$USER" != "robot" ]; then
 	echo 'FATAL: CAN ONLY BE EXECUTED AS "robot" USER'
 	exit
 fi
 
-if [ "$HOSTNAME" != "$robot_name-b1" ]; then 
+if [ "$HOSTNAME" != "$robot_name-b1" ]; then
 	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC"
 	exit
 fi
@@ -20,13 +20,13 @@ client_list=$(echo $client_list_all | xargs -n1 | sort -u | xargs)
 
 echo "Executing adduser"
 sudo /usr/sbin/adduser $1 --home /u/$1
-sudo adduser $1 dialout 
-sudo adduser $1 cdrom 
-sudo adduser $1 floppy 
+sudo adduser $1 dialout
+sudo adduser $1 cdrom
+sudo adduser $1 floppy
 sudo adduser $1 audio
 sudo adduser $1 video
 sudo adduser $1 plugdev
-sudo adduser $1 users 
+sudo adduser $1 users
 
 echo "Syncing passwd file to other cob-pcs"
 for i in $client_list_ip

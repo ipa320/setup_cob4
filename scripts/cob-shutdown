@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if [[ $HOSTNAME != *"b"* ]]; then 
+if [[ $HOSTNAME != *"b"* ]]; then
     echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC, current host is $HOSTNAME"
     exit
 fi
@@ -15,7 +15,7 @@ for client in $client_list; do
         continue
     fi
     echo "-------------------------------------------"
-    echo "Executing <<"shutdown">> on $client"  
+    echo "Executing <<"shutdown">> on $client"
     echo "-------------------------------------------"
     echo ""
     ssh -o ConnectTimeout=15 $client "sudo shutdown now -P 0"
@@ -31,7 +31,7 @@ for client in $client_list; do
         continue
     fi
     echo "-------------------------------------------"
-    echo "Executing <<waiting for>> on" $client  
+    echo "Executing <<waiting for>> on" $client
     echo "-------------------------------------------"
     echo ""
     Crono=0

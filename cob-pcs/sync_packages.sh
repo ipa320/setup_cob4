@@ -22,7 +22,7 @@ declare -a commands=(
 )
 
 
-for client in $client_list; do 
+for client in $client_list; do
   echo "-------------------------------------------"
   echo "Installing packages on $client"
   echo "-------------------------------------------"

@@ -4,7 +4,7 @@
 2. <a href="#Zentyal">Zentyal Config</a>
 2. <a href="#DDWRT">DD WRT Config</a>
 
-### 1. Certificate generation <a id="Certificate"/> 
+### 1. Certificate generation <a id="Certificate"/>
 - Open Zentyal Web Admin
 - Goto Certification Authority->General
 - Issue new Certificate with e.G. Common Name = cob4-X
@@ -37,7 +37,7 @@ open admin page and configure the follwing ddwrt settings:
 - DNSMasq for DHCP = Enabled
 - DNSMasq for DNS = Enabled
 - DHCP-Authoritative = Enabled
-- NTP Client = Enabled 
+- NTP Client = Enabled
 - NTP Client Server IP/Name = set to any NTP Server (eg. de.pool.ntp.org)
 
 #### Services->VPN:
@@ -53,7 +53,7 @@ open admin page and configure the follwing ddwrt settings:
 - TLS Cipher = None
 - LZO Compression = No
 - NAT = Disabled
-- IP Address = 
+- IP Address =
 - Subnet Mask =
 - Tunnel MTU setting = 1500
 - Tunnel UDP Fragment =

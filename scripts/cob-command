@@ -12,7 +12,7 @@ upstart_file_path="/etc/ros/cob.yaml"
 
 get_client_and_user_list(){
   IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
-  client_list=$(nmap --unprivileged $IP-50 --system-dns | grep report | awk '{print $6}' | sed 's/(//g;s/)//g' | tr '\n' ' ') 
+  client_list=$(nmap --unprivileged $IP-50 --system-dns | grep report | awk '{print $6}' | sed 's/(//g;s/)//g' | tr '\n' ' ')
   pos=0
   for i in $client_list
   do
@@ -28,8 +28,8 @@ get_client_and_user_list(){
 get_pid(){
   pid="$1"
   for child in $(ps -o pid  --no-headers --ppid $pid)
-    do 
-      [[ "$$" -eq "$child" ]] 
+    do
+      [[ "$$" -eq "$child" ]]
       echo $(ps -o pid= -p $child)
   done
 }
@@ -60,7 +60,7 @@ list_sessions(){
     do
       sessions_list=""
       num=0
-      sessions_list=$(su $u -l -c "ssh $i 'tmux list-sessions'" | awk '{print $1}') 
+      sessions_list=$(su $u -l -c "ssh $i 'tmux list-sessions'" | awk '{print $1}')
       ret=${PIPESTATUS[0]}
       if [ $ret != 0 ] ; then
         break
@@ -70,7 +70,7 @@ list_sessions(){
           num=$((num+1))
           sessions[$num]=${session_name%%:*}
         done
-          for n in $(seq 1 $num) 
+          for n in $(seq 1 $num)
           do
             pid_command='tmux list-panes -s -F "#{pane_pid}" -t '
             quom="'"
@@ -327,7 +327,7 @@ sub_stop(){
     echo -e "${blue}===========================================${NC}"
     echo -e "${blue}===========================================${NC}"
     echo -e "${grey}\n ${NC}"
-    for i in $(seq 1 $num) 
+    for i in $(seq 1 $num)
     do
       echo "$i: ${sessions[i]}"
     done
@@ -375,7 +375,7 @@ sub_reboot(){
   echo -e "${grey}\n ${NC}"
   cob-shutdown
 }
-  
+
 sub_start_gui(){
   echo -e "${blue}===========================================${NC}"
   echo "Starting VM...."
@@ -415,7 +415,7 @@ case $subcommand in
   ;;
   *)shift
     option=$1
-    case $option in 
+    case $option in
     "-v" | "--verbose") shift
     verbose=true
     ;;

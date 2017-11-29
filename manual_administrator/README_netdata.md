@@ -7,7 +7,7 @@
 2. [Install netdata](#2-install-netdata)
 
   Download and install netdata. You can also update it the same way.
-  
+
 3. [Extend overview page](#3-extend-overview-page)
 
   Add netdata instance to overview page hostet on cob4-x-b1

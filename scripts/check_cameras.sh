@@ -24,7 +24,7 @@ fi
 
 dmesg | grep "cannot get freq at ep 0x84"
 if [ $? -eq 0 ]; then
-  echo "error -- cannot get freq -- found" 
+  echo "error -- cannot get freq -- found"
 else
   check3=true
 fi
