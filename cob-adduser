@@ -46,7 +46,16 @@ if [ "$1" != "" ]; then
 	sudo -u $1 cat /u/$1/.ssh/id_rsa.pub | ssh $1@$robot_name-b1 "cat >> /u/$1/.ssh/authorized_keys"
 	echo "login to $1@localhost"
 	sudo -u $1 ssh $1@localhost 'exit'
-	for i in "$client_list_ip $client_list_hostnames"
+
+	# login to all pcs using ip
+	for i in $client_list_ip
+	do
+		echo "login to $1@$i"
+		sudo -u $1 ssh $1@$i 'exit'
+	done
+
+	# login to all pcs using hostname
+	for i in $client_list_hostnames
 	do
 		echo "login to $1@$i"
 		sudo -u $1 ssh $1@$i 'exit'

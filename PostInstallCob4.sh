@@ -61,7 +61,7 @@ function query_pc_list {
 function SetupRootUser {
   echo -e "\n${green}INFO:setup root user${NC}\n"
 
-  query_pc_list $client_list_hostnames
+  query_pc_list "$client_list_hostnames"
   pc_list=$LIST
 
   #generate a ssh key for root user per pc
@@ -98,7 +98,7 @@ function SetupRootUser {
 function SetupRobotUser {
   echo -e "\n${green}INFO:Setup Robot User${NC}\n"
 
-  query_pc_list $client_list_hostnames
+  query_pc_list "$client_list_hostnames"
   pc_list=$LIST
 
   /u/robot/git/setup_cob4/cob-adduser robot
@@ -132,7 +132,7 @@ function SetupRobotUser {
 function SetupMimicUser {
   echo -e "\n${green}INFO:Setup Mimic User${NC}\n"
 
-  query_pc_list $robot_name-h1
+  query_pc_list "$robot_name-h1"
   pc_head=$LIST
 
   /u/robot/git/setup_cob4/cob-adduser mimic
@@ -238,7 +238,7 @@ function InstallUpstart {
 
   # get client_list
   echo -e "\n${green}INFO:CLIENT LIST:${NC}"
-  query_pc_list $client_list_hostnames
+  query_pc_list "$client_list_hostnames"
   client_list=$LIST
   sudo sed -i "s/CLIENT_LIST/$client_list/g" /usr/sbin/cob-start
 
