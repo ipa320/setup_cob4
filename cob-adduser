@@ -35,6 +35,7 @@ if [ "$1" != "" ]; then
 	echo "setup bash environment"
 	sudo cp /u/robot/git/setup_cob4/cob-pcs/user.bashrc /u/$1/.bashrc
 	sudo cp /u/robot/git/setup_cob4/cob-pcs/tmux.conf /u/$1/.tmux.conf
+	sudo chown $1:$1 /u/$1/.tmux.conf
 	sudo sed -i "s/myrobot/$robot_name/g" /u/$1/.bashrc
 	sudo sed -i "s/mydistro/$ROS_DISTRO/g" /u/$1/.bashrc
 
