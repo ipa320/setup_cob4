@@ -9,29 +9,6 @@ fi
 IP=$(hostname -I | awk '{print $1}')
 client_list=$(nmap --unprivileged $IP-50 --system-dns | grep report | awk '{print $6}' | sed 's/(//g;s/)//g' | tr '\n' ' ')
 
-##### uncomment the following lines if Windows runs as a Virtual Machine
-#cob-stop-vm-win
-#
-#rm -rf /tmp/runningVMS
-#Crono=0
-#while [[ $Crono -le 60 ]]; do
-#  su mimic -c "ssh -o ConnectTimeout=15 $robot_name-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
-#  if grep -q $robot_name-win "/tmp/runningVMS"; then
-#    echo "VM still running"
-#    Crono=$((Crono+1))
-#  else
-#    echo "VM not running"
-#    Crono=100
-#    break
-#  fi
-#  sleep 1
-#done
-##### 
-
-#while /opt/ros/indigo/env.sh rostopic list > /dev/null; do
-#	sleep 1
-#done
-
 for client in $client_list; do
     if [ $client == $IP ] ; then
         echo "skipping $client"
@@ -57,12 +34,10 @@ for client in $client_list; do
     echo "Executing <<waiting for>> on" $client  
     echo "-------------------------------------------"
     echo ""
-    shutdown=false
     Crono=0
-    while [[ !$shutdown &&  $Crono -le 60 ]]; do
+    while [[ $Crono -le 60 ]]; do
       ping -qc 1 -w 3 $client > /dev/null
       if [ $? -ne 0 ] ; then
-        shutdown=true
         echo $client down
         break
       else
@@ -71,7 +46,8 @@ for client in $client_list; do
       fi
       sleep 1
     done
-    echo "done"
+    echo $client "timeout reached"
 done
 
+echo "shutting down"
 sudo shutdown now -P 0
