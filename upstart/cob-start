@@ -42,12 +42,12 @@ done
 
 # wait for mimic to be logged in into -h1
 while [ true ]; do
-  echo "waiting for mimic to be logged in into -h1"
-  if [[ -n $( ssh $ROBOT-h1 'who |grep ":0"| grep mimic') ]]; then
-    echo "mimic logged in into -h1"
-    break
-  fi
-  sleep 1
+    echo "waiting for mimic to be logged in into -h1"
+    if [[ -n $( ssh $ROBOT-h1 'who |grep ":0"| grep mimic') ]]; then
+        echo "mimic logged in into -h1"
+        break
+    fi
+    sleep 1
 done
 
 # wait until screen is rotated

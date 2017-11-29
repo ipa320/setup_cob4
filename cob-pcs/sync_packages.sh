@@ -40,4 +40,3 @@ for client in $client_list; do
 done
 
 echo "syncing packages done."
-

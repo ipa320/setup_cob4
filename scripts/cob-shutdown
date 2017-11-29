@@ -21,7 +21,7 @@ for client in $client_list; do
     ssh -o ConnectTimeout=15 $client "sudo shutdown now -P 0"
     ret=${PIPESTATUS[0]}
     if [ $ret != 0 ] ; then
-      echo "command return an error (error code: $ret), aborting..."
+        echo "command return an error (error code: $ret), aborting..."
     fi
 done
 
@@ -36,15 +36,15 @@ for client in $client_list; do
     echo ""
     Crono=0
     while [[ $Crono -le 60 ]]; do
-      ping -qc 1 -w 3 $client > /dev/null
-      if [ $? -ne 0 ] ; then
-        echo $client down
-        break
-      else
-        Crono=$((Crono+1))
-        echo "waiting for" $client
-      fi
-      sleep 1
+        ping -qc 1 -w 3 $client > /dev/null
+        if [ $? -ne 0 ] ; then
+            echo $client down
+            break
+        else
+            Crono=$((Crono+1))
+            echo "waiting for" $client
+        fi
+        sleep 1
     done
     echo $client "timeout reached"
 done

@@ -32,7 +32,6 @@ fi
 
 #### DEFINE SPECIFIC LIST OF PCs
 function Entry {
-
   echo -e "\n${green}INFO:POST-INSTALLATION${NC}\n"
   echo -e "${green} Default pc list:${NC}  $robot_name-b1  $robot_name-t1  $robot_name-t2  $robot_name-t3  $robot_name-s1  $robot_name-h1"
   echo -e "\nDo you want to install the default configuration (y/n)?"
@@ -45,13 +44,11 @@ function Entry {
   echo -e "\nEnter your list of pcs of your robot::"
     read pc_list
   fi
-
 }
 
 
 #### Setup root user
 function SetupRootUser {
-
   echo -e "\n${green}INFO:setup root user${NC}\n"
 
   Entry
@@ -87,7 +84,6 @@ function SetupRootUser {
 
 #### Setup Robot user
 function  SetupRobotUser {
-
   echo -e "\n${green}INFO:Setup Robot User${NC}\n"
 
   Entry
@@ -120,7 +116,6 @@ function  SetupRobotUser {
 
 #### SETUP MIMIC
 function SetupMimicUser {
-
   echo -e "\n${green}INFO:Setup Mimic User${NC}\n"
 
   echo -e "${green} default pc head:${NC} $robot_name-h1"
@@ -221,7 +216,6 @@ function  InstallUpstart {
   sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-stop|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-stop||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-stop" -e "}" /etc/sudoers
   sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-command"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-command|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-command||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-command" -e "}" /etc/sudoers
 
-
   # install cob.yaml
   echo -e "\n${green}INFO:UPSTART CONFIGURATION:${NC}"
   cat $path_to_cob_yaml
@@ -280,7 +274,6 @@ function  InstallUpstart {
 
 #### SETUP SCANNERS
 function  SetupDevices {
-
   echo -e "\n${green}INFO: Setup udev rules for the scanners ${NC}\n"
 
   results=()
@@ -320,10 +313,10 @@ function  SetupDevices {
 
   echo "setup devices done"
 }
+
 ########################################################################
 ############################# INITIAL MENU #############################
 ########################################################################
-
 
 if [[ "$1" =~ "--help" ]]; then echo -e $usage; exit 0; fi
 
@@ -371,5 +364,3 @@ if [[ "$choice" == 99 ]]
     SetupDevices
     InstallUpstart
 fi
-
-

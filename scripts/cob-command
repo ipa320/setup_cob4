@@ -28,9 +28,9 @@ get_client_and_user_list(){
 get_pid(){
   pid="$1"
   for child in $(ps -o pid  --no-headers --ppid $pid)
-    do
-      [[ "$$" -eq "$child" ]]
-      echo $(ps -o pid= -p $child)
+  do
+    [[ "$$" -eq "$child" ]]
+    echo $(ps -o pid= -p $child)
   done
 }
 
@@ -70,27 +70,27 @@ list_sessions(){
           num=$((num+1))
           sessions[$num]=${session_name%%:*}
         done
-          for n in $(seq 1 $num)
-          do
-            pid_command='tmux list-panes -s -F "#{pane_pid}" -t '
-            quom="'"
-            ssh_command="ssh $i $quom$pid_command${sessions[$n]}$quom"
-            tmux_pid=$(su $u -l -c "$ssh_command")
-            unset PID
-            PID=$(get_pid $tmux_pid)
-            if [ -z "$PID" ]; then
-              command=""
-            else
-              command=$(ps -p $PID -o args)
-            fi
-            echo "${sessions[$n]}"
-            if ${verbose}; then
-              echo "  pc: $i"
-              echo "  user: $u"
-              echo "  PID: $PID"
-              echo "  command: ${command#* }"
-            fi
-          done
+        for n in $(seq 1 $num)
+        do
+          pid_command='tmux list-panes -s -F "#{pane_pid}" -t '
+          quom="'"
+          ssh_command="ssh $i $quom$pid_command${sessions[$n]}$quom"
+          tmux_pid=$(su $u -l -c "$ssh_command")
+          unset PID
+          PID=$(get_pid $tmux_pid)
+          if [ -z "$PID" ]; then
+            command=""
+          else
+            command=$(ps -p $PID -o args)
+          fi
+          echo "${sessions[$n]}"
+          if ${verbose}; then
+            echo "  pc: $i"
+            echo "  user: $u"
+            echo "  PID: $PID"
+            echo "  command: ${command#* }"
+          fi
+        done
       fi
     done
     pos=$((pos+1))
@@ -174,20 +174,20 @@ stop_session(){
 
 start_session(){
   if [ -z "$arg_session_name" ]; then
-      echo "SYNTAX ERROR: please check your " $upstart_file_path ":session name not defined"
-      echo " "
-      exit
+    echo "SYNTAX ERROR: please check your " $upstart_file_path ":session name not defined"
+    echo " "
+    exit
   fi
   if [ -z "$arg_command" ]; then
-      echo "SYNTAX ERROR: please check your " $upstart_file_path ":command not defined"
-      echo " "
-      exit
+    echo "SYNTAX ERROR: please check your " $upstart_file_path ":command not defined"
+    echo " "
+    exit
   fi
   if [ -z "$arg_pc" ]; then
-      arg_pc="localhost"
+    arg_pc="localhost"
   fi
   if [ -z "$arg_user" ]; then
-      arg_user="robot"
+    arg_user="robot"
   fi
 
   echo -e "${green}===========================================${NC}"
@@ -220,15 +220,15 @@ start_session(){
 }
 
 sub_help(){
-    echo "Usage: $ProgName command -options <arguments>\n"
-    echo "Commands:"
-    echo "    ls [-v]"
-    echo "    find <session_name>"
-    echo "    start [<file path>]"
-    echo "    stop [-a] [<session_name>]"
-    echo "    stop_core"
-    echo "    reboot"
-    echo ""
+  echo "Usage: $ProgName command -options <arguments>\n"
+  echo "Commands:"
+  echo "    ls [-v]"
+  echo "    find <session_name>"
+  echo "    start [<file path>]"
+  echo "    stop [-a] [<session_name>]"
+  echo "    stop_core"
+  echo "    reboot"
+  echo ""
 }
 
 sub_ls(){
@@ -277,26 +277,25 @@ sub_start(){
   done < /tmp/cob
   for ((n=1; n <= $num; n++))
   do
-      arg_session_name=${sessions[$n]}
-      IFS="="
-      while read -r name value
-      do
-        if [[ $name == ${sessions[$n]}'_command' ]];then
-          arg_command=$value
-        fi
-        if [[ $name == ${sessions[$n]}'_user' ]];then
-          arg_user=$value
-        fi
-        if [[ $name == ${sessions[$n]}'_pc' ]];then
-          arg_pc=$value
-        fi
-        if [[ $name == ${sessions[$n]}'_pre_condition' ]];then
-          arg_pre_condition=$value
-        fi
-      done < /tmp/cob
-      start_session
+    arg_session_name=${sessions[$n]}
+    IFS="="
+    while read -r name value
+    do
+      if [[ $name == ${sessions[$n]}'_command' ]];then
+        arg_command=$value
+      fi
+      if [[ $name == ${sessions[$n]}'_user' ]];then
+        arg_user=$value
+      fi
+      if [[ $name == ${sessions[$n]}'_pc' ]];then
+        arg_pc=$value
+      fi
+      if [[ $name == ${sessions[$n]}'_pre_condition' ]];then
+        arg_pre_condition=$value
+      fi
+    done < /tmp/cob
+    start_session
   done
-
 }
 
 sub_stop(){
@@ -426,9 +425,9 @@ case $subcommand in
     esac
 esac
 
-  sub_${subcommand} $@
-  if [ $? = 127 ]; then
-    echo "Error: '$subcommand' is not a known subcommand." >&2
-    exit 1
-  fi
+sub_${subcommand} $@
+if [ $? = 127 ]; then
+  echo "Error: '$subcommand' is not a known subcommand." >&2
+  exit 1
+fi
 

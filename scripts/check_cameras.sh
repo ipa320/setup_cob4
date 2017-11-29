@@ -44,8 +44,8 @@ else
 fi
 
 if $check1 && $check2 && $check3 && $check4 && $check5; then
- echo "OK"
- touch /tmp/check_done
+  echo "OK"
+  touch /tmp/check_done
 else
- reboot -f now
+  reboot -f now
 fi
