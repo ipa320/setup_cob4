@@ -11,7 +11,7 @@ packages=$(dpkg --get-selections | grep -v "deinstall" | awk '{print $1}')
 echo $packages > /tmp/package_list
 
 #### retrieve client_list variables
-source ../helper_client_list.sh
+source /u/robot/git/setup_cob4/helper_client_list.sh
 
 declare -a commands=(
 "sudo apt-get update"

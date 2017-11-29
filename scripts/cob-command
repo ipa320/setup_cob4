@@ -11,7 +11,7 @@ ProgName=$(basename $0)
 upstart_file_path="/etc/ros/cob.yaml"
 
 #### retrieve client_list variables
-source ../helper_client_list.sh
+source /u/robot/git/setup_cob4/helper_client_list.sh
 
 get_user_list(){
   pos=0

@@ -12,7 +12,7 @@ if [ "$HOSTNAME" != "$robot_name-b1" ]; then
 fi
 
 #retrieve client_list variables
-source ./helper_client_list.sh
+source /u/robot/git/setup_cob4/helper_client_list.sh
 
 echo "Executing adduser"
 sudo /usr/sbin/adduser $1 --home /u/$1

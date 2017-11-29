@@ -39,7 +39,7 @@ if [[ ${HOSTNAME} != *"b1"* ]];then
 fi
 
 #### retrieve client_list variables
-source ./helper_client_list.sh
+source /u/robot/git/setup_cob4/helper_client_list.sh
 
 #### DEFINE SPECIFIC LIST OF PCs
 function query_pc_list {
@@ -52,7 +52,7 @@ function query_pc_list {
     LIST=$1
   else
     echo -e "\n${green}==>${NC} Please specify your custom pc list (using the hostnames):"
-    echo -e "\nEnter your list of pcs of your robot::"
+    echo -e "\nEnter your list of pcs of your robot:"
     read LIST
   fi
 }
@@ -242,13 +242,13 @@ function InstallUpstart {
   client_list=$LIST
   sudo sed -i "s/CLIENT_LIST/$client_list/g" /usr/sbin/cob-start
 
-  # get camera_client_list
-  echo -e "\n${green}INFO:CAMERA CLIENT LIST:${NC}"
+  # get check_client_list
+  echo -e "\n${green}INFO:CHECK CLIENT LIST:${NC}"
   query_pc_list ""
-  camera_client_list=$LIST
+  check_client_list=$LIST
 
   # install check scripts on pc
-  for client in $camera_client_list; do
+  for client in $check_client_list; do
     echo "-------------------------------------------"
     echo "Executing on $client"
     echo "-------------------------------------------"
@@ -256,7 +256,8 @@ function InstallUpstart {
     ssh $client "sudo cp -f /u/robot/git/setup_cob4/scripts/check_cameras.sh /etc/init.d/check_cameras.sh"
     ssh $client "sudo update-rc.d check_cameras.sh defaults"
   done
-  sudo sed -i "s/CAMERA_CLIENT_LIST/$camera_client_list/g" /usr/sbin/cob-start
+  sudo sed -i "s/myrobot/$robot_name/g" /usr/sbin/cob-start
+  sudo sed -i "s/CHECK_LIST/$check_client_list/g" /usr/sbin/cob-start
 
   echo "install upstart done"
 }

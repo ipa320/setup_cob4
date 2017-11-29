@@ -10,7 +10,7 @@ if [ "$#" -lt 1 ]; then
 fi
 
 #### retrieve client_list variables
-source ../helper_client_list.sh
+source /u/robot/git/setup_cob4/helper_client_list.sh
 
 for client in $client_list_hostnames; do
 	echo "-------------------------------------------"
