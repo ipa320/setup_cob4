@@ -2,10 +2,10 @@
 
 set -e
 ROBOT=myrobot
-pcs="pc_list"
-camera_client_list="checkPc_list"
+client_list="CLIENT_LIST"
+check_client_list="CHECK_LIST"
 
-for i in $pcs; do
+for i in $client_list; do
     while [ true ]
       do
         if ping -c1 $i &>/dev/null
@@ -25,7 +25,7 @@ for i in $pcs; do
     done
 done
 
-for i in $camera_client_list; do
+for i in $check_client_list; do
     while [ true ]
       do
         echo $(date)
@@ -42,12 +42,12 @@ done
 
 # wait for mimic to be logged in into -h1
 while [ true ]; do
-  echo "waiting for mimic to be logged in into -h1"
-  if [[ -n $( ssh $ROBOT-h1 'who |grep ":0"| grep mimic') ]]; then
-    echo "mimic logged in into -h1"
-    break
-  fi
-  sleep 1
+    echo "waiting for mimic to be logged in into -h1"
+    if [[ -n $( ssh $ROBOT-h1 'who |grep ":0"| grep mimic') ]]; then
+        echo "mimic logged in into -h1"
+        break
+    fi
+    sleep 1
 done
 
 # wait until screen is rotated

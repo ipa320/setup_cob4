@@ -32,4 +32,3 @@ if __name__ == "__main__":
         l = sys.stdin.readline()
         with lock:
             data.append(l)
- 

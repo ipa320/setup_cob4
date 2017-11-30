@@ -30,14 +30,14 @@ The following administrator manual requires some enhanced knowledge about:
 If you are missing some of this requirements or feel uncomfortable with what you are doing, please interrupt and ask somebody to help you before continuing.
 
 
-=== [[Setup robot pcs]] Setup robot pcs 
+=== [[Setup robot pcs]] Setup robot pcs
 
-On all Care-O-bot 4 there are at least six pcs... 
+On all Care-O-bot 4 there are at least six pcs...
 
 
-==== Install operating system 
+==== Install operating system
 
-The first step is to install the operating system for each base, torso and sensorring pc. We are using Ubuntu as the main operating system for the robot. We recommend to install the Ubuntu 14.04 LTS (long term stable) 64-bit version because this version is well tested to work with the hardware. First please install Ubuntu (English version) creating a normal swap partition. Please choose robot as an admin account with a really safe password which should only be known to the local robot administrator. 
+The first step is to install the operating system for each base, torso and sensorring pc. We are using Ubuntu as the main operating system for the robot. We recommend to install the Ubuntu 14.04 LTS (long term stable) 64-bit version because this version is well tested to work with the hardware. First please install Ubuntu (English version) creating a normal swap partition. Please choose robot as an admin account with a really safe password which should only be known to the local robot administrator.
 
 The hostnames of the pcs should be:
 
@@ -57,7 +57,7 @@ The hostnames of the pcs should be:
 
 ==== Install basic toolsInstall ROS and driver software
 
-In the case of the NUC pcs it is necessary install the Ethernet driver http://sourceforge.net/projects/e1000[e1000e] and activate on the BIOS that the NUc powers on by swichting on the robot. On the Bios setup 
+In the case of the NUC pcs it is necessary install the Ethernet driver http://sourceforge.net/projects/e1000[e1000e] and activate on the BIOS that the NUc powers on by swichting on the robot. On the Bios setup
 
 image:doc/screenshot_biosNUC.jpg[Bios menu]
 
@@ -129,7 +129,7 @@ Allow robot user to execute sudo command without password. Add +robot ALL=(ALL) 
 sudo visudo -f /etc/sudoers
 ----
 
-==== [[RootUser]] Setup root local account 
+==== [[RootUser]] Setup root local account
 
 Enable root account on all robot pcs
 
@@ -155,7 +155,7 @@ It is recommendable defined in the router static ip address for the pcs, using t
 * cob4-X-s1 : +10.4.X.31+
 * cob4-X-h1 : +10.4.X.41+
 
-We recommend remove the ubuntu network manager and configure the LAN port using the file +/etc/network/interfaces+ 
+We recommend remove the ubuntu network manager and configure the LAN port using the file +/etc/network/interfaces+
 
 ----
 sudo apt-get remove network-manager
@@ -306,7 +306,7 @@ sudo apt-get install ntp
 ==== NTP configuration on cob4-X-b1 (NTP server)
 
 Edit +/etc/ntp.conf+, change the server to +0.pool.ntp.org+ and add the restrict
-line, IP is the parameter that define your 
+line, IP is the parameter that define your
 
 <<Setup internal robot network,robot network>>.
 
@@ -330,7 +330,7 @@ For general instructions see http://wiki.ros.org/indigo/Installation/Ubuntu[Ubun
 ==== Install additional tools
 
 ----
-sudo apt-get install openjdk-6-jdk zsh terminator 
+sudo apt-get install openjdk-6-jdk zsh terminator
 ----
 
 ==== Setup your source.list
@@ -350,9 +350,9 @@ wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
 ==== Install ROS
 
 ----
-sudo apt-get update 
+sudo apt-get update
 sudo apt-get install ros-indigo-rosbash python-ros-*
-sudo apt-get install ros-indigo-care-o-bot-robot 
+sudo apt-get install ros-indigo-care-o-bot-robot
 ----
 
 ==== Setup bash environment
@@ -361,7 +361,7 @@ We setup a special bash environment to be used on the Care-O-bot pcs. The enviro
 
 ----
 sudo cp ~/git/setup_cob4/cob-pcs/cob.bash.bashrc.pcY /etc/cob.bash.bashrc
----- 
+----
 
 All users have a pre-configured bash environment too, therefore copy +user.bashrc+ to +∼/.bashrc+
 
@@ -382,7 +382,7 @@ ROBOT_ENV=YOUR_ENVIRONMENT
 
 === Create overlays for stacks
 
-It is recommended use the following folders structure, in order to use the default scripts and tools, a main folder +git+ on the home robot directory. Inside this folder should be the setup_cob4 repository and the catkin workspace +care-o-bot+ 
+It is recommended use the following folders structure, in order to use the default scripts and tools, a main folder +git+ on the home robot directory. Inside this folder should be the setup_cob4 repository and the catkin workspace +care-o-bot+
 
 ----
 mkdir /u/robot/git/care-o-bot
@@ -424,11 +424,11 @@ udev, pcan
 
 [width="80%",cols="^3,^3,^3,^3",options="header"]
 |=========================================================
-| Component | PC | Driver | Required 
+| Component | PC | Driver | Required
 
-| Laser scanner | cob4-X-b1 | <<sick_s300 , sick_s300>> | udev rules 
+| Laser scanner | cob4-X-b1 | <<sick_s300 , sick_s300>> | udev rules
 
-| Flexisoft | cob4-X-b1 | <<sick_flexisoft , sick_flexisoft>> | - 
+| Flexisoft | cob4-X-b1 | <<sick_flexisoft , sick_flexisoft>> | -
 
 | Base | cob4-X-b1 | <<base , base>> | Pcan driver
 

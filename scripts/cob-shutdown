@@ -1,50 +1,49 @@
 #!/usr/bin/env bash
 
-if [[ $HOSTNAME != *"b"* ]]; then 
+if [[ $HOSTNAME != *"b"* ]]; then
     echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC, current host is $HOSTNAME"
     exit
 fi
 
-# get pcs in local network
-IP=$(hostname -I | awk '{print $1}')
-client_list=$(nmap --unprivileged $IP-50 --system-dns | grep report | awk '{print $6}' | sed 's/(//g;s/)//g' | tr '\n' ' ')
+#### retrieve client_list variables
+source /u/robot/git/setup_cob4/helper_client_list.sh
 
-for client in $client_list; do
+for client in $client_list_hostnames; do
     if [ $client == $IP ] ; then
         echo "skipping $client"
         continue
     fi
     echo "-------------------------------------------"
-    echo "Executing <<"shutdown">> on $client"  
+    echo "Executing <<"shutdown">> on $client"
     echo "-------------------------------------------"
     echo ""
     ssh -o ConnectTimeout=15 $client "sudo shutdown now -P 0"
     ret=${PIPESTATUS[0]}
     if [ $ret != 0 ] ; then
-      echo "command return an error (error code: $ret), aborting..."
+        echo "command return an error (error code: $ret), aborting..."
     fi
 done
 
-for client in $client_list; do
+for client in $client_list_hostnames; do
     if [ $client == $IP ] ; then
         echo "skipping $client"
         continue
     fi
     echo "-------------------------------------------"
-    echo "Executing <<waiting for>> on" $client  
+    echo "Executing <<waiting for>> on" $client
     echo "-------------------------------------------"
     echo ""
     Crono=0
     while [[ $Crono -le 60 ]]; do
-      ping -qc 1 -w 3 $client > /dev/null
-      if [ $? -ne 0 ] ; then
-        echo $client down
-        break
-      else
-        Crono=$((Crono+1))
-        echo "waiting for" $client
-      fi
-      sleep 1
+        ping -qc 1 -w 3 $client > /dev/null
+        if [ $? -ne 0 ] ; then
+            echo $client down
+            break
+        else
+            Crono=$((Crono+1))
+            echo "waiting for" $client
+        fi
+        sleep 1
     done
     echo $client "timeout reached"
 done

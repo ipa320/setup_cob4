@@ -71,5 +71,5 @@ rtcsync
 # the CMOS clock is on UTC (GMT).  If it reads '# rtconutc' or is absent
 # chrony will assume local time.  The line (if any) was written by the
 # chrony postinst based on what it found in /etc/default/rcS.  You may
-# change it if necessary. 
+# change it if necessary.
 rtconutc

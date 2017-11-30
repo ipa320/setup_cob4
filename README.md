@@ -1,4 +1,4 @@
-<a id="top"/> 
+<a id="top"/>
 # cob4 Installation
 
 This repository contains a collection of files, scripts, manuals and other things that can be used to setup the Care-O-bot4.

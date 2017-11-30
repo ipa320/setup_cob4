@@ -10,9 +10,8 @@ sudo apt-get autoremove -y
 packages=$(dpkg --get-selections | grep -v "deinstall" | awk '{print $1}')
 echo $packages > /tmp/package_list
 
-# get pcs in local network
-IP=$(hostname -I | awk '{print $1}')
-client_list=$(nmap --unprivileged $IP-50 --system-dns | grep report | awk '{print $5}')
+#### retrieve client_list variables
+source /u/robot/git/setup_cob4/helper_client_list.sh
 
 declare -a commands=(
 "sudo apt-get update"
@@ -21,8 +20,7 @@ declare -a commands=(
 "sudo apt-get autoremove -y"
 )
 
-
-for client in $client_list; do 
+for client in $client_list_hostnames; do
   echo "-------------------------------------------"
   echo "Installing packages on $client"
   echo "-------------------------------------------"
@@ -40,4 +38,3 @@ for client in $client_list; do
 done
 
 echo "syncing packages done."
-

@@ -24,7 +24,7 @@ fi
 
 dmesg | grep "cannot get freq at ep 0x84"
 if [ $? -eq 0 ]; then
-  echo "error -- cannot get freq -- found" 
+  echo "error -- cannot get freq -- found"
 else
   check3=true
 fi
@@ -44,8 +44,8 @@ else
 fi
 
 if $check1 && $check2 && $check3 && $check4 && $check5; then
- echo "OK"
- touch /tmp/check_done
+  echo "OK"
+  touch /tmp/check_done
 else
- reboot -f now
+  reboot -f now
 fi

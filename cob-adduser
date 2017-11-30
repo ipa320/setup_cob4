@@ -1,31 +1,31 @@
 #!/bin/bash
 robot_name="${HOSTNAME//-b1}"
 
-if [ "$USER" != "robot" ]; then 
+if [ "$USER" != "robot" ]; then
 	echo 'FATAL: CAN ONLY BE EXECUTED AS "robot" USER'
 	exit
 fi
 
-if [ "$HOSTNAME" != "$robot_name-b1" ]; then 
+if [ "$HOSTNAME" != "$robot_name-b1" ]; then
 	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC"
 	exit
 fi
 
-IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
-client_list=$(nmap --unprivileged $IP-50 --system-dns | grep report | awk '{print $6}' | sed 's/(//g;s/)//g' | tr '\n' ' ') 
+#retrieve client_list variables
+source /u/robot/git/setup_cob4/helper_client_list.sh
 
 echo "Executing adduser"
 sudo /usr/sbin/adduser $1 --home /u/$1
-sudo adduser $1 dialout 
-sudo adduser $1 cdrom 
-sudo adduser $1 floppy 
+sudo adduser $1 dialout
+sudo adduser $1 cdrom
+sudo adduser $1 floppy
 sudo adduser $1 audio
 sudo adduser $1 video
 sudo adduser $1 plugdev
-sudo adduser $1 users 
+sudo adduser $1 users
 
 echo "Syncing passwd file to other cob-pcs"
-for i in $client_list
+for i in $client_list_ip
 do
 	echo "sync passwd on $i"
 	sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$i:/etc/
@@ -35,6 +35,7 @@ if [ "$1" != "" ]; then
 	echo "setup bash environment"
 	sudo cp /u/robot/git/setup_cob4/cob-pcs/user.bashrc /u/$1/.bashrc
 	sudo cp /u/robot/git/setup_cob4/cob-pcs/tmux.conf /u/$1/.tmux.conf
+	sudo chown $1:$1 /u/$1/.tmux.conf
 	sudo sed -i "s/myrobot/$robot_name/g" /u/$1/.bashrc
 	sudo sed -i "s/mydistro/$ROS_DISTRO/g" /u/$1/.bashrc
 
@@ -45,9 +46,18 @@ if [ "$1" != "" ]; then
 	sudo -u $1 cat /u/$1/.ssh/id_rsa.pub | ssh $1@$robot_name-b1 "cat >> /u/$1/.ssh/authorized_keys"
 	echo "login to $1@localhost"
 	sudo -u $1 ssh $1@localhost 'exit'
-	for i in $client_list
+
+	# login to all pcs using ip
+	for i in $client_list_ip
 	do
-	    echo "login to $1@$i"
+		echo "login to $1@$i"
+		sudo -u $1 ssh $1@$i 'exit'
+	done
+
+	# login to all pcs using hostname
+	for i in $client_list_hostnames
+	do
+		echo "login to $1@$i"
 		sudo -u $1 ssh $1@$i 'exit'
 	done
 

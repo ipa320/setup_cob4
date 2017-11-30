@@ -15,11 +15,20 @@ INFO: This script is a helper tool for the setup and installation of Care-O-bot:
 EOF
 )
 
+upstart_selection=$(cat << "EOF"
+INFO: The following upstart variants are available: \n
+1. cob_bringup\n
+2. unity_bringup\n
+3. msh_all\n
+4. custom upstart\n
+EOF
+)
+
 green='\e[0;32m'
 red='\e[0;31m'
 NC='\e[0m' # No Color
 
-if [ "$USER" != "robot" ]; then 
+if [ "$USER" != "robot" ]; then
   echo -e "\n${red}FATAL: CAN ONLY BE EXECUTED AS robot USER${NC}"
   exit
 fi
@@ -29,32 +38,32 @@ if [[ ${HOSTNAME} != *"b1"* ]];then
   exit
 fi
 
+#### retrieve client_list variables
+source /u/robot/git/setup_cob4/helper_client_list.sh
 
 #### DEFINE SPECIFIC LIST OF PCs
-function Entry {
-
-  echo -e "\n${green}INFO:POST-INSTALLATION${NC}\n" 
-  echo -e "${green} Default pc list:${NC}  $robot_name-b1  $robot_name-t1  $robot_name-t2  $robot_name-t3  $robot_name-s1  $robot_name-h1"
-  echo -e "\nDo you want to install the default configuration (y/n)?"
+function query_pc_list {
+  echo -e "\n${green}INFO:QUERY_PC_LIST${NC}\n"
+  echo -e "${green} PC_LIST:${NC} $1"
+  echo -e "\nDo you want to use the suggested pc list (y/n)?"
   read answer
 
   if echo "$answer" | grep -iq "^y" ;then
-    pc_list="$robot_name-b1 $robot_name-t1 $robot_name-t2 $robot_name-t3 $robot_name-s1 $robot_name-h1"
+    LIST=$1
   else
-    echo -e "\n${green}==>${NC} Please specify the list of pcs of your robot (e.g. 'cob4-2-b1 cob4-2-t1 cob4-2-t2 cob4-2-t3 cob4-2-s1 cob4-2-h1'):"
-  echo -e "\nEnter your list of pcs of your robot::"
-    read pc_list  
+    echo -e "\n${green}==>${NC} Please specify your custom pc list (using the hostnames):"
+    echo -e "\nEnter your list of pcs of your robot:"
+    read LIST
   fi
-
 }
-
 
 #### Setup root user
 function SetupRootUser {
-
   echo -e "\n${green}INFO:setup root user${NC}\n"
 
-  Entry
+  query_pc_list "$client_list_hostnames"
+  pc_list=$LIST
+
   #generate a ssh key for root user per pc
   if sudo grep -q SSH_ASKPASS "/root/.bashrc"; then
     echo -e "\n${green}INFO: Found SSH_ASKPASS${NC}\n"
@@ -62,7 +71,7 @@ function SetupRootUser {
     sudo sh -c "echo 'unset SSH_ASKPASS' >> /root/.bashrc"
   fi
 
-  if sudo test -f "/root/.ssh/id_rsa.pub";then
+  if sudo test -f "/root/.ssh/id_rsa.pub"; then
     echo -e "\n${green}INFO:ssh key exists for root${NC}\n"
   else
     echo "create new ssh key"
@@ -86,22 +95,23 @@ function SetupRootUser {
 }
 
 #### Setup Robot user
-function  SetupRobotUser {
-
+function SetupRobotUser {
   echo -e "\n${green}INFO:Setup Robot User${NC}\n"
 
-  Entry
+  query_pc_list "$client_list_hostnames"
+  pc_list=$LIST
+
   /u/robot/git/setup_cob4/cob-adduser robot
 
   source /opt/ros/indigo/setup.bash #FIXME only working for indigo!!!
 
-  if grep -q ROBOT "/u/robot/.bashrc"; then  
+  if grep -q ROBOT "/u/robot/.bashrc"; then
     echo ".bashrc already configured"
   else
     /u/robot/git/setup_cob4/cob-adduser robot
   fi
 
-  if [ -d /u/robot/git/care-o-bot/src ]; then 
+  if [ -d /u/robot/git/care-o-bot/src ]; then
     echo "INFO: robot workspace already exits"
   else
     mkdir -p /u/robot/git/care-o-bot/src
@@ -120,20 +130,10 @@ function  SetupRobotUser {
 
 #### SETUP MIMIC
 function SetupMimicUser {
-
   echo -e "\n${green}INFO:Setup Mimic User${NC}\n"
 
-  echo -e "${green} default pc head:${NC} $robot_name-h1"
-  echo -e "\nDo you want to install the default configuration in the pc head (y/n)?"
-  read answer
-
-  if echo "$answer" | grep -iq "^y" ;then
-    pc_head="$robot_name-h1"
-  else
-    echo -e "\n${green}==>${NC} Please specify the head pc of your robot (e.g. 'cob4-2-h1'):"
-  echo -e "\nEnter your head pc of your robot::"
-    read pc_head  
-  fi
+  query_pc_list "$robot_name-h1"
+  pc_head=$LIST
 
   /u/robot/git/setup_cob4/cob-adduser mimic
 
@@ -203,11 +203,7 @@ EOF"
 }
 
 #### INSTALL UPSTART
-function  InstallUpstart {
-  path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/cob.yaml"
-  pc_list="myrobot-b1 myrobot-t1 myrobot-t2 myrobot-t3 myrobot-s1 myrobot-h1"
-  checkPc_list=""
-
+function InstallUpstart {
   echo -e "\n${green}INFO: Install Upstart${NC}\n"
 
   sudo apt-get install nmap
@@ -217,54 +213,42 @@ function  InstallUpstart {
   sudo cp -f /u/robot/git/setup_cob4/upstart/cob-stop /usr/sbin/cob-stop
   sudo cp -f /u/robot/git/setup_cob4/scripts/cob-command /usr/sbin/cob-command
 
-  sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-start"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-start|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-start||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-start" -e "}" /etc/sudoers 
-  sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-stop|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-stop||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-stop" -e "}" /etc/sudoers 
-  sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-command"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-command|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-command||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-command" -e "}" /etc/sudoers 
-
+  sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-start"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-start|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-start||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-start" -e "}" /etc/sudoers
+  sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-stop|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-stop||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-stop" -e "}" /etc/sudoers
+  sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-command"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-command|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-command||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-command" -e "}" /etc/sudoers
 
   # install cob.yaml
   echo -e "\n${green}INFO:UPSTART CONFIGURATION:${NC}"
-  cat $path_to_cob_yaml
-  echo -e "\nDo you want to install the default configuration from $path_to_cob_yaml (y/n)?"
-  read answer
-  if echo "$answer" | grep -iq "^y" ;then
-    echo "installing default upstart configuration"
+  echo -e $upstart_selection
+  read -p "Please select an upstart option: " choice
+  if [[ "$choice" == 1 ]] ; then
+    path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/cob_bringup.yaml"
+  elif [[ "$choice" == 2 ]] ; then
+    path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/unity_bringup.yaml"
+  elif [[ "$choice" == 3 ]] ; then
+    path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/msh_all.yaml"
   else
-    echo -e "${green}==>${NC} Please specify the path of the scenario configuration file (e.g. /u/robot/git/setup_cob4/upstart/cob.yaml): "
+    echo -e "${green}==>${NC} Please specify the path of your custom upstart configuration file (fully quantified filename): "
     read path_to_cob_yaml
-    echo "installing the following upstart configuration from $path_to_cob_yaml"
-    cat $path_to_cob_yaml
   fi
+  echo "installing the following upstart configuration: $path_to_cob_yaml"
+  cat $path_to_cob_yaml
   sudo cp -f $path_to_cob_yaml /etc/ros/cob.yaml
   sudo sed -i "s/myrobot/$robot_name/g" /etc/ros/cob.yaml
 
-  # get pc_list
-  echo -e "\n${green}INFO:PC LIST FOR UPSTART:${NC}"
-  echo -e "${green}pc list:${NC} $pc_list"
-  echo -e "\nDo you want to install upstart with the default pc configuration (y/n)?"
-  read answer
-  if echo "$answer" | grep -iq "^y" ;then
-    echo "installing upstart for default pc configuration"
-  else
-    echo -e "\n${green}==>${NC} Please specify the list of pcs (e.g. 'cob4-2-b1 cob4-2-t1 cob4-2-t2 cob4-2-t3 cob4-2-s1 cob4-2-h1'): "
-    read pc_list
-  fi
-  sudo sed -i "s/pc_list/$pc_list/g" /usr/sbin/cob-start
-  
-  # get checkPc_list
-  echo -e "\n${green}INFO:CHECK PC LIST:${NC}"
-  echo -e "${green}check pc list:${NC} $checkPc_list"
-  echo -e "\nDo you want to install the default check pc configuration (y/n)?"
-  read answer
-  if echo "$answer" | grep -iq "^y" ;then
-    echo "installing default check pc configuration"
-  else
-    echo -e "\n${green}==>${NC} Please specify the list of pcs with a check condition of your robot (e.g. 'cob4-2-t1 cob4-2-t3 cob4-2-s1'): "
-    read checkPc_list
-  fi  
-  
+  # get client_list
+  echo -e "\n${green}INFO:CLIENT LIST:${NC}"
+  query_pc_list "$client_list_hostnames"
+  client_list=$LIST
+  sudo sed -i "s/CLIENT_LIST/$client_list/g" /usr/sbin/cob-start
+
+  # get check_client_list
+  echo -e "\n${green}INFO:CHECK CLIENT LIST:${NC}"
+  query_pc_list ""
+  check_client_list=$LIST
+
   # install check scripts on pc
-  for client in $checkPc_list; do
+  for client in $check_client_list; do
     echo "-------------------------------------------"
     echo "Executing on $client"
     echo "-------------------------------------------"
@@ -272,15 +256,14 @@ function  InstallUpstart {
     ssh $client "sudo cp -f /u/robot/git/setup_cob4/scripts/check_cameras.sh /etc/init.d/check_cameras.sh"
     ssh $client "sudo update-rc.d check_cameras.sh defaults"
   done
-  sudo sed -i "s/checkPc_list/$checkPc_list/g" /usr/sbin/cob-start
   sudo sed -i "s/myrobot/$robot_name/g" /usr/sbin/cob-start
+  sudo sed -i "s/CHECK_LIST/$check_client_list/g" /usr/sbin/cob-start
 
   echo "install upstart done"
 }
 
 #### SETUP SCANNERS
-function  SetupDevices {
-
+function SetupDevices {
   echo -e "\n${green}INFO: Setup udev rules for the scanners ${NC}\n"
 
   results=()
@@ -297,33 +280,30 @@ function  SetupDevices {
 
   echo "found $count scanners: $results"
 
-  if [[ ${results[0]} == ${results[1]} ]]
-    then
-      ATTRSSerialFL=${results[0]}
-      ATTRSSerialR=${results[2]}
-  elif [[ ${results[1]} == ${results[2]} ]]
-    then
-      ATTRSSerialFL=${results[1]}
-      ATTRSSerialR=${results[0]}
-  elif [[ ${results[0]} == ${results[2]} ]]
-    then
-      ATTRSSerialFL=${results[0]}
-      ATTRSSerialR=${results[1]}
+  if [[ ${results[0]} == ${results[1]} ]]; then
+    ATTRSSerialFL=${results[0]}
+    ATTRSSerialR=${results[2]}
+  elif [[ ${results[1]} == ${results[2]} ]]; then
+    ATTRSSerialFL=${results[1]}
+    ATTRSSerialR=${results[0]}
+  elif [[ ${results[0]} == ${results[2]} ]]; then
+    ATTRSSerialFL=${results[0]}
+    ATTRSSerialR=${results[1]}
   fi
 
-  ATTRSSerialFL="$( echo "$ATTRSSerialFL" | sed 's/ //g' )"	
-  ATTRSSerialR="$( echo "$ATTRSSerialR" | sed 's/ //g' )"	
+  ATTRSSerialFL="$( echo "$ATTRSSerialFL" | sed 's/ //g' )"
+  ATTRSSerialR="$( echo "$ATTRSSerialR" | sed 's/ //g' )"
 
-  sudo sed -i -re "s/(ScanFrontAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh	
+  sudo sed -i -re "s/(ScanFrontAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
   sudo sed -i -re "s/(ScanLeftAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
   sudo sed -i -re "s/(ScanRightAttr2=).*/\1'${ATTRSSerialR}'/g" /etc/init.d/udev_cob.sh
 
   echo "setup devices done"
 }
+
 ########################################################################
 ############################# INITIAL MENU #############################
 ########################################################################
-
 
 if [[ "$1" =~ "--help" ]]; then echo -e $usage; exit 0; fi
 
@@ -332,7 +312,7 @@ echo "                INITIAL MENU"
 echo -e "${green}===========================================${NC}"
 
 echo -e $usage
-read -p "Please select an installation option: " choice 
+read -p "Please select an installation option: " choice
 
 robot_name="${HOSTNAME//-b1}"
 
@@ -343,33 +323,22 @@ else
   git --work-tree=/u/robot/git/setup_cob4 --git-dir=/u/robot/git/setup_cob4/.git pull origin master
 fi
 
-if [[ "$choice" == 1 ]]
-  then
-    SetupRootUser
+if [[ "$choice" == 1 ]]; then
+  SetupRootUser
+elif [[ "$choice" == 2 ]]; then
+  SetupRobotUser
+elif [[ "$choice" == 3 ]]; then
+  SetupMimicUser
+elif [[ "$choice" == 4 ]]; then
+  SetupDevices
+elif [[ "$choice" == 5 ]]; then
+  InstallUpstart
+elif [[ "$choice" == 99 ]]; then
+  SetupRootUser
+  SetupRobotUser
+  SetupMimicUser
+  SetupDevices
+  InstallUpstart
+else
+  echo -e "\n${red}INFO: Invalid install option. Exiting. ${NC}\n"
 fi
-if [[ "$choice" == 2 ]]
-  then
-    SetupRobotUser
-fi
-if [[ "$choice" == 3 ]]
-  then
-    SetupMimicUser
-fi
-if [[ "$choice" == 4 ]]
-  then
-    SetupDevices
-fi
-if [[ "$choice" == 5 ]]
-  then
-    InstallUpstart
-fi
-if [[ "$choice" == 99 ]]
-  then
-    SetupRootUser
-    SetupRobotUser
-    SetupMimicUser
-    SetupDevices
-    InstallUpstart
-fi
-
-

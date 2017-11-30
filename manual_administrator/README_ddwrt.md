@@ -13,7 +13,7 @@
 - Accept Lizenz and click on `manual Configuration`.
 
 ![Flash1](doc/Flash1.PNG)
-  
+
 - Now click on `Anmelden` and ether the default Passwort: admin
 
 ![Flash2](doc/Flash2.PNG)
@@ -26,7 +26,7 @@
 
 - Press `start` to start the flash progress <br>
   Accept the upcomming warings and restart the Router once the process is finished
-  
+
 ### 3. Setup DDWRT <a id="DDWRT"/>
 - After the Router restartet got to the Address `192.168.1.1` by entering it in the Address Bar of you web browser
 - Now enter a new username and password <br>
@@ -39,7 +39,7 @@
 
 ![ddwrt3](doc/ddwrt3.png)<br>
 ![ddwrt4](doc/ddwrt4.png)<br>
-  
+
 ### 4. Configure DDWRT for Robot <a id="ConfigGen"/>
 - install sshpass on your pc <br>
   `sudo apt-get update`
@@ -51,7 +51,7 @@
 - execute script to generate a ddwrt config <br>
   - `./create_ddwrt_script.sh` <br>
   - enter all required values and double check them (if you are unshure how to get the VPN Certificates look at the [README_Openvpn](README_Openvpn.md)
- 
+
 ### 5. (Optional) turn off direct wifi
 Go to `Administration/commands` and save
 ```

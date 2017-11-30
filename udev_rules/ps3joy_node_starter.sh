@@ -36,10 +36,10 @@ echo "roscore ready"
 echo "Checking whether any ps3joy(_node) is already running.."
 # pgrep: 0 on match, 1 on no match
 # grep: 0 on match, 1 on no match
-if pgrep ps3joy.py > /dev/null || 
+if pgrep ps3joy.py > /dev/null ||
    pgrep ps3joy_node.py > /dev/null ||
    # this test is needed because python scripts are executed under the
-   # generic process name 'python' so we have to test for ps3joy as a 
+   # generic process name 'python' so we have to test for ps3joy as a
    # ros node.
    rosnode list | grep "/ps3joy" ; then
 	echo "Error!? ps3joy(_node) is already running! Quitting starter"

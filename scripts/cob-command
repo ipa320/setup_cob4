@@ -1,6 +1,7 @@
 #!/bin/bash
 blue='\e[1;34m'
 black='\e[0;30m'
+grey='\e[0;37m'
 red='\e[0;31m'
 green='\e[1;32m'
 
@@ -9,12 +10,12 @@ standard_user="robot"
 ProgName=$(basename $0)
 upstart_file_path="/etc/ros/cob.yaml"
 
-get_client_and_user_list(){
-  IP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
-  client_list=$(nmap --unprivileged $IP-50 --system-dns | grep report | awk '{print $6}' | sed 's/(//g;s/)//g' | tr '\n' ' ') 
+#### retrieve client_list variables
+source /u/robot/git/setup_cob4/helper_client_list.sh
+
+get_user_list(){
   pos=0
-  for i in $client_list
-  do
+  for i in $client_list_hostnames; do
     #ssh $i "ps aux | grep 'tmux new'" > /tmp/$i.users
     #current_users=$(sed '/grep/d' /tmp/$i.users | awk '{ print $1 }'| sort | uniq)
     #command="ssh $i "ps aux | grep 'tmux new'" |  sed '/grep/d' | awk '{ print $1 }'|  sort | uniq"
@@ -26,10 +27,9 @@ get_client_and_user_list(){
 
 get_pid(){
   pid="$1"
-  for child in $(ps -o pid  --no-headers --ppid $pid)
-    do 
-      [[ "$$" -eq "$child" ]] 
-      echo $(ps -o pid= -p $child)
+  for child in $(ps -o pid  --no-headers --ppid $pid); do
+    [[ "$$" -eq "$child" ]]
+    echo $(ps -o pid= -p $child)
   done
 }
 
@@ -51,45 +51,41 @@ parse_yaml(){
 }
 
 list_sessions(){
-  get_client_and_user_list
+  get_user_list
   pos=0
-  for i in $client_list
-  do
-    for u in ${users_list[$pos]}
-    do
+  for i in $client_list_hostnames; do
+    for u in ${users_list[$pos]}; do
       sessions_list=""
       num=0
-      sessions_list=$(su $u -l -c "ssh $i 'tmux list-sessions'" | awk '{print $1}') 
+      sessions_list=$(su $u -l -c "ssh $i 'tmux list-sessions'" | awk '{print $1}')
       ret=${PIPESTATUS[0]}
       if [ $ret != 0 ] ; then
         break
       else
-        for session_name in $sessions_list
-        do
+        for session_name in $sessions_list; do
           num=$((num+1))
           sessions[$num]=${session_name%%:*}
         done
-          for n in $(seq 1 $num) 
-          do
-            pid_command='tmux list-panes -s -F "#{pane_pid}" -t '
-            quom="'"
-            ssh_command="ssh $i $quom$pid_command${sessions[$n]}$quom"
-            tmux_pid=$(su $u -l -c "$ssh_command")
-            unset PID
-            PID=$(get_pid $tmux_pid)
-            if [ -z "$PID" ]; then
-            	command=""
-            else
-            	command=$(ps -p $PID -o args)
-            fi
-            echo "${sessions[$n]}"
-            if ${verbose}; then
-              echo "  pc: $i"
-              echo "  user: $u"
-              echo "  PID: $PID"
-              echo "  command: ${command#* }"
-            fi
-          done
+        for n in $(seq 1 $num); do
+          pid_command='tmux list-panes -s -F "#{pane_pid}" -t '
+          quom="'"
+          ssh_command="ssh $i $quom$pid_command${sessions[$n]}$quom"
+          tmux_pid=$(su $u -l -c "$ssh_command")
+          unset PID
+          PID=$(get_pid $tmux_pid)
+          if [ -z "$PID" ]; then
+            command=""
+          else
+            command=$(ps -p $PID -o args)
+          fi
+          echo "${sessions[$n]}"
+          if ${verbose}; then
+            echo "  pc: $i"
+            echo "  user: $u"
+            echo "  PID: $PID"
+            echo "  command: ${command#* }"
+          fi
+        done
       fi
     done
     pos=$((pos+1))
@@ -98,13 +94,10 @@ list_sessions(){
 
 find_session(){
   SESSION_NAME="$1"
-  get_client_and_user_list
-
+  get_user_list
   pos=0
-  for i in $client_list
-  do
-    for u in ${users_list[$pos]}
-    do
+  for i in $client_list_hostnames; do
+    for u in ${users_list[$pos]}; do
       sessions_list=$(su $u -l -c "ssh $i 'tmux list-sessions' 2>&1")
       ret=${PIPESTATUS[0]}
       if [ $ret != 0 ] ; then
@@ -128,7 +121,7 @@ stop_session(){
   echo -e "${red}===========================================${NC}"
   echo "              Stopping $arg_session_stop        "
   echo -e "${red}===========================================${NC}"
-  echo -e "${black}\n ${NC}"
+  echo -e "${grey}\n ${NC}"
   find_session $arg_session_stop
   PC=$where_session
   USER=$who_session
@@ -152,41 +145,41 @@ stop_session(){
   fi
   command=${command#* }
   if $lock_core; then
-		if [[ $command == *'roscore'* ]]; then
-		  echo -e "${red}Ignoring roscore, to kill the core please use the command: cob-command stop_core${NC}"
-		  echo -e "${black}\n ${NC}"
-		else
-			su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
-			if [ ! -z "$PID" ]; then
-				while su $standard_user -l -c "ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 "; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && sleep 1; done
-			fi
-			su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
-		fi
-	else
-		su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
-		if [ ! -z "$PID" ]; then
-		  while su $standard_user -l -c "ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 "; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && sleep 1; done
-		fi
-		su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
-	fi
+    if [[ $command == *'roscore'* ]]; then
+      echo -e "${red}Ignoring roscore, to kill the core please use the command: cob-command stop_core${NC}"
+      echo -e "${grey}\n ${NC}"
+    else
+      su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
+      if [ ! -z "$PID" ]; then
+        while su $standard_user -l -c "ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 "; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && sleep 1; done
+      fi
+      su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
+    fi
+  else
+    su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
+    if [ ! -z "$PID" ]; then
+      while su $standard_user -l -c "ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 "; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && sleep 1; done
+    fi
+    su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
+  fi
 }
 
 start_session(){
   if [ -z "$arg_session_name" ]; then
-      echo "SYNTAX ERROR: please check your " $upstart_file_path ":session name not defined"
-      echo " "
-      exit
+    echo "SYNTAX ERROR: please check your " $upstart_file_path ":session name not defined"
+    echo " "
+    exit
   fi
   if [ -z "$arg_command" ]; then
-      echo "SYNTAX ERROR: please check your " $upstart_file_path ":command not defined"
-      echo " "
-      exit
+    echo "SYNTAX ERROR: please check your " $upstart_file_path ":command not defined"
+    echo " "
+    exit
   fi
   if [ -z "$arg_pc" ]; then
-      arg_pc="localhost"
+    arg_pc="localhost"
   fi
   if [ -z "$arg_user" ]; then
-      arg_user="robot"
+    arg_user="robot"
   fi
 
   echo -e "${green}===========================================${NC}"
@@ -196,15 +189,15 @@ start_session(){
   echo "Command: $arg_command"
   echo "Pre condition: $arg_pre_condition"
   echo -e "${green}===========================================${NC}"
-  echo -e "${black}\n ${NC}"
+  echo -e "${grey}\n ${NC}"
   unset session_found
   find_session $arg_session_name > /dev/null
   if ! [[ $arg_command == *'ros'* ]]; then
     echo -e "${red}ERROR: only ros commands are allow${NC}"
-    echo -e "${black} ${NC}"
+    echo -e "${grey} ${NC}"
   elif ! [ -z "$session_found" ]; then
     echo -e "${red}ERROR: $arg_session_name session already exists${NC}"
-    echo -e "${black} ${NC}"
+    echo -e "${grey} ${NC}"
   else
     if ! [ -z $arg_pre_condition ]; then
       arg_command=$arg_pre_condition' && '$arg_command
@@ -219,22 +212,22 @@ start_session(){
 }
 
 sub_help(){
-    echo "Usage: $ProgName command -options <arguments>\n"
-    echo "Commands:"
-    echo "    ls [-v]"
-    echo "    find <session_name>"
-    echo "    start [<file path>]"
-    echo "    stop [-a] [<session_name>]"
-    echo "    stop_core"
-    echo "    reboot"
-    echo ""
+  echo "Usage: $ProgName command -options <arguments>\n"
+  echo "Commands:"
+  echo "    ls [-v]"
+  echo "    find <session_name>"
+  echo "    start [<file path>]"
+  echo "    stop [-a] [<session_name>]"
+  echo "    stop_core"
+  echo "    reboot"
+  echo ""
 }
 
 sub_ls(){
   echo -e "${blue}===========================================${NC}"
   echo "Listing sessions...."
   echo -e "${blue}===========================================${NC}"
-  echo -e "${black}\n ${NC}"
+  echo -e "${grey}\n ${NC}"
   list_sessions
 }
 
@@ -242,7 +235,7 @@ sub_find(){
   echo -e "${blue}===========================================${NC}"
   echo "Finding sessions...."
   echo -e "${blue}===========================================${NC}"
-  echo -e "${black}\n ${NC}"
+  echo -e "${grey}\n ${NC}"
   if [ -z "$arg_session_name" ]; then
       echo "no session name defined"
       echo -e $usage
@@ -258,7 +251,7 @@ sub_start(){
   echo -e "${blue}===========================================${NC}"
   echo "Starting sessions...."
   echo -e "${blue}===========================================${NC}"
-  echo -e "${black}\n ${NC}"
+  echo -e "${grey}\n ${NC}"
   arg_upstart_file_path=$1
   if ! [ -z "$arg_upstart_file_path" ]; then
     upstart_file_path=$arg_upstart_file_path
@@ -267,55 +260,50 @@ sub_start(){
   parse_yaml $upstart_file_path
   IFS="="
   num=0
-  while read -r name value
-  do
-    if [[ $name == *'session_name' ]];then
+  while read -r name value ; do
+    if [[ $name == *'session_name' ]]; then
       num=$((num+1))
       sessions[$num]=$value
     fi
   done < /tmp/cob
-  for ((n=1; n <= $num; n++))
-  do
-      arg_session_name=${sessions[$n]}
-      IFS="="
-      while read -r name value
-      do
-        if [[ $name == ${sessions[$n]}'_command' ]];then
-          arg_command=$value
-        fi
-        if [[ $name == ${sessions[$n]}'_user' ]];then
-          arg_user=$value
-        fi
-        if [[ $name == ${sessions[$n]}'_pc' ]];then
-          arg_pc=$value
-        fi
-        if [[ $name == ${sessions[$n]}'_pre_condition' ]];then
-          arg_pre_condition=$value
-        fi
-      done < /tmp/cob
-      start_session
+  for ((n=1; n <= $num; n++)); do
+    arg_session_name=${sessions[$n]}
+    IFS="="
+    while read -r name value
+    do
+      if [[ $name == ${sessions[$n]}'_command' ]]; then
+        arg_command=$value
+      fi
+      if [[ $name == ${sessions[$n]}'_user' ]]; then
+        arg_user=$value
+      fi
+      if [[ $name == ${sessions[$n]}'_pc' ]]; then
+        arg_pc=$value
+      fi
+      if [[ $name == ${sessions[$n]}'_pre_condition' ]]; then
+        arg_pre_condition=$value
+      fi
+    done < /tmp/cob
+    start_session
   done
-
 }
 
 sub_stop(){
   echo -e "${blue}===========================================${NC}"
   echo "Stopping sessions...."
   echo -e "${blue}===========================================${NC}"
-  echo -e "${black}\n ${NC}"
+  echo -e "${grey}\n ${NC}"
   arg_session_name=$1
   if ${all}; then
     sessions_list=$(list_sessions)
-    for i in $sessions_list
-    do
+    for i in $sessions_list; do
       stop_session $i
     done
   elif ! [ -z "$arg_session_name" ]; then
     stop_session $arg_session_name
   else
     sessions_list=$(list_sessions)
-    for session_name in $sessions_list
-    do
+    for session_name in $sessions_list; do
       num=$((num+1))
       sessions[$num]=$session_name
     done
@@ -325,9 +313,8 @@ sub_stop(){
     echo "              Stop Session Menu                 "
     echo -e "${blue}===========================================${NC}"
     echo -e "${blue}===========================================${NC}"
-    echo -e "${black}\n ${NC}"
-    for i in $(seq 1 $num) 
-    do
+    echo -e "${grey}\n ${NC}"
+    for i in $(seq 1 $num); do
       echo "$i: ${sessions[i]}"
     done
     read -p "Please select a session number or 'all' to kill all the active sessions: " choice
@@ -335,11 +322,10 @@ sub_stop(){
       echo -e "========> $choice not valid , please choose a number session between 1-$num"
       exit
     fi
-		lock_core=true
+    lock_core=true
     if [[ "$choice" == "all" ]]; then
       all=true
-      for i in $sessions_list
-      do
+      for i in $sessions_list; do
         stop_session $i
       done
     else
@@ -350,7 +336,7 @@ sub_stop(){
   echo -e "${red}===========================================${NC}"
   echo "              Calling rosnode cleanup               "
   echo -e "${red}===========================================${NC}"
-  echo -e "${black}\n ${NC}"
+  echo -e "${grey}\n ${NC}"
   sleep 1 # give tmux sessions and rosnodes a little time to properly shutdown before calling rosnode cleanup
   su $standard_user -l -c "source /opt/ros/indigo/setup.bash && echo 'y' | rosnode cleanup"
 }
@@ -359,7 +345,7 @@ sub_stop_core(){
   echo -e "${blue}===========================================${NC}"
   echo "Stopping the core...."
   echo -e "${blue}===========================================${NC}"
-  echo -e "${black}\n ${NC}"
+  echo -e "${grey}\n ${NC}"
   killall -9 roscore
   killall -9 rosmaster
   wait $!
@@ -371,15 +357,15 @@ sub_reboot(){
   echo -e "${blue}===========================================${NC}"
   echo "Rebooting the robot...."
   echo -e "${blue}===========================================${NC}"
-  echo -e "${black}\n ${NC}"
+  echo -e "${grey}\n ${NC}"
   cob-shutdown
 }
-  
+
 sub_start_gui(){
   echo -e "${blue}===========================================${NC}"
   echo "Starting VM...."
   echo -e "${blue}===========================================${NC}"
-  echo -e "${black}\n ${NC}"
+  echo -e "${grey}\n ${NC}"
   rm -rf /tmp/runningVMS
   su mimic -c "ssh $ROBOT-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
 
@@ -395,7 +381,7 @@ sub_stop_gui(){
   echo -e "${blue}===========================================${NC}"
   echo "Stopping the Windows VM...."
   echo -e "${blue}===========================================${NC}"
-  echo -e "${black}\n ${NC}"
+  echo -e "${grey}\n ${NC}"
   su mimic -c "ssh -o ConnectTimeout=15 $ROBOT-h1 'export DISPLAY=:0 && vboxmanage controlvm myrobot-win acpipowerbutton'"
 }
 
@@ -414,7 +400,7 @@ case $subcommand in
   ;;
   *)shift
     option=$1
-    case $option in 
+    case $option in
     "-v" | "--verbose") shift
     verbose=true
     ;;
@@ -425,9 +411,8 @@ case $subcommand in
     esac
 esac
 
-  sub_${subcommand} $@
-  if [ $? = 127 ]; then
-    echo "Error: '$subcommand' is not a known subcommand." >&2
-    exit 1
-  fi
-
+sub_${subcommand} $@
+if [ $? = 127 ]; then
+  echo "Error: '$subcommand' is not a known subcommand." >&2
+  exit 1
+fi

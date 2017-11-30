@@ -15,12 +15,12 @@
 7. <a href="#Instructions">Instructions</a>
 8. <a href="#Cleanup">Cleanup</a>
 
-### 1. Introduction <a id="Introduction"/> 
+### 1. Introduction <a id="Introduction"/>
 Automatic software setup for service robots which is also defined as Unattended Installation which is performed on Ubuntu 14.04 Server. The most commonly used methods when it comes to automating Ubuntu installation: Kickstart. The Kickstart is really easy to start with because Ubuntu supports most of the RedHat's Kickstart options and we are going to use some Preseed commands.
 
 In this document we are going to create Kickstart and Preseed configuration files, modify original Ubuntu ISO (Server 14.04) files, save our modified ISO and make USB Startup Disk or CD from it.
 
-### 2. Create Kickstart Configuration file <a id="Create Kickstart Configuration file"/> 
+### 2. Create Kickstart Configuration file <a id="Create Kickstart Configuration file"/>
 
 Install Kickstart by typing command into the terminal:
 ```
@@ -34,11 +34,11 @@ in terminal.
 When the Kickstart opens, choose the settings you need for your installation. Here is the configuration used.
 
 ![alt text](doc/kickstart-0.png "Logo Title Text 0")
-Very basic and self explanatory settings here. We have used x86 architecture, because our devices had less than 4 GB of RAM. 
+Very basic and self explanatory settings here. We have used x86 architecture, because our devices had less than 4 GB of RAM.
 
 
 ![alt text](doc/kickstart-1.png "Logo Title Text 1")
-If you want to install Ubuntu from CD-ROM or USB like we did, choose CD-ROM. If you want to install it from ISO file stored on FTP, HTTP servers or hard drive, choose appropriate options. 
+If you want to install Ubuntu from CD-ROM or USB like we did, choose CD-ROM. If you want to install it from ISO file stored on FTP, HTTP servers or hard drive, choose appropriate options.
 
 
 ![alt text](doc/kickstart-2.png "Logo Title Text 2")
@@ -46,7 +46,7 @@ Keep boot loader options to default.
 
 
 ![alt text](doc/kickstart-3.png "Logo Title Text 3")
-Be careful on this step and set the right partitioning information, because it can completely delete your current system. We have installed Ubuntu on machines that had the same size HDDs with existing partitions. 
+Be careful on this step and set the right partitioning information, because it can completely delete your current system. We have installed Ubuntu on machines that had the same size HDDs with existing partitions.
 
 Make sure to create /boot, / ,and swap partitions. In this example the first two partitions are in fixed size and the last one is set to fill all remaining space for swap .
 
@@ -54,22 +54,22 @@ Note:  We make some small changes in the partition information in the further se
 
 
 ![alt text](doc/kickstart-4.png "Logo Title Text 4")
-Choose Static or DHCP. 
+Choose Static or DHCP.
 
 
 ![alt text](doc/kickstart-5.png "Logo Title Text 5")
-Kept the default settings. 
+Kept the default settings.
 
 
 ![alt text](doc/kickstart-6.png "Logo Title Text 6")
 Enter your credentials. You can later change the password in ks.cfg file manually. If you chose to encrypt your password, the supported hash in Kickstart configuration is MD5. Use Open SSL command
 ```
-openssl passwd -1 yourpassword 
+openssl passwd -1 yourpassword
 ```
 in Terminal to generate the new password. Place the generated new password in the place of Password and Confirm Password.
 
 ![alt text](doc/kickstart-7.png "Logo Title Text 7")
-Keep it disabled. Ubuntu doesn't support firewall settings. 
+Keep it disabled. Ubuntu doesn't support firewall settings.
 
 
 ![alt text](doc/kickstart-8.png "Logo Title Text 8")
@@ -92,19 +92,19 @@ When you are finished with the configuration, press File > Save File in the top 
 
 In ks.cfg search for #Disk partitioning information where we are going make small changes in the partition according to our requirement. Remove the lines of partition and paste below mentioned lines.
 ```
-#Disk partitioning information 
-##################################################### 
-clearpart --all --initlabel 
-part /boot --fstype ext4 --size 200 --asprimary 
-part swap --size 1024 
-part pv.01 --size 1 --grow 
-volgroup rootvg pv.01 
-logvol / --fstype ext4 --vgname=rootvg --size=1 --grow --name=rootvol 
-# needed to answer the 'do you want to write changes to disk" 
-preseed partman-lvm/confirm_nooverwrite boolean true 
+#Disk partitioning information
+#####################################################
+clearpart --all --initlabel
+part /boot --fstype ext4 --size 200 --asprimary
+part swap --size 1024
+part pv.01 --size 1 --grow
+volgroup rootvg pv.01
+logvol / --fstype ext4 --vgname=rootvg --size=1 --grow --name=rootvol
+# needed to answer the 'do you want to write changes to disk"
+preseed partman-lvm/confirm_nooverwrite boolean true
 
-# needed to answer the question about not having a separate /boot 
-preseed partman-auto-lvm/no_boot boolean true 
+# needed to answer the question about not having a separate /boot
+preseed partman-auto-lvm/no_boot boolean true
 #####################################################
 ```
 In automatic installation of Care-O-bot we are making two ISO images, one for Slave and one for Master.
@@ -112,79 +112,79 @@ Master Machine: cob4-X-b1
 Slave Machines: cob4-X-t1, cob4-X-t2, cob4-X-t3, cob4-X-s1, cob4-X-h1
 
 The ks.cfg which is saved on Desktop make copy of same file, name one with ks-robot-slave.cfg and other with ks-robot-master.cfg. Now we have two configuration file by which we can extract two image files one for Master and one for Slave.
-### 3. Adding packages, pre-installation, post-installation for Master and Slave configuration files. <a id="Adding packages, pre-installation, post-installation for Master and Slave configuration files."/> 
-### a. Packages: <a id="Packages"/> 
-Use the %packages command to begin a Kickstart section which describes the software packages to be installed. 
+### 3. Adding packages, pre-installation, post-installation for Master and Slave configuration files. <a id="Adding packages, pre-installation, post-installation for Master and Slave configuration files."/>
+### a. Packages: <a id="Packages"/>
+Use the %packages command to begin a Kickstart section which describes the software packages to be installed.
 ```
 Packages for ks-robot-master.cfg:
 ################################################################################
-# Additional packages to install. 
-%packages 
-vim 
-gnome 
-tree 
-gitg 
-git-gui 
-meld 
-openjdk-6-jdk 
-zsh 
-terminator 
-language-pack-de 
-language-pack-en 
+# Additional packages to install.
+%packages
+vim
+gnome
+tree
+gitg
+git-gui
+meld
+openjdk-6-jdk
+zsh
+terminator
+language-pack-de
+language-pack-en
 ipython
 ################################################################################
 ```
 ```
 Packages for ks-robot-slave.cfg:
 ################################################################################
-# Additional packages to install. 
-%packages 
-vim 
-gnome 
-tree 
-gitg 
-git-gui 
-meld 
-openjdk-6-jdk 
-zsh 
-terminator 
-language-pack-de 
-language-pack-en 
-ipython 
+# Additional packages to install.
+%packages
+vim
+gnome
+tree
+gitg
+git-gui
+meld
+openjdk-6-jdk
+zsh
+terminator
+language-pack-de
+language-pack-en
+ipython
 ################################################################################
 
 ```
 
 
-### b. Pre-installation Script <a id="Pre-Installation Script"/> 
+### b. Pre-installation Script <a id="Pre-Installation Script"/>
 We can add commands to run on the system immediately after the kick-start configuration file has been parsed. One must start with %pre command and end with the %end command. The pre-installation script section of kick-start cannot manage multiple installation trees or sources media. This information must be included for each created kick-start configuration file, as the pre – installation script occurs duing the second stage of the installation process.
 
-Here we are using pre-installation script to fetch host name of the machine 
+Here we are using pre-installation script to fetch host name of the machine
 Master Machine: cob4-X-b1
 Slave Machines: cob4-X-t1, cob4-X-t2, cob4-X-t3, cob4-X-s1, cob4-X-h1
 ```
 Pre-installation Script for ks-robot-master.cfg:
 ################################################################################
-%pre 
-#!/bin/bash 
+%pre
+#!/bin/bash
 
-###Request for hostname######################################### 
-exec < /dev/tty6 > /dev/tty6 
-chvt 6 
-clear 
-echo "################################" 
-echo "# A Small Request ! #" 
-echo "################################" 
-echo -n "Enter the name of the machine (hostname): " 
-read hostn 
-hostname $hostn 
-echo -e "NETWORKING=yes\nHOSTNAME=$hostn" > /etc/sysconfig/network 
-echo "You have chosen $hostn. Press enter to continue or Ctrl Alt Del to restart" 
-read 
-###Go back to tty1## 
-exec < /dev/tty1 > /dev/tty1 
-chvt 1 
-################################################################ 
+###Request for hostname#########################################
+exec < /dev/tty6 > /dev/tty6
+chvt 6
+clear
+echo "################################"
+echo "# A Small Request ! #"
+echo "################################"
+echo -n "Enter the name of the machine (hostname): "
+read hostn
+hostname $hostn
+echo -e "NETWORKING=yes\nHOSTNAME=$hostn" > /etc/sysconfig/network
+echo "You have chosen $hostn. Press enter to continue or Ctrl Alt Del to restart"
+read
+###Go back to tty1##
+exec < /dev/tty1 > /dev/tty1
+chvt 1
+################################################################
 %end
 ################################################################################
 
@@ -196,48 +196,48 @@ Pre-installation Script for ks-robot-slave.cfg:
 
 ################################################################################
 
-%pre --interpreter=/bin/sh 
-#!/bin/sh 
+%pre --interpreter=/bin/sh
+#!/bin/sh
 
-exec < /dev/tty6 > /dev/tty6 2>&1 
-chvt 6 
-LOGFILE=/tmp/ks-pre.log 
+exec < /dev/tty6 > /dev/tty6 2>&1
+chvt 6
+LOGFILE=/tmp/ks-pre.log
 
-echo "################################" 
-echo "# Running Pre Configuration    #" 
-echo "################################" 
-#presetup script 
-CONFIRM=no 
-while [ "$CONFIRM" != "y" ] 
-do 
-echo -n "Give hostname:" 
-read HOSTNAME 
-if [ "$HOSTNAME" == "" ] 
-then 
-HOSTLINE="network --device=etho --bootproto=dhcp" 
-echo -e -n "\e[00;31mConfigure OS to use DHCP?(y/n): \e[00m" 
-read CONFIRM 
-else 
-echo -n "Give servername:" 
-read SERVERNAME 
-echo -e -n "Hostname: \e[01;36m$HOSTNAME \e[00m" 
-echo -e -n "Servername: \e[01;36m$SERVERNAME \e[00m" 
-HOSTLINE="network --device=eth0 --bootproto=static --netmask= --gateway= --nameserver=$SERVERNAME --hostname=$HOSTNAME localhost.localdomain" 
-sleep 5 
-echo -e -n "Is the above configuration correct?(y/n): " 
-read CONFIRM 
-fi 
-done 
-echo $HOSTLINE > /tmp/test.ks 
-hostname $HOSTNAME 
-2>&1 | /usr/bin/tee $LOGFILE 
-chvt 1 
-exec < /dev/tty1 > /dev/tty1 
+echo "################################"
+echo "# Running Pre Configuration    #"
+echo "################################"
+#presetup script
+CONFIRM=no
+while [ "$CONFIRM" != "y" ]
+do
+echo -n "Give hostname:"
+read HOSTNAME
+if [ "$HOSTNAME" == "" ]
+then
+HOSTLINE="network --device=etho --bootproto=dhcp"
+echo -e -n "\e[00;31mConfigure OS to use DHCP?(y/n): \e[00m"
+read CONFIRM
+else
+echo -n "Give servername:"
+read SERVERNAME
+echo -e -n "Hostname: \e[01;36m$HOSTNAME \e[00m"
+echo -e -n "Servername: \e[01;36m$SERVERNAME \e[00m"
+HOSTLINE="network --device=eth0 --bootproto=static --netmask= --gateway= --nameserver=$SERVERNAME --hostname=$HOSTNAME localhost.localdomain"
+sleep 5
+echo -e -n "Is the above configuration correct?(y/n): "
+read CONFIRM
+fi
+done
+echo $HOSTLINE > /tmp/test.ks
+hostname $HOSTNAME
+2>&1 | /usr/bin/tee $LOGFILE
+chvt 1
+exec < /dev/tty1 > /dev/tty1
 %end
 ################################################################################
 
 ```
-### c. Post-installation Script <a id="Post-Installation Script"/> 
+### c. Post-installation Script <a id="Post-Installation Script"/>
 We have the option of adding commands to run on the system once the installation is complete. This section must be placed towards the end of the kick-start file, and must start with the %post command and end with the %end command. This section is useful for functions such as installing additional software and configuring an additional name server , editing the files according to our requirement in file system. The post-install script is run in a chroot environment; therefore, performing tasks such as copying scripts or RPMs from the installation media do not work. There can be multiple post installation scripts in one kick-start configuration file.
 
 We are using post-installation to install following list:
@@ -250,7 +250,7 @@ We are using post-installation to install following list:
 7. Setup bash environment
 8. Setup NTP
 9. Setup NFS
-### 4. Create Preseed files for Master and Slave configuration files <a id="Create Preseed files for Master and Slave configuration files"/> 
+### 4. Create Preseed files for Master and Slave configuration files <a id="Create Preseed files for Master and Slave configuration files"/>
 
 Preseeding provides a way to set answers to questions asked during the installation process, without having to manually enter the answers while the installation is running. This makes it possible to fully automate most types of installation and even offers some features not available during normal installations.
 
@@ -258,35 +258,35 @@ Pressed commands work when they are directly written inside the kick-start file,
 ```
 ubuntu-auto-robot-master.seed
 ################################################################################
-# Unmount drives with active partitions. Without this command all the installation process would stop and require confirmation to unmount drives that are already mounted. 
-d-i preseed/early_command string umount /media || true 
+# Unmount drives with active partitions. Without this command all the installation process would stop and require confirmation to unmount drives that are already mounted.
+d-i preseed/early_command string umount /media || true
 
-# Don't install recommended items 
-d-i preseed base-installer/install-recommends boolean false 
+# Don't install recommended items
+d-i preseed base-installer/install-recommends boolean false
 
-# Install only security updates automatically 
-d-i preseed pkgsel/update-policy select unattended-upgrades 
+# Install only security updates automatically
+d-i preseed pkgsel/update-policy select unattended-upgrades
 
-#d-i live-installer/net-image string http://10.1.1.2/trusty-server-amd64/install/filesystem.squashfs 
+#d-i live-installer/net-image string http://10.1.1.2/trusty-server-amd64/install/filesystem.squashfs
 
-d-i partman-auto/method string lvm 
-d-i partman-auto-lvm/guided_size string max 
-d-i partman-auto/choose_recipe select atomic 
-d-i partman-partitioning/confirm_write_new_label boolean true 
-d-i partman/confirm_write_new_label     boolean true 
-d-i partman/choose_partition            select  finish 
-d-i partman/confirm_nooverwrite         boolean true 
-d-i partman/confirm                     boolean true 
-d-i partman-auto/purge_lvm_from_device  boolean true 
-d-i partman-lvm/device_remove_lvm       boolean true 
-d-i partman-lvm/confirm                 boolean true 
-d-i partman-lvm/confirm_nooverwrite     boolean true 
-d-i partman-auto/init_automatically_partition       select      Guided - use entire disk and set up LVM 
-d-i partman/choose_partition                select      Finish partitioning and write changes to disk 
-d-i partman-auto-lvm/no_boot            boolean true 
-d-i partman-md/device_remove_md         boolean true 
-d-i partman-md/confirm                  boolean true 
-d-i partman-md/confirm_nooverwrite      boolean true 
+d-i partman-auto/method string lvm
+d-i partman-auto-lvm/guided_size string max
+d-i partman-auto/choose_recipe select atomic
+d-i partman-partitioning/confirm_write_new_label boolean true
+d-i partman/confirm_write_new_label     boolean true
+d-i partman/choose_partition            select  finish
+d-i partman/confirm_nooverwrite         boolean true
+d-i partman/confirm                     boolean true
+d-i partman-auto/purge_lvm_from_device  boolean true
+d-i partman-lvm/device_remove_lvm       boolean true
+d-i partman-lvm/confirm                 boolean true
+d-i partman-lvm/confirm_nooverwrite     boolean true
+d-i partman-auto/init_automatically_partition       select      Guided - use entire disk and set up LVM
+d-i partman/choose_partition                select      Finish partitioning and write changes to disk
+d-i partman-auto-lvm/no_boot            boolean true
+d-i partman-md/device_remove_md         boolean true
+d-i partman-md/confirm                  boolean true
+d-i partman-md/confirm_nooverwrite      boolean true
 d-i netcfg/target_network_config string ifupdown
 ################################################################################
 ```
@@ -294,40 +294,40 @@ d-i netcfg/target_network_config string ifupdown
 ```
 ubuntu-auto-robot-slave.seed
 ################################################################################
-# Unmount drives with active partitions. Without this command all the installation process would stop and require confirmation to unmount drives that are already mounted. 
-d-i preseed/early_command string umount /media || true 
+# Unmount drives with active partitions. Without this command all the installation process would stop and require confirmation to unmount drives that are already mounted.
+d-i preseed/early_command string umount /media || true
 
-# Don't install recommended items 
-d-i preseed base-installer/install-recommends boolean false 
+# Don't install recommended items
+d-i preseed base-installer/install-recommends boolean false
 
-# Install only security updates automatically 
-d-i preseed pkgsel/update-policy select unattended-upgrades 
+# Install only security updates automatically
+d-i preseed pkgsel/update-policy select unattended-upgrades
 
-#d-i live-installer/net-image string http://10.1.1.2/trusty-server-amd64/install/filesystem.squashfs 
+#d-i live-installer/net-image string http://10.1.1.2/trusty-server-amd64/install/filesystem.squashfs
 
-d-i partman-auto/method string lvm 
-d-i partman-auto-lvm/guided_size string max 
-d-i partman-auto/choose_recipe select atomic 
-d-i partman-partitioning/confirm_write_new_label boolean true 
-d-i partman/confirm_write_new_label     boolean true 
-d-i partman/choose_partition            select  finish 
-d-i partman/confirm_nooverwrite         boolean true 
-d-i partman/confirm                     boolean true 
-d-i partman-auto/purge_lvm_from_device  boolean true 
-d-i partman-lvm/device_remove_lvm       boolean true 
-d-i partman-lvm/confirm                 boolean true 
-d-i partman-lvm/confirm_nooverwrite     boolean true 
-d-i partman-auto/init_automatically_partition       select      Guided - use entire disk and set up LVM 
-d-i partman/choose_partition                select      Finish partitioning and write changes to disk 
-d-i partman-auto-lvm/no_boot            boolean true 
-d-i partman-md/device_remove_md         boolean true 
-d-i partman-md/confirm                  boolean true 
-d-i partman-md/confirm_nooverwrite      boolean true 
-# Primary network interface: 
-d-i netcfg/choose_interface select auto 
+d-i partman-auto/method string lvm
+d-i partman-auto-lvm/guided_size string max
+d-i partman-auto/choose_recipe select atomic
+d-i partman-partitioning/confirm_write_new_label boolean true
+d-i partman/confirm_write_new_label     boolean true
+d-i partman/choose_partition            select  finish
+d-i partman/confirm_nooverwrite         boolean true
+d-i partman/confirm                     boolean true
+d-i partman-auto/purge_lvm_from_device  boolean true
+d-i partman-lvm/device_remove_lvm       boolean true
+d-i partman-lvm/confirm                 boolean true
+d-i partman-lvm/confirm_nooverwrite     boolean true
+d-i partman-auto/init_automatically_partition       select      Guided - use entire disk and set up LVM
+d-i partman/choose_partition                select      Finish partitioning and write changes to disk
+d-i partman-auto-lvm/no_boot            boolean true
+d-i partman-md/device_remove_md         boolean true
+d-i partman-md/confirm                  boolean true
+d-i partman-md/confirm_nooverwrite      boolean true
+# Primary network interface:
+d-i netcfg/choose_interface select auto
 ################################################################################
 ```
-### 5. Extract and modify original ISO file <a id="Extract and modify original ISO file"/> 
+### 5. Extract and modify original ISO file <a id="Extract and modify original ISO file"/>
 Download Ubuntu Server 14.04.5 from Ubuntu website. It is necessary to use server version, because desktop version doesn't support unattested installations. Desktop functionality will be achieved after we install ubuntu-desktop or activate lightdm package in %package section or install in %post installation script.
 
 Mount .iso file to Ubuntu filesystem using terminal. The command below will mount .iso file to the folders named ubuntu_iso_master and ubuntu_iso_slave on our desktop.
