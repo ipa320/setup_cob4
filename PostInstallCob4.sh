@@ -19,8 +19,9 @@ upstart_selection=$(cat << "EOF"
 INFO: The following upstart variants are available: \n
 1. cob_bringup\n
 2. unity_bringup\n
-3. msh_all\n
-4. custom upstart\n
+3. msh_cob_robots\n
+4. msh_unity_robots\n
+5. custom upstart\n
 EOF
 )
 
@@ -226,7 +227,9 @@ function InstallUpstart {
   elif [[ "$choice" == 2 ]] ; then
     path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/unity_bringup.yaml"
   elif [[ "$choice" == 3 ]] ; then
-    path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/msh_all.yaml"
+    path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/msh_cob_robots.yaml"
+  elif [[ "$choice" == 4 ]] ; then
+    path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/msh_unity_robots.yaml"
   else
     echo -e "${green}==>${NC} Please specify the path of your custom upstart configuration file (fully quantified filename): "
     read path_to_cob_yaml
