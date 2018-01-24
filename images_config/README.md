@@ -72,6 +72,14 @@ The resulting file is stored as:
  - `ubuntu-auto.seed`
  - `ubuntu-auto-cached.seed` (includes settings to use `cob-kitchen-server` as `apt-cacher`)
 
+An alternative method is to do a manual installation and then, after rebooting, use the debconf-get-selections from the debconf-utils package to dump both the debconf database and the installer's cdebconf database to a single file:
+```
+echo "#_preseed_V1" > file
+debconf-get-selections --installer >> file
+debconf-get-selections >> file
+```
+
+
 ### 4. Create Custom ISO File <a id="Create Custom ISO File"/>
 Download latest Ubuntu Server 16.04.3 from Ubuntu website (https://www.ubuntu.com/download/server).
 
