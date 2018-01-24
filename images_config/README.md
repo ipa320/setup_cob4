@@ -66,7 +66,7 @@ The resulting files are stored as:
 
 In addition to the Kickstart Configuration File, a Preseed Configuration File is needed to allow Kickstart to run. The Preseed Configuration file also specifies the way the disk is partitioned.
 
-See https://help.ubuntu.com/lts/installation-guide/s390x/apb.html
+See https://help.ubuntu.com/lts/installation-guide/example-preseed.txt
 
 The resulting file is stored as:
  - `ubuntu-auto.seed`
@@ -88,17 +88,31 @@ cp ~/git/setup_cob4/images_config/ks-robot-master.cfg ~/ubuntu_files/
 cp ~/git/setup_cob4/images_config/ks-robot-slave.cfg ~/ubuntu_files/
 cp ~/git/setup_cob4/images_config/ubuntu-auto.seed ~/ubuntu_files/
 cp ~/git/setup_cob4/images_config/ubuntu-auto-cached.seed ~/ubuntu_files/
-cp ~/git/setup_cob4/images_config/txt.cfg ~/ubuntu_files/isolinux/txt.cfg/
-#cp ~/git/setup_cob4/images_config/initrd.gz ~/ubuntu_files/install/
+cp ~/git/setup_cob4/images_config/txt.cfg ~/ubuntu_files/isolinux/txt.cfg
 sudo mkisofs -D -r -V "Ubuntu-16.04-Care-O-bot" -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -input-charset utf-8 -cache-inodes -o ~/ubuntu-16.04-care-o-bot.iso ~/ubuntu_files
 ```
 
 ### 5. Create Bootable Media <a id="Create Bootable Media"/>
+Install Utils
 ```
 sudo apt-get install syslinux-utils
+```
+
+Make ISO bootable
+```
 sudo isohybrid ubuntu-16.04-care-o-bot.iso
 ```
-Plugin 
+
+Plugin USB device, determine path and unmount
+```
+lsblk
+sudo umount /dev/sdX
+```
+
+Copy ISO `ubuntu-16.04-care-o-bot.iso` to USB device `/dev/sdX` (**NOT `/dev/sdX1`**)
+```
+sudo dd if=ubuntu-16.04-care-o-bot.iso of=/dev/sdX bs=4M && sync
+```
 
 
 ### 6. Cleanup <a id="Cleanup"/>
