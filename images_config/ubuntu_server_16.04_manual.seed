@@ -21,7 +21,7 @@ partman-partitioning	partman-partitioning/big_new_size	error
 # Amount of volume group to use for guided partitioning:
 partman-auto-lvm	partman-auto-lvm/guided_size	string	some number
 # Hostname:
-netcfg	netcfg/get_hostname	string	cob4-13-b1
+netcfg	netcfg/get_hostname	string	
 # Identical mount points for two file systems
 partman-target	partman-target/same_mountpoint	error	
 # Do you intend to use FireWire Ethernet?
@@ -268,7 +268,7 @@ d-i	debian-installer/country	string	DE
 apt-mirror-setup	apt-setup/partner	boolean	false
 # Kernel to install:
 # Choices: linux-signed-generic,linux-generic-hwe-16.04,linux-generic,linux-virtual,linux-signed-image-generic,linux-image-extra-4.10.0-28-generic,linux-image-extra-4.4.0-87-generic,linux-image-generic-hwe-16.04,linux-image-generic,linux-image-virtual,linux-signed-image-4.4.0-87-generic,linux-image-4.4.0-87-generic,linux-image-4.10.0-28-generic, none
-base-installer	base-installer/kernel/image	select	linux-signed-generic
+base-installer	base-installer/kernel/image	select	linux-generic-hwe-16.04
 # Error while creating a new logical volume
 partman-lvm	partman-lvm/lvcreate_error	error	
 # No partitionable media
@@ -326,7 +326,7 @@ partman-btrfs	partman-btrfs/btrfs_root	error
 # LVM configuration failure
 partman-lvm	partman-lvm/commit_failed	error	
 # HTTP proxy information (blank for none):
-choose-mirror-bin	mirror/http/proxy	string	
+choose-mirror-bin	mirror/http/proxy	string	http://10.0.1.1:3142/
 # No physical volumes selected
 partman-lvm	partman-lvm/vgextend_nosel	error	
 # Mount point for this partition:
@@ -672,7 +672,7 @@ netcfg	netcfg/get_ipaddress	string
 # Are you sure you want to exit now?
 d-i	di-utils-reboot/really_reboot	boolean	false
 # for internal use; can be preseeded
-d-i	preseed/early_command	string	
+d-i	preseed/early_command	string	umount /media || true
 # No iSCSI targets discovered
 partman-iscsi	partman-iscsi/login/no_targets	error	
 # location
@@ -975,7 +975,7 @@ apt-cdrom-setup	apt-setup/cdrom/set-double	boolean	true
 d-i	cdrom-detect/manual_config	boolean	true
 # Language packs to install
 # Choices: aa ace af am an ar as ast az be ber bg bn bo br bs bua byn ca ceb co cs csb cy da de dsb dv dz el en eo es et eu fa fi fil fo fr fur fy ga gd gl gn grc gu he hi hr ht hu hy ia id is it ja jbo jv ka kab kk km kn ko ku ky la lb lg li ln lo lt lv mg mi mk ml mn mr ms mt my nap nb nds ne nl nn no nr nso oc om or pa pl ps pt qu rm ro ru rw sc sco sd se si sk sl so sq sr st sv sw ta te tet tg th ti tk tl tlh tr ts ug uk ur uz ve vi wa wo xh yi yo zh zu
-pkgsel	pkgsel/language-packs	multiselect	
+pkgsel	pkgsel/language-packs	multiselect	de, en
 # Home directory encryption failed
 user-setup-udeb	user-setup/encrypt-home-failed	error	
 # Load CD-ROM drivers from removable media?
