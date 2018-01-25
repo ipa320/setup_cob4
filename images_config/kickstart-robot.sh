@@ -47,13 +47,13 @@ function AddUsers {
     # cp -rT /etc/skel /home/robot-local
     # chown robot-local:robot-local /home/robot-local
 }
-
+#TODO password is not set correctly!!!!
 function SetupRootUser {
     if grep -q "Defaults rootpw" /etc/sudoers ; then
         echo "found Defaults rootpw in sudoers already, skipping SetupRootUser"
     else
         echo "Defaults rootpw" >> /etc/sudoers
-        passwd root --iscrypted sawVsPPn2.KXM
+        rootpw --iscrypted sawVsPPn2.KXM
     fi
 }
 
@@ -71,6 +71,7 @@ function GiveFullRights {
     fi
 }
 
+#TODO: requires user input
 function KeyboardLayout {
     L='de' && sed -i 's/XKBLAYOUT=\"\w*"/XKBLAYOUT=\"'$L'\"/g' /etc/default/keyboard
     apt-get install console-data -y -f
@@ -80,7 +81,7 @@ function KeyboardLayout {
 function NFSSetup {
     if [ "$INSTALL_TYPE" == "master" ]; then
         apt-get install nfs-kernel-server nfs-common autofs -y
-        if [ grep -q "/home /u none bind 0 0" /etc/fstab ] || [ grep -q "/u *(rw,fsid=0,sync,no_subtree_check)" /etc/exports ] ; then
+        if grep -q "/home /u none bind 0 0" /etc/fstab || grep -q "/u *(rw,fsid=0,sync,no_subtree_check)" /etc/exports ; then
             echo "NFS setup already in /etc/fstab or /etc/exports, skipping NFSSetup for master"
         else
             echo "/home /u none bind 0 0" >> /etc/fstab
@@ -93,7 +94,7 @@ function NFSSetup {
         SERVERNAME=$(echo ${HOSTNAME%-*}-b1)
         echo $SERVERNAME
         touch /etc/auto.direct
-        if [ grep -q "/u  -fstype=nfs4    $SERVERNAME:/" /etc/auto.direct ] || [ grep -q "/-  /etc/auto.direct" /etc/auto.master ] ; then
+        if grep -q "/u  -fstype=nfs4    $SERVERNAME:/" /etc/auto.direct || grep -q "/-  /etc/auto.direct" /etc/auto.master ; then
             echo "NFS setup already in /etc/auto.direct or /etc/auto.master, skipping NFSSetup for slave"
         else
             echo "/u  -fstype=nfs4    $SERVERNAME:/" >> /etc/auto.direct
@@ -119,9 +120,9 @@ function ChronySetup {
 }
 
 function ConfigureSSH {
-    
-    if [ grep -q "X11Forwarding yes" /etc/ssh/sshd_config ] || [ grep -q "X11UseLocalhost no" /etc/ssh/sshd_config ] || [ grep -q "PermitRootLogin yes" /etc/ssh/sshd_config ] || [ grep -q "ClientAliveInterval 60" /etc/ssh/sshd_config ] ; then
-        echo "SSH config already in /etc/ssh/sshd_config, skipping ConfigureSSH"
+    apt-get install openssh-server -y
+    if grep -q "X11Forwarding yes" /etc/ssh/sshd_config || grep -q "X11UseLocalhost no" /etc/ssh/sshd_config || grep -q "PermitRootLogin yes" /etc/ssh/sshd_config || grep -q "ClientAliveInterval 60" /etc/ssh/sshd_config ; then
+        echo "SSH config already in /etc/ssh/sshd_config, skipping editing sshd_config"
     else
         echo "X11Forwarding yes" >> /etc/ssh/sshd_config
         echo "X11UseLocalhost no" >> /etc/ssh/sshd_config
@@ -129,7 +130,7 @@ function ConfigureSSH {
         echo "ClientAliveInterval 60" >> /etc/ssh/sshd_config
     fi
     sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/g' /etc/ssh/sshd_config
-    /etc/init.d/ssh restart
+    service ssh restart
 }
 
 function SetupUdevRules {
@@ -167,15 +168,15 @@ function SetupDefaultBashEnv {
 
     elif [ "$INSTALL_TYPE" == "slave" ]; then
         ROBOT=$(echo ${HOSTNAME%-*})
-        if [[ "$HOSTNAME" == "$ROBOT-t"* ]] then
+        if [[ "$HOSTNAME" == "$ROBOT-t"* ]]; then
             wget -O /etc/cob.bash.bashrc https://raw.githubusercontent.com/ipa320/setup_cob4/master/cob-pcs/cob.bash.bashrc.t
         fi
 
-        if [[ "$HOSTNAME" == "$ROBOT-h"* ]] then
+        if [[ "$HOSTNAME" == "$ROBOT-h"* ]]; then
             wget -O /etc/cob.bash.bashrc https://raw.githubusercontent.com/ipa320/setup_cob4/master/cob-pcs/cob.bash.bashrc.h
         fi
 
-        if [[ "$HOSTNAME" == "$ROBOT-s"* ]] then
+        if [[ "$HOSTNAME" == "$ROBOT-s"* ]]; then
             wget -O /etc/cob.bash.bashrc https://raw.githubusercontent.com/ipa320/setup_cob4/master/cob-pcs/cob.bash.bashrc.s
         fi
     fi
@@ -186,7 +187,7 @@ function InstallShutdown {
         wget -O /usr/sbin/cob-shutdown https://raw.githubusercontent.com/ipa320/setup_cob4/master/scripts/cob-shutdown
         chmod +x /usr/sbin/cob-shutdown
         sed -i 's/etc\/acpi\/powerbtn.sh/usr\/sbin\/cob-shutdown/g' /etc/acpi/events/powerbtn
-        if [ grep -q  "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown" /etc/sudoers] ; then
+        if grep -q  "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown" /etc/sudoers ; then
             echo "NOPASSWD already for all users in /usr/sbin/cob-shutdown, skipping InstallShutdown"
         else
             echo "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown" >> /etc/sudoers
@@ -194,7 +195,7 @@ function InstallShutdown {
     fi
 }
 
-# TODO: schauen ob Unterscheidung zwischen T1 und anderen PCs bei slave Sinn macht?
+# TODO: warum ausloggen???
 function NetworkSetup {
     apt-get -y remove biosdevname -y --force-yes
     update-initramfs -u
@@ -297,14 +298,14 @@ function DisableFailsafeBoot {
 
 function InstallAptCacher {
     apt-get install apt-cacher-ng -y
-
-    if [ grep -q  'Acquire::http { Proxy "http://server_ip:3142"; };' >> /etc/apt/apt.conf.d/01proxy] ; then
-            echo "Proxy already in /etc/apt/apt.conf.d/01proxy, skipping InstallAptCacher"
-        else
-            echo 'Acquire::http { Proxy "http://server_ip:3142"; };' >> /etc/apt/apt.conf.d/01proxy
-    fi
     HOSTNAME=$(cat /etc/hostname)
     SERVERNAME=$(echo ${HOSTNAME%-*}-b1)
+    #TODO is $SERVERNAME same as server_ip???
+    if grep -q 'Acquire::http { Proxy "http://'$SERVERNAME':3142"; };' /etc/apt/apt.conf.d/01proxy ; then
+        echo "Proxy already in /etc/apt/apt.conf.d/01proxy, skipping InstallAptCacher"
+    else
+        echo 'Acquire::http { Proxy "http://server_ip:3142"; };' >>  /etc/apt/apt.conf.d/01proxy
+    fi
     sed -i "s/server_ip/${SERVERNAME}/g" /etc/apt/apt.conf.d/01proxy
     if [ "$INSTALL_TYPE" == "master" ]; then
         sed -i 's/\# PassThroughPattern: .\*/PassThroughPattern: .\*/g' /etc/apt-cacher-ng/acng.conf
