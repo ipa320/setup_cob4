@@ -15,7 +15,7 @@ function SetupGroup {
 
 # TODO: fxm
 function UpgradeKernel {
-    apt-get install --install-recommends linux-generic-lts-xenial -y --force-yes
+    apt-get install --install-recommends linux-generic-lts-xenial -y --allow
 }
 
 function InstallGraphicalIface {
@@ -53,7 +53,7 @@ function SetupRootUser {
         echo "found Defaults rootpw in sudoers already, skipping SetupRootUser"
     else
         echo "Defaults rootpw" >> /etc/sudoers
-        rootpw --iscrypted sawVsPPn2.KXM
+        usermod --password sawVsPPn2.KXM root 
     fi
 }
 
@@ -81,7 +81,7 @@ function KeyboardLayout {
 function NFSSetup {
     if [ "$INSTALL_TYPE" == "master" ]; then
         apt-get install nfs-kernel-server nfs-common autofs -y
-        if grep -q "/home /u none bind 0 0" /etc/fstab || grep -q "/u *(rw,fsid=0,sync,no_subtree_check)" /etc/exports ; then
+        if grep -q "/home /u none bind 0 0" /etc/fstab && grep -q "/u *(rw,fsid=0,sync,no_subtree_check)" /etc/exports ; then
             echo "NFS setup already in /etc/fstab or /etc/exports, skipping NFSSetup for master"
         else
             echo "/home /u none bind 0 0" >> /etc/fstab
@@ -94,7 +94,7 @@ function NFSSetup {
         SERVERNAME=$(echo ${HOSTNAME%-*}-b1)
         echo $SERVERNAME
         touch /etc/auto.direct
-        if grep -q "/u  -fstype=nfs4    $SERVERNAME:/" /etc/auto.direct || grep -q "/-  /etc/auto.direct" /etc/auto.master ; then
+        if grep -q "/u  -fstype=nfs4    $SERVERNAME:/" /etc/auto.direct && grep -q "/-  /etc/auto.direct" /etc/auto.master ; then
             echo "NFS setup already in /etc/auto.direct or /etc/auto.master, skipping NFSSetup for slave"
         else
             echo "/u  -fstype=nfs4    $SERVERNAME:/" >> /etc/auto.direct
@@ -121,7 +121,7 @@ function ChronySetup {
 
 function ConfigureSSH {
     apt-get install openssh-server -y
-    if grep -q "X11Forwarding yes" /etc/ssh/sshd_config || grep -q "X11UseLocalhost no" /etc/ssh/sshd_config || grep -q "PermitRootLogin yes" /etc/ssh/sshd_config || grep -q "ClientAliveInterval 60" /etc/ssh/sshd_config ; then
+    if grep -q "X11Forwarding yes" /etc/ssh/sshd_config && grep -q "X11UseLocalhost no" /etc/ssh/sshd_config && grep -q "PermitRootLogin yes" /etc/ssh/sshd_config && grep -q "ClientAliveInterval 60" /etc/ssh/sshd_config ; then
         echo "SSH config already in /etc/ssh/sshd_config, skipping editing sshd_config"
     else
         echo "X11Forwarding yes" >> /etc/ssh/sshd_config
@@ -339,7 +339,7 @@ InstallGraphicalIface
 AddUsers
 SetupRootUser
 GiveFullRights
-KeyboardLayout
+#KeyboardLayout
 NFSSetup
 ChronySetup
 ConfigureSSH
