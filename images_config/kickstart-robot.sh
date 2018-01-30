@@ -301,6 +301,7 @@ function InstallAptCacher {
     HOSTNAME=$(cat /etc/hostname)
     SERVERNAME=$(echo ${HOSTNAME%-*}-b1)
     #TODO is $SERVERNAME same as server_ip???
+    touch /etc/apt/apt.conf.d/01proxy
     if grep -q 'Acquire::http { Proxy "http://'$SERVERNAME':3142"; };' /etc/apt/apt.conf.d/01proxy ; then
         echo "Proxy already in /etc/apt/apt.conf.d/01proxy, skipping InstallAptCacher"
     else
