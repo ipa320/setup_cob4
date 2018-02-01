@@ -21,7 +21,9 @@ INFO: The following upstart variants are available: \n
 2. unity_bringup\n
 3. msh_cob_robots\n
 4. msh_unity_robots\n
-5. custom upstart\n
+5. hdg_cob_robots\n
+6. hdg_unity_robots\n
+7. custom upstart\n
 EOF
 )
 
@@ -230,6 +232,10 @@ function InstallUpstart {
     path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/msh_cob_robots.yaml"
   elif [[ "$choice" == 4 ]] ; then
     path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/msh_unity_robots.yaml"
+  elif [[ "$choice" == 5 ]] ; then
+    path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/hdg_cob_robots.yaml"
+  elif [[ "$choice" == 6 ]] ; then
+    path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/hdg_unity_robots.yaml"
   else
     echo -e "${green}==>${NC} Please specify the path of your custom upstart configuration file (fully quantified filename): "
     read path_to_cob_yaml
