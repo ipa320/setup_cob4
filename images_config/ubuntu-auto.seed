@@ -7,8 +7,6 @@ d-i preseed base-installer/install-recommends boolean false
 # Install only security updates automatically
 d-i preseed pkgsel/update-policy select unattended-upgrades
 
-#d-i live-installer/net-image string http://10.1.1.2/trusty-server-amd64/install/filesystem.squashfs
-
 ###################
 ### Partitioning
 ## Partitioning example
