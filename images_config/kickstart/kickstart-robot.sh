@@ -1,5 +1,22 @@
 #!/bin/bash
 
+function SetLocalAptCacher {
+    unset http_proxy
+    touch /etc/apt/apt.conf.d/01proxy
+
+    if grep -q 'Acquire::http { Proxy "http://10.0.1.1:3142"; };' /etc/apt/apt.conf.d/01proxy ; then
+        echo "Proxy already in /etc/apt/apt.conf.d/01proxy, skipping SetLocalAptCacher"
+    fi
+    if grep -q 'Acquire::http { Proxy "http://'$SERVERNAME':3142"; };' /etc/apt/apt.conf.d/01proxy ; then
+        rm /etc/apt/apt.conf.d/01proxy
+        touch /etc/apt/apt.conf.d/01proxy
+        echo 'Acquire::http { Proxy "http://10.0.1.1:3142"; };' >>  /etc/apt/apt.conf.d/01proxy
+    else
+        echo 'Acquire::http { Proxy "http://10.0.1.1:3142"; };' >>  /etc/apt/apt.conf.d/01proxy
+    fi
+    
+}
+
 function UpgradeAptPackages {
     apt-get update
     apt-get upgrade -y 
@@ -84,7 +101,7 @@ function InstallROS {
     if grep -q "deb http://packages.ros.org/ros/ubuntu $DISTRO main" /etc/apt/sources.list.d/ros-latest.list ; then
         echo "Ros sources already setup. Skipping setup"
     else
-        sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $DISTRO main" > /etc/apt/sources.list.d/ros-latest.list'
+        echo "deb http://packages.ros.org/ros/ubuntu $DISTRO main" > /etc/apt/sources.list.d/ros-latest.list
         apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
     fi
 
@@ -124,24 +141,6 @@ function ConfigureSSH {
     fi
     sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/g' /etc/ssh/sshd_config
     systemctl restart ssh
-}
-
-function InstallAptCacher {
-    HOSTNAME=$(cat /etc/hostname)
-    SERVERNAME=$(echo ${HOSTNAME%-*}-b1)
-    if [ "$INSTALL_TYPE" == "master" ]; then
-        apt-get install apt-cacher-ng -y
-        sed -i 's/\# PassThroughPattern: .\*/PassThroughPattern: .\*/g' /etc/apt-cacher-ng/acng.conf
-        systemctl restart apt-cacher-ng
-    elif [ "$INSTALL_TYPE" == "slave" ]; then
-        touch /etc/apt/apt.conf.d/01proxy
-
-        if grep -q 'Acquire::http { Proxy "http://'$SERVERNAME':3142"; };' /etc/apt/apt.conf.d/01proxy ; then
-            echo "Proxy already in /etc/apt/apt.conf.d/01proxy, skipping InstallAptCacher"
-        else
-            echo 'Acquire::http { Proxy "http://'$SERVERNAME':3142"; };' >>  /etc/apt/apt.conf.d/01proxy
-        fi
-    fi
 }
 
 function ChronySetup {
@@ -292,6 +291,28 @@ function DisableFailsafeBoot {
     sed -i 's/start on \(filesystem and static-network-up\) or failsafe-boot/start on filesystem and static-network-up/g' /etc/init/rc-sysinit.conf
 }
 
+function InstallAptCacher {
+    HOSTNAME=$(cat /etc/hostname)
+    SERVERNAME=$(echo ${HOSTNAME%-*}-b1)
+    if [ "$INSTALL_TYPE" == "master" ]; then
+        apt-get install apt-cacher-ng -y
+        sed -i 's/\# PassThroughPattern: .\*/PassThroughPattern: .\*/g' /etc/apt-cacher-ng/acng.conf
+        systemctl restart apt-cacher-ng
+    elif [ "$INSTALL_TYPE" == "slave" ]; then
+        touch /etc/apt/apt.conf.d/01proxy
+
+        if grep -q 'Acquire::http { Proxy "http://10.0.1.1:3142"; };' /etc/apt/apt.conf.d/01proxy ; then
+            rm /etc/apt/apt.conf.d/01proxy
+            touch /etc/apt/apt.conf.d/01proxy
+        fi
+        if grep -q 'Acquire::http { Proxy "http://'$SERVERNAME':3142"; };' /etc/apt/apt.conf.d/01proxy ; then
+            echo "Proxy already in /etc/apt/apt.conf.d/01proxy, skipping InstallAptCacher"
+        else
+            echo 'Acquire::http { Proxy "http://'$SERVERNAME':3142"; };' >>  /etc/apt/apt.conf.d/01proxy
+        fi
+    fi
+}
+
 ########################################################################
 ############################# INITIAL MENU #############################
 ########################################################################
@@ -314,6 +335,12 @@ else
     echo "Starting kickstart robot - using install type: $INSTALL_TYPE for distro $DISTRO"
 fi
 
+if [ ! -z "$http_proxy" ]; then
+    echo "http_proxy is set from preseed. Unsetting and setup apt cacher"
+    unset http_proxy
+    SetLocalAptCacher
+fi
+
 UpgradeAptPackages
 UpgradeKernel
 InstallUbuntuGnome
@@ -324,9 +351,6 @@ InstallROS
 SetupGrubRecFail
 #KeyboardLayout
 ConfigureSSH
-
-unset http_proxy
-InstallAptCacher
 ChronySetup
 SetupUdevRules
 InstallGitLFS
@@ -341,3 +365,4 @@ InstallCobCommand
 RemoveModemanager
 DisableUpdatePopup
 #DisableFailsafeBoot
+InstallAptCacher
