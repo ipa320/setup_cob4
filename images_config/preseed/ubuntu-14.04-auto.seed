@@ -38,6 +38,12 @@ d-i partman/choose_partition select finish
 d-i partman/confirm boolean true
 d-i partman/confirm_nooverwrite boolean true
 
+# Keyboard configuration
+d-i console-setup/ask_detect false
+d-i keyboard-configuration/layoutcode string de
+d-i keyboard-configuration keyboard-configuration/layout select German
+d-i keyboard-configuration/xkb-keymap select de
+
 #################################################################
 
 # If we're booting using the backported Vivid kernel, install it too.
