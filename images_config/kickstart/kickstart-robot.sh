@@ -81,14 +81,19 @@ function NFSSetup {
 }
 
 function InstallROS {
-    sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $DISTRO main" > /etc/apt/sources.list.d/ros-latest.list'
-    apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
+    if grep -q "deb http://packages.ros.org/ros/ubuntu $DISTRO main" /etc/apt/sources.list.d/ros-latest.list ; then
+        echo "Ros sources already setup. Skipping setup"
+    else
+        sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $DISTRO main" > /etc/apt/sources.list.d/ros-latest.list'
+        apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
+    fi
+
     apt-get update
     apt-get install ros-kinetic-ros-base -y
     apt-get install python-rosinstall python-rosinstall-generator python-wstool -y
     apt-get install python-catkin-tools -y
     apt-get install python-pip -y
-    apt-get install ros-kinetic-care-o-bot-robot
+    apt-get install ros-kinetic-care-o-bot-robot -y
 }
 
 function SetupGrubRecFail {
