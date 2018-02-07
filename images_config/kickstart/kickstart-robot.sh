@@ -1,5 +1,10 @@
 #!/bin/bash
 
+function logFile {
+    touch /root/kickstart_log
+    $1 >> /root/kickstart_log
+}
+
 function printHeader {
     echo "#############################################"
     echo "Execute $1"
@@ -23,17 +28,16 @@ function SetLocalAptCacher {
     fi
 }
 
+function EnableAptSources {
+    printHeader "EnableAptSources"
+    sed -i "s/# deb-src/deb-src/g" /etc/apt/sources.list
+}
+
 function UpgradeAptPackages {
     printHeader "UpgradeAptPackages"
     apt-get update
     apt-get upgrade -y
     apt-get dist-upgrade -y
-}
-
-function EnableKernelSources {
-    printHeader "EnableKernelSources"
-    wget -O enable_kernel_sources.sh http://bit.ly/en_krnl_src
-    bash ./enable_kernel_sources.sh
 }
 
 # TODO: fxm
@@ -90,6 +94,11 @@ function NFSSetup {
 
 function AddUsers {
     printHeader "AddUsers"
+
+    #add robot-local user (preseedd seems to have a bug adding the user before postscript execution, results in overwritten group and user ids)
+    useradd -b /home -d /home/robot-local -m -s /bin/bash -k /etc/skel robot-local
+    echo 'robot-local:$1$.8rMo3Kc$hwkXrTTshYmLa9iplJchz.' | chpasswd -e
+
     #Give robot-local full sudo rights
     if grep -q "robot-local ALL=(ALL) NOPASSWD: ALL" /etc/sudoers ; then
         echo "found robot-local NOPASSWD in sudoers already, skipping GiveFullRights to robot-local"
@@ -99,8 +108,9 @@ function AddUsers {
 
     if [ "$INSTALL_TYPE" == "master" ]; then       
         #Add robot user
-        useradd -b /u -d /u/robot -m -g 1001 -u 1001 -s /bin/bash -k /etc/skel 
-
+        mkdir /u
+        mount --bind /home /u
+        useradd -b /u -d /u/robot -m -s /bin/bash -k /etc/skel robot
         echo 'robot:$1$.8rMo3Kc$hwkXrTTshYmLa9iplJchz.' | chpasswd -e
 
         #Give robot user full rights for sudo
@@ -236,12 +246,12 @@ function NetworkSetup {
     INTERFACE=`ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}'`
 
     if [ "$INSTALL_TYPE" == "master" ]; then
-        wget -O /etc/network/interfaces https://raw.githubusercontent.com/ipa-bnm/setup_cob4/feature/xenial_unattended/cob-pcs/networkInterfacesMaster
+        wget -O /etc/network/interfaces.backup https://raw.githubusercontent.com/ipa-bnm/setup_cob4/feature/xenial_unattended/cob-pcs/networkInterfacesMaster
     elif [ "$INSTALL_TYPE" == "slave" ]; then
-        wget -O /etc/network/interfaces https://raw.githubusercontent.com/ipa-bnm/setup_cob4/feature/xenial_unattended/cob-pcs/networkInterfacesSlave
+        wget -O /etc/network/interfaces.backup https://raw.githubusercontent.com/ipa-bnm/setup_cob4/feature/xenial_unattended/cob-pcs/networkInterfacesSlave
     fi
 
-    sed -i "s/eth0/$INTERFACE/g" /etc/network/interfaces
+    sed -i "s/eth0/$INTERFACE/g" /etc/network/interfaces.backup
 
     systemctl restart networking
 }
@@ -379,29 +389,29 @@ if [ ! -z "$http_proxy" ]; then
     unset http_proxy
     SetLocalAptCacher
 fi
-UpgradeAptPackages
-EnableKernelSources
-UpgradeKernel
-InstallUbuntuGnome
-InstallHWEnableStacks
+#EnableAptSources
+#UpgradeAptPackages
+#UpgradeKernel
+#InstallUbuntuGnome
+#InstallHWEnableStacks
 NFSSetup
 AddUsers
-InstallROS
-SetupGrubRecFail
-#KeyboardLayout
-ConfigureSSH
-ChronySetup
-SetupUdevRules
-InstallGitLFS
-SetupDefaultBashEnv
-InstallShutdown
+#InstallROS
+#SetupGrubRecFail
+KeyboardLayout
+#ConfigureSSH
+#ChronySetup
+#SetupUdevRules
+#InstallGitLFS
+#SetupDefaultBashEnv
+#InstallShutdown
 NetworkSetup
-SetupEtcHosts
-InstallCandumpTools
-InstallNoMachine
-InstallNetData
-InstallCobCommand
-RemoveModemanager
-DisableUpdatePopup
+#SetupEtcHosts
+#InstallCandumpTools
+#InstallNoMachine
+#InstallNetData
+#InstallCobCommand
+#RemoveModemanager
+#DisableUpdatePopup
 #DisableFailsafeBoot
-InstallAptCacher
+#InstallAptCacher

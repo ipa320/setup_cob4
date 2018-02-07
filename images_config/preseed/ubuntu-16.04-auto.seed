@@ -59,6 +59,11 @@ d-i apt-setup/partner boolean true
 d-i apt-setup/restricted boolean true
 d-i apt-setup/universe boolean true
 
+# Late command network install
+d-i preseed/late_command string \
+in-target cp /etc/network/interfaces.backup /etc/network/interfaces
+
+
 #################################################################
 
 # If we're booting using the backported Vivid kernel, install it too.
