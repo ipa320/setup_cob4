@@ -46,29 +46,6 @@ function InstallHWEnableStacks {
     fi
 }
 
-function AddUsers {
-    #Give robot-local full sudo rights
-    if grep -q "robot-local ALL=(ALL) NOPASSWD: ALL" /etc/sudoers ; then
-        echo "found robot-local NOPASSWD in sudoers already, skipping GiveFullRights to robot-local"
-    else
-        echo "robot-local ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-    fi
-
-    if [ "$INSTALL_TYPE" == "master" ]; then
-        #Add robot user
-        useradd -b /u -d /u/robot -m robot
-
-        echo 'robot:$1$.8rMo3Kc$hwkXrTTshYmLa9iplJchz.' | chpasswd -e
-
-        #Give robot user full rights for sudo
-        if grep -q "robot ALL=(ALL) NOPASSWD: ALL" /etc/sudoers ; then
-            echo "found robot NOPASSWD in sudoers already, skipping GiveFullRights to robot"
-        else
-            echo "robot ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-        fi
-    fi
-}
-
 function NFSSetup {
     if [ "$INSTALL_TYPE" == "master" ]; then
         apt-get install nfs-kernel-server nfs-common autofs -y
@@ -94,6 +71,31 @@ function NFSSetup {
         update-rc.d autofs defaults
         service autofs restart
         modprobe nfs
+    fi
+}
+
+function AddUsers {
+    #Give robot-local full sudo rights
+    if grep -q "robot-local ALL=(ALL) NOPASSWD: ALL" /etc/sudoers ; then
+        echo "found robot-local NOPASSWD in sudoers already, skipping GiveFullRights to robot-local"
+    else
+        echo "robot-local ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+    fi
+
+    if [ "$INSTALL_TYPE" == "master" ]; then
+        
+        #Add robot user
+        mkdir /u
+        useradd -b /u -d /u/robot -m robot
+
+        echo 'robot:$1$.8rMo3Kc$hwkXrTTshYmLa9iplJchz.' | chpasswd -e
+
+        #Give robot user full rights for sudo
+        if grep -q "robot ALL=(ALL) NOPASSWD: ALL" /etc/sudoers ; then
+            echo "found robot NOPASSWD in sudoers already, skipping GiveFullRights to robot"
+        else
+            echo "robot ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+        fi
     fi
 }
 
@@ -345,8 +347,8 @@ UpgradeAptPackages
 UpgradeKernel
 InstallUbuntuGnome
 InstallHWEnableStacks
-AddUsers
 NFSSetup
+AddUsers
 InstallROS
 SetupGrubRecFail
 #KeyboardLayout
