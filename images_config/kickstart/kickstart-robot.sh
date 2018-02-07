@@ -14,16 +14,16 @@ function SetLocalAptCacher {
     else
         echo 'Acquire::http { Proxy "http://10.0.1.1:3142"; };' >>  /etc/apt/apt.conf.d/01proxy
     fi
-
-}
-
-function EnableAptSources {
-    sed -i "s/# deb-src/deb-src/g" /etc/apt/sources.list
 }
 
 function UpgradeAptPackages {
     apt-get update
     apt-get upgrade -y
+}
+
+function EnableKernelSources {
+    wget -O enable_kernel_sources.sh http://bit.ly/en_krnl_src
+    bash ./enable_kernel_sources.sh
 }
 
 # TODO: fxm
@@ -342,8 +342,8 @@ if [ ! -z "$http_proxy" ]; then
     unset http_proxy
     SetLocalAptCacher
 fi
-EnableAptSources
 UpgradeAptPackages
+EnableKernelSources
 UpgradeKernel
 InstallUbuntuGnome
 InstallHWEnableStacks
