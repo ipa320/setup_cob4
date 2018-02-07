@@ -17,6 +17,10 @@ function SetLocalAptCacher {
 
 }
 
+function EnableAptSources {
+    sed -i "s/# deb-src/deb-src/g" /etc/apt/sources.list
+}
+
 function UpgradeAptPackages {
     apt-get update
     apt-get upgrade -y
@@ -336,7 +340,7 @@ if [ ! -z "$http_proxy" ]; then
     unset http_proxy
     SetLocalAptCacher
 fi
-
+EnableAptSources
 UpgradeAptPackages
 UpgradeKernel
 InstallUbuntuGnome
