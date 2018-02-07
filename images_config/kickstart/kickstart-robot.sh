@@ -14,12 +14,12 @@ function SetLocalAptCacher {
     else
         echo 'Acquire::http { Proxy "http://10.0.1.1:3142"; };' >>  /etc/apt/apt.conf.d/01proxy
     fi
-    
+
 }
 
 function UpgradeAptPackages {
     apt-get update
-    apt-get upgrade -y 
+    apt-get upgrade -y
 }
 
 # TODO: fxm
@@ -43,15 +43,18 @@ function InstallHWEnableStacks {
 }
 
 function AddUsers {
-    if [ "$INSTALL_TYPE" == "master" ]; then
-        echo "session required pam_mkhomedir.so " >> /etc/pam.d/common-session
+    #Give robot-local full sudo rights
+    if grep -q "robot-local ALL=(ALL) NOPASSWD: ALL" /etc/sudoers ; then
+        echo "found robot-local NOPASSWD in sudoers already, skipping GiveFullRights to robot-local"
+    else
+        echo "robot-local ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+    fi
 
+    if [ "$INSTALL_TYPE" == "master" ]; then
         #Add robot user
-        adduser --disabled-password --gecos "" robot --home /u/robot
-        echo "robot:$1$.8rMo3Kc$hwkXrTTshYmLa9iplJchz."  | chpasswd -e
-        usermod -m -d /u/robot robot
-        cp -rT /etc/skel /u/robot/
-        chown robot:robot /u/robot/
+        useradd -b /u -d /u/robot -m robot
+
+        echo 'robot:$1$.8rMo3Kc$hwkXrTTshYmLa9iplJchz.' | chpasswd -e
 
         #Give robot user full rights for sudo
         if grep -q "robot ALL=(ALL) NOPASSWD: ALL" /etc/sudoers ; then
@@ -59,13 +62,6 @@ function AddUsers {
         else
             echo "robot ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
         fi
-    fi
-
-    #Give robot-local full sudo rights
-    if grep -q "robot-local ALL=(ALL) NOPASSWD: ALL" /etc/sudoers ; then
-        echo "found robot-local NOPASSWD in sudoers already, skipping GiveFullRights to robot-local"
-    else
-        echo "robot-local ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
     fi
 }
 
@@ -156,7 +152,7 @@ function ChronySetup {
     fi
 }
 
-#udev rules 
+#udev rules
 function SetupUdevRules {
     wget -O /etc/udev/rules.d/98-led.rules https://raw.githubusercontent.com/ipa320/setup_cob4/master/udev_rules/98-led.rules
     if [ "$INSTALL_TYPE" == "master" ]; then
