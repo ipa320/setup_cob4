@@ -1,6 +1,13 @@
 #!/bin/bash
 
+function printHeader {
+    echo "#############################################"
+    echo "Execute $1"
+    echo "---------------------------------------------"
+}
+
 function SetLocalAptCacher {
+    printHeader "SetLocalAptCacher"
     unset http_proxy
     touch /etc/apt/apt.conf.d/01proxy
 
@@ -17,29 +24,35 @@ function SetLocalAptCacher {
 }
 
 function UpgradeAptPackages {
+    printHeader "UpgradeAptPackages"
     apt-get update
     apt-get upgrade -y
+    apt-get dist-upgrade -y
 }
 
 function EnableKernelSources {
+    printHeader "EnableKernelSources"
     wget -O enable_kernel_sources.sh http://bit.ly/en_krnl_src
     bash ./enable_kernel_sources.sh
 }
 
 # TODO: fxm
 function UpgradeKernel {
+    printHeader "UpgradeKernel"
     if [ "$DISTRO" == "trusty" ]; then
         apt-get install --install-recommends linux-generic-lts-xenial -y --allow
     fi
 }
 
 function InstallUbuntuGnome {
+    printHeader "InstallUbuntuGnome"
     add-apt-repository ppa:gnome3-team/gnome3 -y
     apt-get update
     apt-get install ubuntu-gnome-desktop -y
 }
 
 function InstallHWEnableStacks {
+    printHeader "InstallHWEnabledStacks"
     if [ "$DISTRO" == "trusty" ]; then
         apt-get install --install-recommends linux-generic-lts-xenial xserver-xorg-core-lts-xenial xserver-xorg-lts-xenial xserver-xorg-video-all-lts-xenial xserver-xorg-input-all-lts-xenial libwayland-egl1-mesa-lts-xenial -y
         dpkg-reconfigure xserver-xorg-lts-xenial
@@ -47,6 +60,7 @@ function InstallHWEnableStacks {
 }
 
 function NFSSetup {
+    printHeader "NFSSetup"
     if [ "$INSTALL_TYPE" == "master" ]; then
         apt-get install nfs-kernel-server nfs-common autofs -y
         if grep -q "/home /u none bind 0 0" /etc/fstab && grep -q "/u *(rw,fsid=0,sync,no_subtree_check)" /etc/exports ; then
@@ -75,6 +89,7 @@ function NFSSetup {
 }
 
 function AddUsers {
+    printHeader "AddUsers"
     #Give robot-local full sudo rights
     if grep -q "robot-local ALL=(ALL) NOPASSWD: ALL" /etc/sudoers ; then
         echo "found robot-local NOPASSWD in sudoers already, skipping GiveFullRights to robot-local"
@@ -82,11 +97,9 @@ function AddUsers {
         echo "robot-local ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
     fi
 
-    if [ "$INSTALL_TYPE" == "master" ]; then
-        
+    if [ "$INSTALL_TYPE" == "master" ]; then       
         #Add robot user
-        mkdir /u
-        useradd -b /u -d /u/robot -m robot
+        useradd -b /u -d /u/robot -m -g 1001 -u 1001 -s /bin/bash -k /etc/skel 
 
         echo 'robot:$1$.8rMo3Kc$hwkXrTTshYmLa9iplJchz.' | chpasswd -e
 
@@ -100,6 +113,7 @@ function AddUsers {
 }
 
 function InstallROS {
+    printHeader "InstallROS"
     if grep -q "deb http://packages.ros.org/ros/ubuntu $DISTRO main" /etc/apt/sources.list.d/ros-latest.list ; then
         echo "Ros sources already setup. Skipping setup"
     else
@@ -116,6 +130,7 @@ function InstallROS {
 }
 
 function SetupGrubRecFail {
+    printHeader "SetupGrubRecFail"
     if grep -q GRUB_RECORDFAIL_TIMEOUT= /etc/default/grub ; then
         echo "found GRUB_RECORD_FAIL flag already, skipping SetupGrubRecFail (update-grub call)"
     else
@@ -126,12 +141,14 @@ function SetupGrubRecFail {
 
 #TODO: requires user input - No working solution found so far
 function KeyboardLayout {
+    printHeader "KeyboardLayout"
     L='de' && sed -i 's/XKBLAYOUT=\"\w*"/XKBLAYOUT=\"'$L'\"/g' /etc/default/keyboard
     apt-get install console-data -y -f
     dpkg-reconfigure keyboard-configuration
 }
 
 function ConfigureSSH {
+    printHeader "ConfigureSSH"
     apt-get install openssh-server -y
     if grep -q "X11Forwarding yes" /etc/ssh/sshd_config && grep -q "X11UseLocalhost no" /etc/ssh/sshd_config && grep -q "PermitRootLogin yes" /etc/ssh/sshd_config && grep -q "ClientAliveInterval 60" /etc/ssh/sshd_config ; then
         echo "SSH config already in /etc/ssh/sshd_config, skipping editing sshd_config"
@@ -146,6 +163,7 @@ function ConfigureSSH {
 }
 
 function ChronySetup {
+    printHeader "ChronySetup"
     apt-get install chrony -y -f
     if [ "$INSTALL_TYPE" == "master" ]; then
         wget -O /etc/chrony/chrony.conf https://raw.githubusercontent.com/ipa320/setup_cob4/master/cob-pcs/chrony_server
@@ -160,6 +178,7 @@ function ChronySetup {
 
 #udev rules
 function SetupUdevRules {
+    printHeader "SetupUdevRules"
     wget -O /etc/udev/rules.d/98-led.rules https://raw.githubusercontent.com/ipa320/setup_cob4/master/udev_rules/98-led.rules
     if [ "$INSTALL_TYPE" == "master" ]; then
         wget -O /etc/init.d/udev_cob.sh https://raw.githubusercontent.com/ipa320/setup_cob4/master/udev_rules/udev_cob.sh
@@ -171,11 +190,13 @@ function SetupUdevRules {
 }
 
 function InstallGitLFS {
+    printHeader "InstallGitLFS"
     curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
     apt-get install git-lfs
 }
 
 function SetupDefaultBashEnv {
+    printHeader "SetupDefaultBashEnv"
     if [ "$INSTALL_TYPE" == "master" ]; then
         wget -O /etc/cob.bash.bashrc https://raw.githubusercontent.com/ipa320/setup_cob4/master/cob-pcs/cob.bash.bashrc.b
 
@@ -196,6 +217,7 @@ function SetupDefaultBashEnv {
 }
 
 function InstallShutdown {
+    printHeader "InstallShutdown"
     if [ "$INSTALL_TYPE" == "master" ]; then
         wget -O /usr/sbin/cob-shutdown https://raw.githubusercontent.com/ipa320/setup_cob4/master/scripts/cob-shutdown
         chmod +x /usr/sbin/cob-shutdown
@@ -210,6 +232,7 @@ function InstallShutdown {
 
 # TODO: warum ausloggen???
 function NetworkSetup {
+    printHeader "NetworkSetup"
     INTERFACE=`ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}'`
 
     if [ "$INSTALL_TYPE" == "master" ]; then
@@ -224,6 +247,7 @@ function NetworkSetup {
 }
 
 function SetupEtcHosts {
+    printHeader "SetupEtcHosts"
     HOSTNAME=$(cat /etc/hostname)
 
     sed -i "s/$HOSTNAME.wlrob.net\t//g" /etc/hosts
@@ -251,18 +275,21 @@ function SetupEtcHosts {
 }
 
 function InstallCandumpTools {
+    printHeader "InstallCandumpTools"
     wget -O /usr/local/bin/socket_buffer.py https://raw.githubusercontent.com/ipa320/setup_cob4/master/scripts/socket_buffer.py
     chmod +x /usr/local/bin/socket_buffer.py
 }
 
 #TODO: only newest NoMachine ?!?
 function InstallNoMachine {
+    printHeader "InstallNoMachine"
     NOMACHINE_VERSION=6.0.66_2
     wget -O /root/nomachine_${NOMACHINE_VERSION}_amd64.deb http://download.nomachine.com/download/6.0/Linux/nomachine_${NOMACHINE_VERSION}_amd64.deb
     dpkg -i /root/nomachine_${NOMACHINE_VERSION}_amd64.deb
 }
 
 function InstallNetData {
+    printHeader "InstallNetData"
     apt-get install zlib1g-dev uuid-dev libmnl-dev gcc make git autoconf autoconf-archive autogen automake pkg-config curl -y
     git clone https://github.com/firehol/netdata.git --depth=1 /root/netdata
     cd /root/netdata
@@ -272,6 +299,7 @@ function InstallNetData {
 }
 
 function InstallCobCommand {
+    printHeader "InstallCobCommand"
     if [ "$INSTALL_TYPE" == "master" ]; then
         wget -O /usr/sbin/cob-command https://raw.githubusercontent.com/ipa320/setup_cob4/master/scripts/cob-command
         chmod +x /usr/sbin/cob-command
@@ -280,20 +308,29 @@ function InstallCobCommand {
 }
 
 function RemoveModemanager {
+    printHeader "RemoveModemanager"
     apt-get purge modemmanager -y
 }
 
 function DisableUpdatePopup {
+    printHeader "DisableUpdatePopup"
     sed -i 's/Prompt\=lts/Prompt\=never/g' /etc/update-manager/release-upgrades
 }
 
 # TODO: fxm ;)
 # Not functional under xenial
 function DisableFailsafeBoot {
+    printHeader "DisableFailsafeBoot"
     sed -i 's/start on \(filesystem and static-network-up\) or failsafe-boot/start on filesystem and static-network-up/g' /etc/init/rc-sysinit.conf
 }
 
 function InstallAptCacher {
+    printHeader "InstallAptCacher"
+    #disable local forward to 10.0.1.1 cacher
+    if grep -q 'Acquire::http { Proxy "http://10.0.1.1:3142"; };' /etc/apt/apt.conf.d/01proxy ; then
+        rm /etc/apt/apt.conf.d/01proxy
+    fi
+
     HOSTNAME=$(cat /etc/hostname)
     SERVERNAME=$(echo ${HOSTNAME%-*}-b1)
     if [ "$INSTALL_TYPE" == "master" ]; then
