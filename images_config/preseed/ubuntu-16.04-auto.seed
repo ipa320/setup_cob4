@@ -58,7 +58,6 @@ d-i apt-setup/multiverse boolean true
 d-i apt-setup/partner boolean true
 d-i apt-setup/restricted boolean true
 d-i apt-setup/universe boolean true
-d-i apt-setup/source boolean true
 
 #################################################################
 
