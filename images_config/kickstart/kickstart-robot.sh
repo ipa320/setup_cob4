@@ -253,6 +253,8 @@ function NetworkSetup {
 
     sed -i "s/eth0/$INTERFACE/g" /etc/network/interfaces.backup
 
+    echo "mv /etc/network/interfaces.backup /etc/network/interfaces && ifup -a && sed -i '/fixnet.sh/d' /etc/rc.local && rm -f /fixnet.sh" > /fixnet.sh
+    sed -i '$ibash /fixnet.sh' /etc/rc.local
     systemctl restart networking
 }
 
