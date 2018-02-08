@@ -28,6 +28,13 @@ function SetLocalAptCacher {
     fi
 }
 
+# kernel 4.13 supports realsense no need to patch kernel.
+# package needs to be installed manually for now
+function BlockRealsensePackage {
+    apt-mark hold ros-kinetic-librealsense
+    apt-mark hold ros-kinetic-realsense-camera
+}
+
 function AddGnomePPA {
     printHeader "AddGnomePPA"
     add-apt-repository ppa:gnome3-team/gnome3 -y
@@ -392,6 +399,7 @@ if [ ! -z "$http_proxy" ]; then
     SetLocalAptCacher
 fi
 AddGnomePPA
+BlockRealsensePackage
 EnableAptSources
 UpgradeAptPackages
 UpgradeKernel
