@@ -28,6 +28,12 @@ function SetLocalAptCacher {
     fi
 }
 
+function AddGnomePPA {
+    printHeader "AddGnomePPA"
+    add-apt-repository ppa:gnome3-team/gnome3 -y
+    apt-get update
+}
+
 function EnableAptSources {
     printHeader "EnableAptSources"
     sed -i "s/# deb-src/deb-src/g" /etc/apt/sources.list
@@ -47,13 +53,6 @@ function UpgradeKernel {
     if [ "$DISTRO" == "trusty" ]; then
         apt-get install --install-recommends linux-generic-lts-xenial -y --allow
     fi
-}
-
-function InstallUbuntuGnome {
-    printHeader "InstallUbuntuGnome"
-    add-apt-repository ppa:gnome3-team/gnome3 -y
-    apt-get update
-    apt-get install ubuntu-gnome-desktop -y
 }
 
 function InstallHWEnableStacks {
@@ -392,11 +391,11 @@ if [ ! -z "$http_proxy" ]; then
     unset http_proxy
     SetLocalAptCacher
 fi
+AddGnomePPA
+EnableAptSources
 UpgradeAptPackages
 UpgradeKernel
-InstallUbuntuGnome
 InstallHWEnableStacks
-EnableAptSources
 NFSSetup
 AddUsers
 InstallROS

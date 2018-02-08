@@ -51,14 +51,6 @@ d-i keyboard-configuration/layoutcode string de
 d-i keyboard-configuration keyboard-configuration/layout select German
 d-i keyboard-configuration/xkb-keymap select de
 
-# Apt setup
-d-i apt-setup/backports boolean true
-d-i apt-setup/extras boolean true
-d-i apt-setup/multiverse boolean true
-d-i apt-setup/partner boolean true
-d-i apt-setup/restricted boolean true
-d-i apt-setup/universe boolean true
-
 # Late command network install
 d-i preseed/late_command string \
 in-target cp /etc/network/interfaces.backup /etc/network/interfaces
