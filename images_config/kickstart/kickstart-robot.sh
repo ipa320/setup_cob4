@@ -31,6 +31,7 @@ function SetLocalAptCacher {
 function EnableAptSources {
     printHeader "EnableAptSources"
     sed -i "s/# deb-src/deb-src/g" /etc/apt/sources.list
+    apt-get update
 }
 
 function UpgradeAptPackages {
@@ -391,29 +392,29 @@ if [ ! -z "$http_proxy" ]; then
     unset http_proxy
     SetLocalAptCacher
 fi
-#EnableAptSources
-#UpgradeAptPackages
-#UpgradeKernel
-#InstallUbuntuGnome
-#InstallHWEnableStacks
+UpgradeAptPackages
+UpgradeKernel
+InstallUbuntuGnome
+InstallHWEnableStacks
+EnableAptSources
 NFSSetup
 AddUsers
-#InstallROS
-#SetupGrubRecFail
+InstallROS
+SetupGrubRecFail
 KeyboardLayout
-#ConfigureSSH
-#ChronySetup
-#SetupUdevRules
-#InstallGitLFS
-#SetupDefaultBashEnv
-#InstallShutdown
+ConfigureSSH
+ChronySetup
+SetupUdevRules
+InstallGitLFS
+SetupDefaultBashEnv
+InstallShutdown
 NetworkSetup
-#SetupEtcHosts
-#InstallCandumpTools
-#InstallNoMachine
-#InstallNetData
-#InstallCobCommand
-#RemoveModemanager
-#DisableUpdatePopup
+SetupEtcHosts
+InstallCandumpTools
+InstallNoMachine
+InstallNetData
+InstallCobCommand
+RemoveModemanager
+DisableUpdatePopup
 #DisableFailsafeBoot
-#InstallAptCacher
+InstallAptCacher
