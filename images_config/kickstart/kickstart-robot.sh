@@ -31,8 +31,10 @@ function SetLocalAptCacher {
 # kernel 4.13 supports realsense no need to patch kernel.
 # package needs to be installed manually for now
 function BlockRealsensePackage {
-    apt-mark hold ros-kinetic-librealsense
-    apt-mark hold ros-kinetic-realsense-camera
+    if [ "$DISTRO" == "xenial" ]; then
+        apt-mark hold ros-kinetic-librealsense
+        apt-mark hold ros-kinetic-realsense-camera
+    fi
 }
 
 function AddGnomePPA {
@@ -143,7 +145,7 @@ function InstallROS {
     apt-get install python-rosinstall python-rosinstall-generator python-wstool -y
     apt-get install python-catkin-tools -y
     apt-get install python-pip -y
-    apt-get install ros-kinetic-care-o-bot-robot -y
+    #apt-get install ros-kinetic-care-o-bot-robot -y
 }
 
 function SetupGrubRecFail {
