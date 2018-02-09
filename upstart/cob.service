@@ -1,0 +1,14 @@
+[Unit]
+Description=bringup cob
+After=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/cob-start > /tmp/log_cob_start
+ExecStop=/usr/sbin/cob-stop
+TimeoutStopSec=30
+User=robot
+
+[Install]
+WantedBy=multi-user.target
