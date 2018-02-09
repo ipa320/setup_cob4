@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e # force the script to exit if any error occurs
 #set -o xtrace # print all commands before executing
 
@@ -107,7 +108,16 @@ function SetupRobotUser {
 
   /u/robot/git/setup_cob4/cob-adduser robot
 
-  source /opt/ros/indigo/setup.bash #FIXME only working for indigo!!!
+  if [ $(lsb_release -sc) == "trusty" ]; then
+    DISTRO="indigo"
+  elif [ $(lsb_release -sc) == "xenial" ]; then
+    DISTRO="kinetic"
+  else
+    echo -e "\n${red}FATAL: Script only supports indigo and kinetic"
+    exit
+  fi
+
+  source /opt/ros/$DISTRO/setup.bash 
 
   if grep -q ROBOT "/u/robot/.bashrc"; then
     echo ".bashrc already configured"
@@ -166,7 +176,9 @@ Comment[en_US]=
 Comment=
 EOF"
 
-  sudo su mimic -c "cat <<EOF > $DESKTOP_PATH/update-monitor-position.desktop
+  # rotation and display position seems to work on xenial. Not need for this trick
+  if [ $(lsb_release -sc) == "trusty" ]; then
+    sudo su mimic -c "cat <<EOF > $DESKTOP_PATH/update-monitor-position.desktop
 [Desktop Entry]
 Type=Application
 Exec=update-monitor-position 5
@@ -178,7 +190,7 @@ Name=Update Monitor Positon
 Comment=Force monitors position 5 seconds after login
 EOF"
 
-  sudo su mimic -c "cat <<EOF > $DESKTOP_PATH/rotation.desktop
+    sudo su mimic -c "cat <<EOF > $DESKTOP_PATH/rotation.desktop
 [Desktop Entry]
 Type=Application
 Exec=xrandr -o right
@@ -191,6 +203,8 @@ Name=rotation
 Comment[en_US]=rotation
 Comment=rotation
 EOF"
+
+  fi
 
   #Brightness and lock
   LOCK_PATH=/etc/default/acpi-support
@@ -212,7 +226,12 @@ function InstallUpstart {
 
   sudo apt-get install nmap
 
-  sudo cp -f /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
+  if [ $(lsb_release -sc) == "trusty" ]; then
+    sudo cp -f /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
+  elif  [ $(lsb_release -sc) == "xenial" ]; then
+    sudo cp -f /u/robot/git/setup_cob4/upstart/cob.service /etc/system.d/system/cob.service
+    systemctl enable cob.service
+  fi
   sudo cp -f /u/robot/git/setup_cob4/upstart/cob-start /usr/sbin/cob-start
   sudo cp -f /u/robot/git/setup_cob4/upstart/cob-stop /usr/sbin/cob-stop
   sudo cp -f /u/robot/git/setup_cob4/scripts/cob-command /usr/sbin/cob-command
@@ -261,15 +280,17 @@ function InstallUpstart {
   query_pc_list ""
   check_client_list=$LIST
 
-  # install check scripts on pc
-  for client in $check_client_list; do
-    echo "-------------------------------------------"
-    echo "Executing on $client"
-    echo "-------------------------------------------"
-    echo ""
-    ssh $client "sudo cp -f /u/robot/git/setup_cob4/scripts/check_cameras.sh /etc/init.d/check_cameras.sh"
-    ssh $client "sudo update-rc.d check_cameras.sh defaults"
-  done
+  if [ $(lsb_release -sc) == "trusty" ]; then
+    # install check scripts on pc
+    for client in $check_client_list; do
+      echo "-------------------------------------------"
+      echo "Executing on $client"
+      echo "-------------------------------------------"
+      echo ""
+      ssh $client "sudo cp -f /u/robot/git/setup_cob4/scripts/check_cameras.sh /etc/init.d/check_cameras.sh"
+      ssh $client "sudo update-rc.d check_cameras.sh defaults"
+    done
+  fi
   sudo sed -i "s/myrobot/$robot_name/g" /usr/sbin/cob-start
   sudo sed -i "s/CHECK_LIST/$check_client_list/g" /usr/sbin/cob-start
 
@@ -308,9 +329,14 @@ function SetupDevices {
   ATTRSSerialFL="$( echo "$ATTRSSerialFL" | sed 's/ //g' )"
   ATTRSSerialR="$( echo "$ATTRSSerialR" | sed 's/ //g' )"
 
-  sudo sed -i -re "s/(ScanFrontAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
-  sudo sed -i -re "s/(ScanLeftAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
-  sudo sed -i -re "s/(ScanRightAttr2=).*/\1'${ATTRSSerialR}'/g" /etc/init.d/udev_cob.sh
+  if [ $(lsb_release -sc) == "trusty" ]; then
+    sudo sed -i -re "s/(ScanFrontAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
+    sudo sed -i -re "s/(ScanLeftAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
+    sudo sed -i -re "s/(ScanRightAttr2=).*/\1'${ATTRSSerialR}'/g" /etc/init.d/udev_cob.sh
+  elif  [ $(lsb_release -sc) == "xenial" ]; then
+    sudo sed -i -re "s/SERIAL_USB_TO_SCAN1/'${ATTRSSerialFL}'/g" /etc/udev/rules.d/scanner.rules
+    sudo sed -i -re "s/SERIAL_USB_TO_SCAN2/'${ATTRSSerialR}'/g" /etc/udev/rules.d/scanner.rules
+  fi
 
   echo "setup devices done"
 }

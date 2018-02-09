@@ -200,9 +200,14 @@ function SetupUdevRules {
     printHeader "SetupUdevRules"
     wget -O /etc/udev/rules.d/98-led.rules https://raw.githubusercontent.com/ipa320/setup_cob4/master/udev_rules/98-led.rules
     if [ "$INSTALL_TYPE" == "master" ]; then
-        wget -O /etc/init.d/udev_cob.sh https://raw.githubusercontent.com/ipa320/setup_cob4/master/udev_rules/udev_cob.sh
-        chmod +x /etc/init.d/udev_cob.sh
-        update-rc.d udev_cob.sh defaults
+        if [ "$DISTRO" == "trusty" ]; then
+            wget -O /etc/init.d/udev_cob.sh https://raw.githubusercontent.com/ipa320/setup_cob4/master/udev_rules/udev_cob.sh
+            chmod +x /etc/init.d/udev_cob.sh
+            update-rc.d udev_cob.sh defaults
+        elif [ "$DISTRO" == "xenial" ]; then
+            wget -O /etc/udev/rules.d/90-scanner.rules https://raw.githubusercontent.com/ipa320/setup_cob4/master/udev_rules/90-scanner.rules
+            wget -O /etc/udev/rules.d/72-logitech.rules https://raw.githubusercontent.com/ipa320/setup_cob4/master/udev_rules/72-logitech.rules
+        fi
     elif [ "$INSTALL_TYPE" == "slave" ]; then
         wget -O /etc/udev/rules.d/99-gripper.rules https://raw.githubusercontent.com/ipa320/setup_cob4/master/udev_rules/99-gripper.rules
     fi
