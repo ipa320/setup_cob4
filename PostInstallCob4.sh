@@ -342,8 +342,8 @@ function SetupDevices {
     sudo sed -i -re "s/(ScanLeftAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
     sudo sed -i -re "s/(ScanRightAttr2=).*/\1'${ATTRSSerialR}'/g" /etc/init.d/udev_cob.sh
   elif  [ $(lsb_release -sc) == "xenial" ]; then
-    sudo sed -i -re "s/SERIAL_USB_TO_SCAN1/'${ATTRSSerialFL}'/g" /etc/udev/rules.d/scanner.rules
-    sudo sed -i -re "s/SERIAL_USB_TO_SCAN2/'${ATTRSSerialR}'/g" /etc/udev/rules.d/scanner.rules
+    sudo sed -i -re "s/SERIAL_USB_TO_SCAN1/'${ATTRSSerialFL}'/g" /etc/udev/rules.d/90-scanner.rules
+    sudo sed -i -re "s/SERIAL_USB_TO_SCAN2/'${ATTRSSerialR}'/g" /etc/udev/rules.d/90-scanner.rules
   fi
 
   echo "setup devices done"
