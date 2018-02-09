@@ -151,7 +151,11 @@ function SetupMimicUser {
 
   /u/robot/git/setup_cob4/cob-adduser mimic
 
-  GDM_PATH=/etc/gdm/custom.conf
+  if [ $(lsb_release -sc) == "trusty" ]; then
+    GDM_PATH=/etc/gdm/custom.conf
+  elif [ $(lsb_release -sc) == "xenial" ]; then
+    GDM_PATH=/etc/gdm3/custom.conf
+  fi
   sudo ssh $pc_head "sed -i s/'#  TimedLoginEnable = true'/'TimedLoginEnable = true'/g $GDM_PATH"
   sudo ssh $pc_head "sed -i s/'#  TimedLogin = user1'/'TimedLogin = mimic'/g $GDM_PATH"
   sudo ssh $pc_head "sed -i s/'#  TimedLoginDelay = 10'/'TimedLoginDelay = 10'/g $GDM_PATH"
