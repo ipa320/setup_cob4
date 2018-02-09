@@ -211,8 +211,12 @@ EOF"
   fi
 
   #Brightness and lock
-  LOCK_PATH=/etc/default/acpi-support
-  sudo ssh $pc_head "sed -i 's/LOCK_SCREEN=true/LOCK_SCREEN=false/g' $LOCK_PATH"
+  if [ $(lsb_release -sc) == "trusty" ]; then
+    LOCK_PATH=/etc/default/acpi-support
+    sudo ssh $pc_head "sed -i 's/LOCK_SCREEN=true/LOCK_SCREEN=false/g' $LOCK_PATH"
+  elif [ $(lsb_release -sc) == "xenial" ]; then
+    sudo -u mimic -i ssh $pc_head 'dbus-launch gsettings set org.gnome.desktop.screensaver lock-enabled false'
+  fi  
 
   sudo -u mimic -i ssh $pc_head 'dbus-launch gsettings set org.gnome.desktop.session idle-delay 0'
 
