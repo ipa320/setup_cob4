@@ -237,7 +237,7 @@ function InstallUpstart {
   if [ $(lsb_release -sc) == "trusty" ]; then
     sudo cp -f /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
   elif  [ $(lsb_release -sc) == "xenial" ]; then
-    sudo cp -f /u/robot/git/setup_cob4/upstart/cob.service /etc/system.d/system/cob.service
+    sudo cp -f /u/robot/git/setup_cob4/upstart/cob.service /etc/systemd/system/cob.service
     systemctl enable cob.service
   fi
   sudo cp -f /u/robot/git/setup_cob4/upstart/cob-start /usr/sbin/cob-start
