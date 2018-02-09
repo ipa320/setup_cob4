@@ -169,15 +169,28 @@ function KeyboardLayout {
 function ConfigureSSH {
     printHeader "ConfigureSSH"
     apt-get install openssh-server -y
-    if grep -q "X11Forwarding yes" /etc/ssh/sshd_config && grep -q "X11UseLocalhost no" /etc/ssh/sshd_config && grep -q "PermitRootLogin yes" /etc/ssh/sshd_config && grep -q "ClientAliveInterval 60" /etc/ssh/sshd_config ; then
-        echo "SSH config already in /etc/ssh/sshd_config, skipping editing sshd_config"
+
+    if grep -q "X11Forwarding"; then
+        sed -i 's/X11Forwarding.*$/X11Forwarding yes/g' /etc/ssh/sshd_config
     else
         echo "X11Forwarding yes" >> /etc/ssh/sshd_config
+    fi
+    if grep -q "X11UseLocalhost"; then
+        sed -i 's/X11UseLocalhost.*$/X11UseLocalhost no/g' /etc/ssh/sshd_config
+    else
         echo "X11UseLocalhost no" >> /etc/ssh/sshd_config
+    fi
+    if grep -q "PermitRootLogin"; then
+        sed -i 's/PermitRootLogin.*$/PermitRootLogin yes/g' /etc/ssh/sshd_config
+    else
         echo "PermitRootLogin yes">> /etc/ssh/sshd_config
+    fi
+    if grep -q "PermitRootLogin"; then
+        sed -i 's/ClientAliveInterval.*$/ClientAliveInterval 60/g' /etc/ssh/sshd_config
+    else
         echo "ClientAliveInterval 60" >> /etc/ssh/sshd_config
     fi
-    sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/g' /etc/ssh/sshd_config
+    
     systemctl restart ssh
 }
 
