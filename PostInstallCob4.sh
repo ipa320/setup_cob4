@@ -108,16 +108,7 @@ function SetupRobotUser {
 
   /u/robot/git/setup_cob4/cob-adduser robot
 
-  if [ $(lsb_release -sc) == "trusty" ]; then
-    DISTRO="indigo"
-  elif [ $(lsb_release -sc) == "xenial" ]; then
-    DISTRO="kinetic"
-  else
-    echo -e "\n${red}FATAL: Script only supports indigo and kinetic"
-    exit
-  fi
-
-  source /opt/ros/$DISTRO/setup.bash 
+  source /opt/ros/$ROS-DISTRO/setup.bash 
 
   if grep -q ROBOT "/u/robot/.bashrc"; then
     echo ".bashrc already configured"
@@ -238,11 +229,12 @@ function InstallUpstart {
     sudo cp -f /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
   elif  [ $(lsb_release -sc) == "xenial" ]; then
     sudo cp -f /u/robot/git/setup_cob4/upstart/cob.service /etc/systemd/system/cob.service
-    systemctl enable cob.service
+    sudo systemctl enable cob.service
   fi
   sudo cp -f /u/robot/git/setup_cob4/upstart/cob-start /usr/sbin/cob-start
   sudo cp -f /u/robot/git/setup_cob4/upstart/cob-stop /usr/sbin/cob-stop
   sudo cp -f /u/robot/git/setup_cob4/scripts/cob-command /usr/sbin/cob-command
+  sudo sed -i "s/ros-distro/$ROS-DISTRO/g" /usr/sbin/cob-command
 
   sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-start"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-start|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-start||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-start" -e "}" /etc/sudoers
   sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-stop|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-stop||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-stop" -e "}" /etc/sudoers
@@ -275,6 +267,7 @@ function InstallUpstart {
     cat $path_to_cob_yaml
     sudo cp -f $path_to_cob_yaml /etc/ros/cob.yaml
     sudo sed -i "s/myrobot/$robot_name/g" /etc/ros/cob.yaml
+    sudo sed -i "s/ros-distro/$ROS-DISTRO/g" /etc/ros/cob.yaml
   fi
 
   # get client_list
@@ -309,6 +302,20 @@ function InstallUpstart {
 function SetupDevices {
   echo -e "\n${green}INFO: Setup udev rules for the scanners ${NC}\n"
 
+  ## ScanFront ##
+  ScanFrontAttr1='ATTRS{bInterfaceNumber}=="00"'
+  
+  ## ScanLeft ##
+  ScanLeftAttr1='ATTRS{bInterfaceNumber}=="01"'
+  
+  ## ScanRight ##
+  ScanRightAttr1='ATTRS{bInterfaceNumber}=="00"'
+  
+  for file in /dev/ttyUSB*; do
+    sudo chmod 666 $file
+    sudo udevadm info -a -p $(udevadm info -q path -n $file) > /tmp/usb${file: -1}
+  done
+  
   results=()
   count=0
 
@@ -333,18 +340,13 @@ function SetupDevices {
     ATTRSSerialFL=${results[0]}
     ATTRSSerialR=${results[1]}
   fi
-
+  
   ATTRSSerialFL="$( echo "$ATTRSSerialFL" | sed 's/ //g' )"
   ATTRSSerialR="$( echo "$ATTRSSerialR" | sed 's/ //g' )"
-
-  if [ $(lsb_release -sc) == "trusty" ]; then
-    sudo sed -i -re "s/(ScanFrontAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
-    sudo sed -i -re "s/(ScanLeftAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
-    sudo sed -i -re "s/(ScanRightAttr2=).*/\1'${ATTRSSerialR}'/g" /etc/init.d/udev_cob.sh
-  elif  [ $(lsb_release -sc) == "xenial" ]; then
-    sudo sed -i -re "s/SERIAL_USB_TO_SCAN1/'${ATTRSSerialFL}'/g" /etc/udev/rules.d/90-scanner.rules
-    sudo sed -i -re "s/SERIAL_USB_TO_SCAN2/'${ATTRSSerialR}'/g" /etc/udev/rules.d/90-scanner.rules
-  fi
+  
+  sudo sed -i -re "s/(ScanFrontAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
+  sudo sed -i -re "s/(ScanLeftAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
+  sudo sed -i -re "s/(ScanRightAttr2=).*/\1'${ATTRSSerialR}'/g" /etc/init.d/udev_cob.sh
 
   echo "setup devices done"
 }
@@ -363,6 +365,14 @@ echo -e $usage
 read -p "Please select an installation option: " choice
 
 robot_name="${HOSTNAME//-b1}"
+if [ $(lsb_release -sc) == "trusty" ]; then
+  ROS-DISTRO="indigo"
+elif [ $(lsb_release -sc) == "xenial" ]; then
+  ROS-DISTRO="kinetic"
+else
+  echo -e "\n${red}FATAL: Script only supports indigo and kinetic"
+  exit
+fi
 
 if [ ! -d /u/robot/git/setup_cob4 ]; then
   mkdir /u/robot/git

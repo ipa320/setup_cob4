@@ -54,5 +54,7 @@ d-i keyboard-configuration/xkb-keymap select de
 
 #################################################################
 
+# If we're booting using the hwe kernel.
+d-i base-installer/kernel/altmeta   string hwe-16.04
 
 

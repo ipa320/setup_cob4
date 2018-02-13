@@ -34,8 +34,17 @@ done
 if [ "$1" != "" ]; then
 	echo "setup bash environment"
 	sudo cp /u/robot/git/setup_cob4/cob-pcs/user.bashrc /u/$1/.bashrc
-	sudo cp /u/robot/git/setup_cob4/cob-pcs/tmux.conf /u/$1/.tmux.conf
-	sudo chown $1:$1 /u/$1/.tmux.conf
+	if [ $(lsb_release -sc) == "trusty" ]; then
+		sudo cp /u/robot/git/setup_cob4/cob-pcs/tmux.conf.trusty /u/$1/.tmux.conf
+		sudo chown $1:$1 /u/$1/.tmux.conf	
+	elif [ $(lsb_release -sc) == "xenial" ]; then
+		sudo cp /u/robot/git/setup_cob4/cob-pcs/tmux.conf.xenial /u/$1/.tmux.conf
+		sudo chown $1:$1 /u/$1/.tmux.conf
+	else
+		echo -e "\n${red}FATAL: Script only supports indigo and kinetic"
+		exit
+	fi
+	
 	sudo sed -i "s/myrobot/$robot_name/g" /u/$1/.bashrc
 	sudo sed -i "s/mydistro/$ROS_DISTRO/g" /u/$1/.bashrc
 

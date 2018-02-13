@@ -54,9 +54,6 @@ d-i keyboard-configuration/xkb-keymap select de
 
 #################################################################
 
-# If we're booting using the hwe kernel.
-d-i base-installer/kernel/altmeta   string hwe-16.04
-
 #use cob kitchen server as apt cacher
 d-i mirror/http/proxy string http://10.0.1.1:3142/
 

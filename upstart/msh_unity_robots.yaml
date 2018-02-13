@@ -6,10 +6,10 @@ bringup:
   session_name: bringup
   user: msh
   command: "roslaunch msh_bringup all.launch"
-  pre_condition: "until /opt/ros/indigo/env.sh rostopic list; do sleep 1; done"
+  pre_condition: "until /opt/ros/ros-distro/env.sh rostopic list; do sleep 1; done"
 sm:
   session_name: sm
   user: msh
   pc: myrobot-t2
   command: "roslaunch msh_statemachine machine.launch"
-  pre_condition: "until /opt/ros/indigo/env.sh rosparam get /robot_description > /dev/null ; do sleep 1; done"
+  pre_condition: "until /opt/ros/ros-distro/env.sh rosparam get /robot_description > /dev/null ; do sleep 1; done"

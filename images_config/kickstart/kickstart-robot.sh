@@ -16,9 +16,10 @@ function SetLocalAptCacher {
     unset http_proxy
     touch /etc/apt/apt.conf.d/01proxy
 
+    SERVERNAME=$(echo ${HOSTNAME%-*}-b1)
     if grep -q 'Acquire::http { Proxy "http://10.0.1.1:3142"; };' /etc/apt/apt.conf.d/01proxy ; then
         echo "Proxy already in /etc/apt/apt.conf.d/01proxy, skipping SetLocalAptCacher"
-    fi
+    fi 
     if grep -q 'Acquire::http { Proxy "http://'$SERVERNAME':3142"; };' /etc/apt/apt.conf.d/01proxy ; then
         rm /etc/apt/apt.conf.d/01proxy
         touch /etc/apt/apt.conf.d/01proxy
@@ -115,19 +116,19 @@ function AddUsers {
         echo "robot-local ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
     fi
 
-    if [ "$INSTALL_TYPE" == "master" ]; then       
+    if [ "$INSTALL_TYPE" == "master" ]; then      
+
         #Add robot user
         mkdir /u
         mount --bind /home /u
         useradd -b /u -d /u/robot -m -s /bin/bash -k /etc/skel robot
         echo 'robot:$1$.8rMo3Kc$hwkXrTTshYmLa9iplJchz.' | chpasswd -e
-
-        #Give robot user full rights for sudo
-        if grep -q "robot ALL=(ALL) NOPASSWD: ALL" /etc/sudoers ; then
-            echo "found robot NOPASSWD in sudoers already, skipping GiveFullRights to robot"
-        else
-            echo "robot ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-        fi
+    fi
+    #Give robot user full rights for sudo
+    if grep -q "robot ALL=(ALL) NOPASSWD: ALL" /etc/sudoers ; then
+        echo "found robot NOPASSWD in sudoers already, skipping GiveFullRights to robot"
+    else
+        echo "robot ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
     fi
 }
 
@@ -213,14 +214,9 @@ function SetupUdevRules {
     printHeader "SetupUdevRules"
     wget -O /etc/udev/rules.d/98-led.rules https://raw.githubusercontent.com/ipa320/setup_cob4/master/udev_rules/98-led.rules
     if [ "$INSTALL_TYPE" == "master" ]; then
-        if [ "$DISTRO" == "trusty" ]; then
             wget -O /etc/init.d/udev_cob.sh https://raw.githubusercontent.com/ipa320/setup_cob4/master/udev_rules/udev_cob.sh
             chmod +x /etc/init.d/udev_cob.sh
             update-rc.d udev_cob.sh defaults
-        elif [ "$DISTRO" == "xenial" ]; then
-            wget -O /etc/udev/rules.d/90-scanner.rules https://raw.githubusercontent.com/ipa320/setup_cob4/master/udev_rules/90-scanner.rules
-            wget -O /etc/udev/rules.d/72-logitech.rules https://raw.githubusercontent.com/ipa320/setup_cob4/master/udev_rules/72-logitech.rules
-        fi
     elif [ "$INSTALL_TYPE" == "slave" ]; then
         wget -O /etc/udev/rules.d/99-gripper.rules https://raw.githubusercontent.com/ipa320/setup_cob4/master/udev_rules/99-gripper.rules
     fi
@@ -258,6 +254,7 @@ function InstallShutdown {
     if [ "$INSTALL_TYPE" == "master" ]; then
         wget -O /usr/sbin/cob-shutdown https://raw.githubusercontent.com/ipa320/setup_cob4/master/scripts/cob-shutdown
         chmod +x /usr/sbin/cob-shutdown
+        #todo kinetic
         sed -i 's/etc\/acpi\/powerbtn.sh/usr\/sbin\/cob-shutdown/g' /etc/acpi/events/powerbtn
         if grep -q  "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown" /etc/sudoers ; then
             echo "NOPASSWD already for all users in /usr/sbin/cob-shutdown, skipping InstallShutdown"
@@ -368,6 +365,9 @@ function InstallAptCacher {
     #disable local forward to 10.0.1.1 cacher
     if grep -q 'Acquire::http { Proxy "http://10.0.1.1:3142"; };' /etc/apt/apt.conf.d/01proxy ; then
         rm /etc/apt/apt.conf.d/01proxy
+    fi
+    if grep -q 'Acquire::http::Proxy "http://10.0.1.1:3142/";' /etc/apt/apt.conf ; then
+        sed -i 's!Acquire::http::Proxy "http://10.0.1.1:3142/";!!g' /etc/apt/apt.conf
     fi
 
     HOSTNAME=$(cat /etc/hostname)
