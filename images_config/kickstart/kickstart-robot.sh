@@ -146,7 +146,6 @@ function InstallROS {
     apt-get install python-rosinstall python-rosinstall-generator python-wstool -y
     apt-get install python-catkin-tools -y
     apt-get install python-pip -y
-    #apt-get install ros-kinetic-care-o-bot-robot -y
 }
 
 function SetupGrubRecFail {
@@ -391,6 +390,23 @@ function InstallAptCacher {
     fi
 }
 
+function InstallRealsense {
+    printHeader "InstallRealsense"
+    if [ "$DISTRO" == "xenial" ]; then
+        echo 'deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main' | tee /etc/apt/sources.list.d/realsense-public.list
+        apt-key adv --keyserver keys.gnupg.net --recv-key 6F3EFCDE
+        apt-get update
+        apt-get install realsense-uvcvideo
+        apt-get install ros-kinetic-librealsense
+        apt-get install ros-kinetic-realsense-camera
+    fi
+}
+
+function InstallCareOBot {
+    printHeader "InstallCareOBot"
+    apt-get install ros-kinetic-care-o-bot-robot -y
+}
+
 ########################################################################
 ############################# INITIAL MENU #############################
 ########################################################################
@@ -444,4 +460,6 @@ InstallCobCommand
 RemoveModemanager
 DisableUpdatePopup
 #DisableFailsafeBoot
+InstallRealsense
+InstallCareOBot
 InstallAptCacher
