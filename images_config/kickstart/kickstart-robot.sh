@@ -396,9 +396,9 @@ function InstallRealsense {
         echo 'deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main' | tee /etc/apt/sources.list.d/realsense-public.list
         apt-key adv --keyserver keys.gnupg.net --recv-key 6F3EFCDE
         apt-get update
-        apt-get install realsense-uvcvideo
-        apt-get install ros-kinetic-librealsense
-        apt-get install ros-kinetic-realsense-camera
+        apt-get install realsense-uvcvideo -y
+        apt-get install ros-kinetic-librealsense -y
+        apt-get install ros-kinetic-realsense-camera -y
     fi
 }
 
