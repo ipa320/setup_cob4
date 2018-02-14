@@ -234,7 +234,7 @@ function InstallUpstart {
   sudo cp -f /u/robot/git/setup_cob4/upstart/cob-start /usr/sbin/cob-start
   sudo cp -f /u/robot/git/setup_cob4/upstart/cob-stop /usr/sbin/cob-stop
   sudo cp -f /u/robot/git/setup_cob4/scripts/cob-command /usr/sbin/cob-command
-  sudo sed -i "s/ros_distro/$ros_distro/g" /usr/sbin/cob-command
+  sudo sed -i "s/ros-distro/$ros_distro/g" /usr/sbin/cob-command
 
   sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-start"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-start|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-start||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-start" -e "}" /etc/sudoers
   sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-stop|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-stop||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-stop" -e "}" /etc/sudoers
@@ -267,7 +267,7 @@ function InstallUpstart {
     cat $path_to_cob_yaml
     sudo cp -f $path_to_cob_yaml /etc/ros/cob.yaml
     sudo sed -i "s/myrobot/$robot_name/g" /etc/ros/cob.yaml
-    sudo sed -i "s/ros_distro/$ros_distro/g" /etc/ros/cob.yaml
+    sudo sed -i "s/ros-distro/$ros_distro/g" /etc/ros/cob.yaml
   fi
 
   # get client_list

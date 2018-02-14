@@ -338,7 +338,7 @@ sub_stop(){
   echo -e "${red}===========================================${NC}"
   echo -e "${grey}\n ${NC}"
   sleep 1 # give tmux sessions and rosnodes a little time to properly shutdown before calling rosnode cleanup
-  su $standard_user -l -c "source /opt/ros/indigo/setup.bash && echo 'y' | rosnode cleanup"
+  su $standard_user -l -c "source /opt/ros/ros-distro/setup.bash && echo 'y' | rosnode cleanup"
 }
 
 sub_stop_core(){

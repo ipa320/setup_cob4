@@ -185,7 +185,7 @@ function ConfigureSSH {
     else
         echo "PermitRootLogin yes">> /etc/ssh/sshd_config
     fi
-    if grep -q "PermitRootLogin" /etc/ssh/sshd_config; then
+    if grep -q "ClientAliveInterval" /etc/ssh/sshd_config; then
         sed -i 's/ClientAliveInterval.*$/ClientAliveInterval 60/g' /etc/ssh/sshd_config
     else
         echo "ClientAliveInterval 60" >> /etc/ssh/sshd_config
