@@ -139,6 +139,10 @@ function SetupMimicUser {
 
   query_pc_list "$robot_name-h1"
   pc_head=$LIST
+  if [ -z "$pc_head" ]; then
+    echo "no head pc, skipping setup mimic user"
+    return
+  fi
 
   /u/robot/git/setup_cob4/cob-adduser mimic
 
@@ -313,6 +317,7 @@ function SetupDevices {
   
   for file in /dev/ttyUSB*; do
     sudo chmod 666 $file
+    sudo rm /tmp/usb${file: -1}
     sudo udevadm info -a -p $(udevadm info -q path -n $file) > /tmp/usb${file: -1}
   done
   
