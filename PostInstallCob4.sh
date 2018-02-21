@@ -319,6 +319,7 @@ function SetupDevices {
     sudo chmod 666 $file
     sudo rm /tmp/usb${file: -1}
     sudo udevadm info -a -p $(udevadm info -q path -n $file) > /tmp/usb${file: -1}
+    sudo chmod 666 /tmp/usb${file: -1}
   done
   
   results=()
