@@ -5,10 +5,10 @@ After=network-online.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/sbin/cob-start > /tmp/log_cob_start
-ExecStop=/usr/sbin/cob-stop
-TimeoutStopSec=30
-User=robot
+ExecStart=/bin/bash -c "/usr/sbin/cob-start"
+ExecStop=/bin/bash -c "/usr/sbin/cob-stop"
+TimeoutStopSec=60
+User=root
 
 [Install]
 WantedBy=multi-user.target
