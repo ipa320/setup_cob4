@@ -40,19 +40,22 @@ for i in $check_client_list; do
     done
 done
 
-# wait for mimic to be logged in into -h1
-while [ true ]; do
-    echo "waiting for mimic to be logged in into -h1"
-    if [[ -n $( ssh $ROBOT-h1 'who |grep ":0"| grep mimic') ]]; then
-        echo "mimic logged in into -h1"
-        break
-    fi
-    sleep 1
-done
 
-# wait until screen is rotated
-echo "waiting for screen to rotate"
-sleep 10
+if [ $(lsb_release -sc) == "trusty" ]; then
+    # wait for mimic to be logged in into -h1
+    while [ true ]; do
+        echo "waiting for mimic to be logged in into -h1"
+        if [[ -n $( ssh $ROBOT-h1 'who |grep ":0"| grep mimic') ]]; then
+            echo "mimic logged in into -h1"
+            break
+        fi
+        sleep 1
+    done
+
+    # wait until screen is rotated
+    echo "waiting for screen to rotate"
+    sleep 10
+fi
 
 echo "cob-command start"
 /usr/sbin/cob-command start
