@@ -73,6 +73,26 @@ The resulting file is stored as:
  - `ubuntu-auto-cached.seed` (includes settings to use `cob-kitchen-server` as `apt-cacher`)
 
 ### 4. Create Custom ISO File <a id="Create Custom ISO File"/>
+#### Ubuntu 14.04
+Download latest Ubuntu Server 14.04.5 from Ubuntu website (https://www.ubuntu.com/download/server).
+
+Make sure you have `setup_cob4` cloned into `~/git/setup_cob4`.
+
+Then perform the following steps:
+```
+mkdir ~/ubuntu_iso
+sudo  mount -r -o loop ~/Downloads/ubuntu-14.04.5-server-amd64.iso ~/ubuntu_iso
+cp -r ~/ubuntu_iso ~/ubuntu_files
+chmod +w -R ~/ubuntu_files
+echo en >> ~/ubuntu_files/isolinux/lang
+cp -r ~/git/setup_cob4/images_config/kickstart ~/ubuntu_files/
+cp ~/git/setup_cob4/images_config/preseed ~/ubuntu_files/
+cp ~/git/setup_cob4/images_config/isolinux/txt-14.04.cfg ~/ubuntu_files/isolinux/txt.cfg
+cp ~/git/setup_cob4/images_config/initrd.gz ~/ubuntu_files/install/
+mkisofs -D -r -V "Ubuntu-14.04-Care-O-bot" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o ~/ubuntu-14.04-care-o-bot.iso ~/ubuntu_files
+```
+
+#### Ubuntu 16.04
 Download latest Ubuntu Server 16.04.3 from Ubuntu website (https://www.ubuntu.com/download/server).
 
 Make sure you have `setup_cob4` cloned into `~/git/setup_cob4`.
@@ -84,22 +104,19 @@ sudo  mount -r -o loop ~/Downloads/ubuntu-16.04.3-server-amd64.iso ~/ubuntu_iso
 cp -r ~/ubuntu_iso ~/ubuntu_files
 chmod +w -R ~/ubuntu_files
 echo en >> ~/ubuntu_files/isolinux/lang
-cp ~/git/setup_cob4/images_config/ks-robot-master.cfg ~/ubuntu_files/
-cp ~/git/setup_cob4/images_config/ks-robot-slave.cfg ~/ubuntu_files/
-cp ~/git/setup_cob4/images_config/ubuntu-auto.seed ~/ubuntu_files/
-cp ~/git/setup_cob4/images_config/ubuntu-auto-cached.seed ~/ubuntu_files/
-cp ~/git/setup_cob4/images_config/txt.cfg ~/ubuntu_files/isolinux/txt.cfg
-#cp ~/git/setup_cob4/images_config/initrd.gz ~/ubuntu_files/install/
-sudo mkisofs -D -r -V "Ubuntu-16.04-Care-O-bot" -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -input-charset utf-8 -cache-inodes -o ~/ubuntu-16.04-care-o-bot.iso ~/ubuntu_files
+cp -r ~/git/setup_cob4/images_config/kickstart ~/ubuntu_files/
+cp ~/git/setup_cob4/images_config/preseed ~/ubuntu_files/
+cp ~/git/setup_cob4/images_config/isolinux/txt-16.04.cfg ~/ubuntu_files/isolinux/txt.cfg
+mkisofs -D -r -V "Ubuntu-16.04-Care-O-bot" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o ~/ubuntu-16.04-care-o-bot.iso ~/ubuntu_files
 ```
 
 ### 5. Create Bootable Media <a id="Create Bootable Media"/>
 ```
 sudo apt-get install syslinux-utils
-sudo isohybrid ~/ubuntu-16.04-care-o-bot.iso
+isohybrid ~/ubuntu-1X.04-care-o-bot.iso
 ```
 
-Plugin and create startup disk
+Plugin USB Stick and create startup disk
 
 
 ### 6. Cleanup <a id="Cleanup"/>
