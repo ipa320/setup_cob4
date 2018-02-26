@@ -7,7 +7,7 @@ function logFile {
 
 function printHeader {
     echo "#############################################"
-    echo "Execute $1"
+    echo "Execute Kickstart-Function: $1"
     echo "---------------------------------------------"
 }
 
@@ -407,6 +407,11 @@ function InstallCareOBot {
     apt-get install ros-kinetic-care-o-bot-robot -y
 }
 
+function FinishKickstartRobot {
+    printHeader "FinalizeKickstartRobot"
+    touch /var/log/installer/kickstart_robot_finished
+}
+
 ########################################################################
 ############################# INITIAL MENU #############################
 ########################################################################
@@ -463,3 +468,4 @@ DisableUpdatePopup
 InstallRealsense
 InstallCareOBot
 InstallAptCacher
+FinishKickstartRobot

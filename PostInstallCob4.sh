@@ -363,13 +363,7 @@ function SetupDevices {
 
 if [[ "$1" =~ "--help" ]]; then echo -e $usage; exit 0; fi
 
-echo -e "${green}===========================================${NC}"
-echo "                INITIAL MENU"
-echo -e "${green}===========================================${NC}"
-
-echo -e $usage
-read -p "Please select an installation option: " choice
-
+#### check prerequisites
 robot_name="${HOSTNAME//-b1}"
 ros_distro='indigo'
 if [ $(lsb_release -sc) == "trusty" ]; then
@@ -381,12 +375,27 @@ else
   exit
 fi
 
+if [ ! -e "/var/log/installer/kickstart_robot_finished" ]; then
+  echo -e "\n${red}FATAL: 'kickstart-robot.sh' did not finish correctly during stick setup."
+  echo -e "\n${red}FATAL: Please investigate '/var/log/installer/syslog' to see what went wrong."
+  echo -e "\n${red}FATAL: 'grep' for 'Execute Kickstart-Function'..."
+  exit
+fi
+
 if [ ! -d /u/robot/git/setup_cob4 ]; then
   mkdir /u/robot/git
   git clone https://github.com/ipa320/setup_cob4 /u/robot/git/setup_cob4
 else
   git --work-tree=/u/robot/git/setup_cob4 --git-dir=/u/robot/git/setup_cob4/.git pull origin master
 fi
+
+
+echo -e "${green}===========================================${NC}"
+echo "                INITIAL MENU"
+echo -e "${green}===========================================${NC}"
+
+echo -e $usage
+read -p "Please select an installation option: " choice
 
 if [[ "$choice" == 1 ]]; then
   SetupRootUser
