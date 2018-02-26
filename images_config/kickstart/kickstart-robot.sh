@@ -29,15 +29,6 @@ function SetLocalAptCacher {
     fi
 }
 
-# kernel 4.13 supports realsense no need to patch kernel.
-# package needs to be installed manually for now
-function BlockRealsensePackage {
-    if [ "$DISTRO" == "xenial" ]; then
-        apt-mark hold ros-kinetic-librealsense
-        apt-mark hold ros-kinetic-realsense-camera
-    fi
-}
-
 function AddGnomePPA {
     printHeader "AddGnomePPA"
     add-apt-repository ppa:gnome3-team/gnome3 -y
@@ -57,7 +48,6 @@ function UpgradeAptPackages {
     apt-get dist-upgrade -y
 }
 
-# TODO: fxm
 function UpgradeKernel {
     printHeader "UpgradeKernel"
     if [ "$DISTRO" == "trusty" ]; then
@@ -142,7 +132,11 @@ function InstallROS {
     fi
 
     apt-get update
-    apt-get install ros-kinetic-ros-base -y
+    if [ "$DISTRO" == "trusty" ]; then
+        apt-get install ros-indigo-ros-base -y
+    elif [ "$DISTRO" == "xenial" ]; then
+        apt-get install ros-kinetic-ros-base -y
+    fi
     apt-get install python-rosinstall python-rosinstall-generator python-wstool -y
     apt-get install python-catkin-tools -y
     apt-get install python-pip -y
@@ -158,7 +152,13 @@ function SetupGrubRecFail {
     fi
 }
 
-#TODO: requires user input - No working solution found so far
+#only needed if the default kickseed setting is not working (test it)
+function SetupLocale {
+    printHeader "SetupLocale"
+    locale-gen en_US.UTF-8
+    update-locale LANG=en_US.UTF-8
+}
+
 function KeyboardLayout {
     printHeader "KeyboardLayout"
     L='de' && sed -i 's/XKBLAYOUT=\"\w*"/XKBLAYOUT=\"'$L'\"/g' /etc/default/keyboard
@@ -225,6 +225,7 @@ function InstallGitLFS {
     printHeader "InstallGitLFS"
     curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
     apt-get install git-lfs
+    git lfs install
 }
 
 function SetupDefaultBashEnv {
@@ -253,7 +254,7 @@ function InstallShutdown {
     if [ "$INSTALL_TYPE" == "master" ]; then
         wget -O /usr/sbin/cob-shutdown https://raw.githubusercontent.com/ipa320/setup_cob4/master/scripts/cob-shutdown
         chmod +x /usr/sbin/cob-shutdown
-        #todo kinetic
+
         sed -i 's/etc\/acpi\/powerbtn.sh/usr\/sbin\/cob-shutdown/g' /etc/acpi/events/powerbtn
         if grep -q  "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown" /etc/sudoers ; then
             echo "NOPASSWD already for all users in /usr/sbin/cob-shutdown, skipping InstallShutdown"
@@ -263,7 +264,6 @@ function InstallShutdown {
     fi
 }
 
-# TODO: warum ausloggen???
 function NetworkSetup {
     printHeader "NetworkSetup"
     INTERFACE=`ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}'`
@@ -316,6 +316,7 @@ function InstallCandumpTools {
 }
 
 #TODO: only newest NoMachine ?!?
+#Not possible because there is no ftp server or something else availible. Just the newest version is on their download page
 function InstallNoMachine {
     printHeader "InstallNoMachine"
     NOMACHINE_VERSION=6.0.66_2
@@ -352,7 +353,7 @@ function DisableUpdatePopup {
     sed -i 's/Prompt\=lts/Prompt\=never/g' /etc/update-manager/release-upgrades
 }
 
-# TODO: fxm ;)
+# Observe if we still need it under xenial
 # Not functional under xenial
 function DisableFailsafeBoot {
     printHeader "DisableFailsafeBoot"
@@ -404,7 +405,11 @@ function InstallRealsense {
 
 function InstallCareOBot {
     printHeader "InstallCareOBot"
-    apt-get install ros-kinetic-care-o-bot-robot -y
+    if [ "$DISTRO" == "trusty" ]; then
+        apt-get install ros-indigo-care-o-bot-robot -y
+    elif [ "$DISTRO" == "xenial" ]; then
+        apt-get install ros-kinetic-care-o-bot-robot -y
+    fi
 }
 
 function FinishKickstartRobot {
@@ -440,7 +445,6 @@ if [ ! -z "$http_proxy" ]; then
     SetLocalAptCacher
 fi
 AddGnomePPA
-BlockRealsensePackage
 EnableAptSources
 UpgradeAptPackages
 UpgradeKernel
@@ -449,6 +453,7 @@ NFSSetup
 AddUsers
 InstallROS
 SetupGrubRecFail
+#SetupLocale
 KeyboardLayout
 ConfigureSSH
 ChronySetup
