@@ -1,6 +1,6 @@
 #!/bin/bash
 robot_name="${HOSTNAME//-b1}"
-robot_ip=hostname -I | awk '{print $1}'
+robot_ip=`hostname -I | awk '{print $1}'`
 
 if [ "$USER" != "robot" ]; then
 	echo 'FATAL: CAN ONLY BE EXECUTED AS "robot" USER'
