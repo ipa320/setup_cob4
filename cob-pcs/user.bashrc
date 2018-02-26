@@ -116,7 +116,8 @@ export MY_CATKIN_WORKSPACE=~/git/care-o-bot
 export ROBOT=myrobot
 export ROBOT_ENV=empty
 export ROSLAUNCH_SSH_UNKNOWN=1
-export ROS_MASTER_URI=http://myrobot-b1:11311
+export ROS_MASTER_URI=http://myrobot-ip:11311
+export ROS_IP=`hostname -I | awk '{print $1}'`
 
 # DONT TOUCH THIS BELOW THE LINE !!!
 

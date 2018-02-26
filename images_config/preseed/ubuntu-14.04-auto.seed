@@ -7,8 +7,6 @@ d-i preseed base-installer/install-recommends boolean false
 # Install only security updates automatically
 d-i preseed pkgsel/update-policy select unattended-upgrades
 
-#d-i live-installer/net-image string http://10.1.1.2/trusty-server-amd64/install/filesystem.squashfs
-
 ###################
 ### Partitioning
 ## Partitioning example
@@ -40,11 +38,15 @@ d-i partman/choose_partition select finish
 d-i partman/confirm boolean true
 d-i partman/confirm_nooverwrite boolean true
 
+# Keyboard configuration
+d-i console-setup/ask_detect false
+d-i keyboard-configuration/layoutcode string de
+d-i keyboard-configuration keyboard-configuration/layout select German
+d-i keyboard-configuration/xkb-keymap select de
+
 #################################################################
 
 # If we're booting using the backported Vivid kernel, install it too.
 d-i	base-installer/kernel/altmeta	string lts-xenial
 
-#use cob kitchen server as apt cacher
-d-i mirror/http/proxy string http://10.0.1.1:3142/
 

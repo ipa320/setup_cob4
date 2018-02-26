@@ -6,4 +6,4 @@ bringup:
   session_name: bringup
   user: robot
   command: "roslaunch cob_bringup robot.launch"
-  pre_condition: "until /opt/ros/indigo/env.sh rostopic list; do sleep 1; done"
+  pre_condition: "until /opt/ros/ros_distro/env.sh rostopic list; do sleep 1; done"

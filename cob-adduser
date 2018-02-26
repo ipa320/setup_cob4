@@ -1,5 +1,6 @@
 #!/bin/bash
 robot_name="${HOSTNAME//-b1}"
+robot_ip=hostname -I | awk '{print $1}'
 
 if [ "$USER" != "robot" ]; then
 	echo 'FATAL: CAN ONLY BE EXECUTED AS "robot" USER'
@@ -34,10 +35,20 @@ done
 if [ "$1" != "" ]; then
 	echo "setup bash environment"
 	sudo cp /u/robot/git/setup_cob4/cob-pcs/user.bashrc /u/$1/.bashrc
-	sudo cp /u/robot/git/setup_cob4/cob-pcs/tmux.conf /u/$1/.tmux.conf
-	sudo chown $1:$1 /u/$1/.tmux.conf
+	if [ $(lsb_release -sc) == "trusty" ]; then
+		sudo cp /u/robot/git/setup_cob4/cob-pcs/tmux.conf.trusty /u/$1/.tmux.conf
+		sudo chown $1:$1 /u/$1/.tmux.conf	
+	elif [ $(lsb_release -sc) == "xenial" ]; then
+		sudo cp /u/robot/git/setup_cob4/cob-pcs/tmux.conf.xenial /u/$1/.tmux.conf
+		sudo chown $1:$1 /u/$1/.tmux.conf
+	else
+		echo -e "\n${red}FATAL: Script only supports indigo and kinetic"
+		exit
+	fi
+	
 	sudo sed -i "s/myrobot/$robot_name/g" /u/$1/.bashrc
 	sudo sed -i "s/mydistro/$ROS_DISTRO/g" /u/$1/.bashrc
+	sudo sed -i "s/myrobot-ip/$robot_ip/g" /u/$1/.bashrc
 
 	if [ ! -f /u/$1/.ssh/id_rsa ]; then
 		echo "create new ssh key"

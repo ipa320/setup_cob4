@@ -1,0 +1,14 @@
+[Unit]
+Description=bringup cob
+After=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/bash -c "/usr/sbin/cob-start"
+ExecStop=/bin/bash -c "/usr/sbin/cob-stop"
+TimeoutStopSec=60
+User=root
+
+[Install]
+WantedBy=multi-user.target

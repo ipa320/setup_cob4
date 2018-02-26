@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e # force the script to exit if any error occurs
 #set -o xtrace # print all commands before executing
 
@@ -107,7 +108,7 @@ function SetupRobotUser {
 
   /u/robot/git/setup_cob4/cob-adduser robot
 
-  source /opt/ros/indigo/setup.bash #FIXME only working for indigo!!!
+  source /opt/ros/$ros_distro/setup.bash 
 
   if grep -q ROBOT "/u/robot/.bashrc"; then
     echo ".bashrc already configured"
@@ -138,10 +139,18 @@ function SetupMimicUser {
 
   query_pc_list "$robot_name-h1"
   pc_head=$LIST
+  if [ -z "$pc_head" ]; then
+    echo "no head pc, skipping setup mimic user"
+    return
+  fi
 
   /u/robot/git/setup_cob4/cob-adduser mimic
 
-  GDM_PATH=/etc/gdm/custom.conf
+  if [ $(lsb_release -sc) == "trusty" ]; then
+    GDM_PATH=/etc/gdm/custom.conf
+  elif [ $(lsb_release -sc) == "xenial" ]; then
+    GDM_PATH=/etc/gdm3/custom.conf
+  fi
   sudo ssh $pc_head "sed -i s/'#  TimedLoginEnable = true'/'TimedLoginEnable = true'/g $GDM_PATH"
   sudo ssh $pc_head "sed -i s/'#  TimedLogin = user1'/'TimedLogin = mimic'/g $GDM_PATH"
   sudo ssh $pc_head "sed -i s/'#  TimedLoginDelay = 10'/'TimedLoginDelay = 10'/g $GDM_PATH"
@@ -166,7 +175,9 @@ Comment[en_US]=
 Comment=
 EOF"
 
-  sudo su mimic -c "cat <<EOF > $DESKTOP_PATH/update-monitor-position.desktop
+  # rotation and display position seems to work on xenial. Not need for this trick
+  if [ $(lsb_release -sc) == "trusty" ]; then
+    sudo su mimic -c "cat <<EOF > $DESKTOP_PATH/update-monitor-position.desktop
 [Desktop Entry]
 Type=Application
 Exec=update-monitor-position 5
@@ -178,7 +189,7 @@ Name=Update Monitor Positon
 Comment=Force monitors position 5 seconds after login
 EOF"
 
-  sudo su mimic -c "cat <<EOF > $DESKTOP_PATH/rotation.desktop
+    sudo su mimic -c "cat <<EOF > $DESKTOP_PATH/rotation.desktop
 [Desktop Entry]
 Type=Application
 Exec=xrandr -o right
@@ -192,9 +203,15 @@ Comment[en_US]=rotation
 Comment=rotation
 EOF"
 
+  fi
+
   #Brightness and lock
-  LOCK_PATH=/etc/default/acpi-support
-  sudo ssh $pc_head "sed -i 's/LOCK_SCREEN=true/LOCK_SCREEN=false/g' $LOCK_PATH"
+  if [ $(lsb_release -sc) == "trusty" ]; then
+    LOCK_PATH=/etc/default/acpi-support
+    sudo ssh $pc_head "sed -i 's/LOCK_SCREEN=true/LOCK_SCREEN=false/g' $LOCK_PATH"
+  elif [ $(lsb_release -sc) == "xenial" ]; then
+    sudo -u mimic -i ssh $pc_head 'dbus-launch gsettings set org.gnome.desktop.screensaver lock-enabled false'
+  fi  
 
   sudo -u mimic -i ssh $pc_head 'dbus-launch gsettings set org.gnome.desktop.session idle-delay 0'
 
@@ -212,10 +229,16 @@ function InstallUpstart {
 
   sudo apt-get install nmap
 
-  sudo cp -f /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
+  if [ $(lsb_release -sc) == "trusty" ]; then
+    sudo cp -f /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
+  elif  [ $(lsb_release -sc) == "xenial" ]; then
+    sudo cp -f /u/robot/git/setup_cob4/upstart/cob.service /etc/systemd/system/cob.service
+    sudo systemctl enable cob.service
+  fi
   sudo cp -f /u/robot/git/setup_cob4/upstart/cob-start /usr/sbin/cob-start
   sudo cp -f /u/robot/git/setup_cob4/upstart/cob-stop /usr/sbin/cob-stop
   sudo cp -f /u/robot/git/setup_cob4/scripts/cob-command /usr/sbin/cob-command
+  sudo sed -i "s/ros-distro/$ros_distro/g" /usr/sbin/cob-command
 
   sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-start"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-start|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-start||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-start" -e "}" /etc/sudoers
   sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-stop|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-stop||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-stop" -e "}" /etc/sudoers
@@ -248,6 +271,7 @@ function InstallUpstart {
     cat $path_to_cob_yaml
     sudo cp -f $path_to_cob_yaml /etc/ros/cob.yaml
     sudo sed -i "s/myrobot/$robot_name/g" /etc/ros/cob.yaml
+    sudo sed -i "s/ros-distro/$ros_distro/g" /etc/ros/cob.yaml
   fi
 
   # get client_list
@@ -261,15 +285,17 @@ function InstallUpstart {
   query_pc_list ""
   check_client_list=$LIST
 
-  # install check scripts on pc
-  for client in $check_client_list; do
-    echo "-------------------------------------------"
-    echo "Executing on $client"
-    echo "-------------------------------------------"
-    echo ""
-    ssh $client "sudo cp -f /u/robot/git/setup_cob4/scripts/check_cameras.sh /etc/init.d/check_cameras.sh"
-    ssh $client "sudo update-rc.d check_cameras.sh defaults"
-  done
+  if [ $(lsb_release -sc) == "trusty" ]; then
+    # install check scripts on pc
+    for client in $check_client_list; do
+      echo "-------------------------------------------"
+      echo "Executing on $client"
+      echo "-------------------------------------------"
+      echo ""
+      ssh $client "sudo cp -f /u/robot/git/setup_cob4/scripts/check_cameras.sh /etc/init.d/check_cameras.sh"
+      ssh $client "sudo update-rc.d check_cameras.sh defaults"
+    done
+  fi
   sudo sed -i "s/myrobot/$robot_name/g" /usr/sbin/cob-start
   sudo sed -i "s/CHECK_LIST/$check_client_list/g" /usr/sbin/cob-start
 
@@ -280,6 +306,22 @@ function InstallUpstart {
 function SetupDevices {
   echo -e "\n${green}INFO: Setup udev rules for the scanners ${NC}\n"
 
+  ## ScanFront ##
+  ScanFrontAttr1='ATTRS{bInterfaceNumber}=="00"'
+  
+  ## ScanLeft ##
+  ScanLeftAttr1='ATTRS{bInterfaceNumber}=="01"'
+  
+  ## ScanRight ##
+  ScanRightAttr1='ATTRS{bInterfaceNumber}=="00"'
+  
+  for file in /dev/ttyUSB*; do
+    sudo chmod 666 $file
+    sudo rm /tmp/usb${file: -1}
+    sudo udevadm info -a -p $(udevadm info -q path -n $file) > /tmp/usb${file: -1}
+    sudo chmod 666 /tmp/usb${file: -1}
+  done
+  
   results=()
   count=0
 
@@ -304,10 +346,10 @@ function SetupDevices {
     ATTRSSerialFL=${results[0]}
     ATTRSSerialR=${results[1]}
   fi
-
+  
   ATTRSSerialFL="$( echo "$ATTRSSerialFL" | sed 's/ //g' )"
   ATTRSSerialR="$( echo "$ATTRSSerialR" | sed 's/ //g' )"
-
+  
   sudo sed -i -re "s/(ScanFrontAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
   sudo sed -i -re "s/(ScanLeftAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
   sudo sed -i -re "s/(ScanRightAttr2=).*/\1'${ATTRSSerialR}'/g" /etc/init.d/udev_cob.sh
@@ -321,14 +363,24 @@ function SetupDevices {
 
 if [[ "$1" =~ "--help" ]]; then echo -e $usage; exit 0; fi
 
-echo -e "${green}===========================================${NC}"
-echo "                INITIAL MENU"
-echo -e "${green}===========================================${NC}"
-
-echo -e $usage
-read -p "Please select an installation option: " choice
-
+#### check prerequisites
 robot_name="${HOSTNAME//-b1}"
+ros_distro='indigo'
+if [ $(lsb_release -sc) == "trusty" ]; then
+  ros_distro='indigo'
+elif [ $(lsb_release -sc) == "xenial" ]; then
+  ros_distro='kinetic'
+else
+  echo -e "\n${red}FATAL: Script only supports indigo and kinetic"
+  exit
+fi
+
+if [ ! -e "/var/log/installer/kickstart_robot_finished" ]; then
+  echo -e "\n${red}FATAL: 'kickstart-robot.sh' did not finish correctly during stick setup."
+  echo -e "\n${red}FATAL: Please investigate '/var/log/installer/syslog' to see what went wrong."
+  echo -e "\n${red}FATAL: 'grep' for 'Execute Kickstart-Function'..."
+  exit
+fi
 
 if [ ! -d /u/robot/git/setup_cob4 ]; then
   mkdir /u/robot/git
@@ -336,6 +388,14 @@ if [ ! -d /u/robot/git/setup_cob4 ]; then
 else
   git --work-tree=/u/robot/git/setup_cob4 --git-dir=/u/robot/git/setup_cob4/.git pull origin master
 fi
+
+
+echo -e "${green}===========================================${NC}"
+echo "                INITIAL MENU"
+echo -e "${green}===========================================${NC}"
+
+echo -e $usage
+read -p "Please select an installation option: " choice
 
 if [[ "$choice" == 1 ]]; then
   SetupRootUser
