@@ -46,9 +46,9 @@ if [ "$1" != "" ]; then
 		exit
 	fi
 	
+	sudo sed -i "s/myrobotip/$robot_ip/g" /u/$1/.bashrc # needs to be replaced before myrobot!
 	sudo sed -i "s/myrobot/$robot_name/g" /u/$1/.bashrc
 	sudo sed -i "s/mydistro/$ROS_DISTRO/g" /u/$1/.bashrc
-	sudo sed -i "s/myrobot-ip/$robot_ip/g" /u/$1/.bashrc
 
 	if [ ! -f /u/$1/.ssh/id_rsa ]; then
 		echo "create new ssh key"
