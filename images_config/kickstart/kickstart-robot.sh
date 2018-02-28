@@ -206,6 +206,13 @@ function ChronySetup {
         wget -O /etc/chrony/chrony.conf https://raw.githubusercontent.com/ipa320/setup_cob4/master/cob-pcs/chrony_client
         sed -i "s/server_ip/${SERVERNAME}/g" /etc/chrony/chrony.conf
     fi
+    
+    # allow everybody to call 'sudo service chrony restart'
+    if grep -q  "%users ALL=NOPASSWD:/usr/sbin/service chrony restart" /etc/sudoers ; then
+        echo "NOPASSWD already for all users in /usr/sbin/service chrony restart, skipping"
+    else
+        echo "%users ALL=NOPASSWD:/usr/sbin/service chrony restart" >> /etc/sudoers
+    fi
 }
 
 #udev rules
