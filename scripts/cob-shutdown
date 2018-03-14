@@ -7,9 +7,10 @@ fi
 
 #### retrieve client_list variables
 source /u/robot/git/setup_cob4/helper_client_list.sh
+echo "host: $HOST"
 
 for client in $client_list_hostnames; do
-    if [ $client == $IP ] ; then
+    if [ $client == $HOST ] ; then
         echo "skipping $client"
         continue
     fi
@@ -25,7 +26,7 @@ for client in $client_list_hostnames; do
 done
 
 for client in $client_list_hostnames; do
-    if [ $client == $IP ] ; then
+    if [ $client == $HOST ] ; then
         echo "skipping $client"
         continue
     fi
