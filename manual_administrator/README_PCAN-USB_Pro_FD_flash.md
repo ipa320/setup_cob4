@@ -3,8 +3,6 @@
 2. flash Bootloader
 3. flash Firmware
 
-All files you can find here: 
-
 More Information:   
 http://www.peak-system.com/produktcd/Firmware/PCAN-USB%20Devices/USB-CAN-Interfaces_FirmwareUpdate_deu.pdf
 
