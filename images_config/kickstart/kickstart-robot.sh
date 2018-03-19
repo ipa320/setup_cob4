@@ -276,9 +276,9 @@ function NetworkSetup {
     INTERFACE=`ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}'`
 
     if [ "$INSTALL_TYPE" == "master" ]; then
-        wget -O /etc/network/interfaces.backup https://raw.githubusercontent.com/ipa-bnm/setup_cob4/feature/xenial_unattended/cob-pcs/networkInterfacesMaster
+        wget -O /etc/network/interfaces.backup https://raw.githubusercontent.com/ipa320/setup_cob4/master/cob-pcs/networkInterfacesMaster
     elif [ "$INSTALL_TYPE" == "slave" ]; then
-        wget -O /etc/network/interfaces.backup https://raw.githubusercontent.com/ipa-bnm/setup_cob4/feature/xenial_unattended/cob-pcs/networkInterfacesSlave
+        wget -O /etc/network/interfaces.backup https://raw.githubusercontent.com/ipa320/setup_cob4/master/cob-pcs/networkInterfacesSlave
     fi
 
     sed -i "s/eth0/$INTERFACE/g" /etc/network/interfaces.backup
