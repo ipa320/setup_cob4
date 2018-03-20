@@ -59,3 +59,11 @@ ifconfig ath0 down
 ifconfig ath1 down
 ```
 and save as `Save Startup`.
+
+### 6. Static Leases on Services Page
+Go to `Services/Services` and edit MAC Addresses of the PCs
+
+Find out MAC-Adresses of the PCs
+```
+sudo nmap -sP 10.4.x.0/24 | awk '/Nmap scan report for/{printf $5;}/MAC Address:/{print " => "$3;}' | sort
+```
