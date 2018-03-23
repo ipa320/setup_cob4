@@ -140,18 +140,19 @@ Comment=
 
 #### 2.4. Calibration touchscreen <a id="Touch"/>
 
-The touchscreen driver can be found under http://zytronic.co.uk/support/downloads/# (ZXY100 32 Input Controller Drivers)
+Install xinput-calibrator:
 ```
-wget http://zytronic.co.uk/wp-content/uploads/2016/02/Linux-01-03-2016.zip
+sudo apt-get install xinput-calibrator
 ```
-after install the driver use the following command to invert the axis and calibrate the panel:
+Run xinput-calibrator:
 ```
- sudo ZyConfig
+ xinput-calibrator
 ```
 or from a remote PC:
 ```
-export DISPLAY=:0 && sudo ZyConfig
+export DISPLAY=:0 && xinput-calibrator
 ```
+once calibration is finished the terminal will show instructions on how to keep the calibration persistent.
 
 #### 2.5. Netdata tool <a id="NetData"/>
 
