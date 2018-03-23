@@ -140,7 +140,7 @@ Comment=
 
 #### 2.4. Calibration touchscreen <a id="Touch"/>
 
-The touchscreen driver can be found under http://zytronic.co.uk/support/downloads/# , after install the driver use the following command to invert the axis and calibrate the panel:
+The touchscreen driver can be found under http://zytronic.co.uk/support/downloads/# (ZXY100 32 Input Controller Drivers), after install the driver use the following command to invert the axis and calibrate the panel:
 ```
  sudo ZyConfig
 ```
