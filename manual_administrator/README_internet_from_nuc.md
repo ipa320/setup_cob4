@@ -86,6 +86,39 @@
    ```
    sudo iptables-save | sudo tee /etc/iptables.sav
    ```
+- enable ip forwarding
+   - edit the file /etc/sysctl.conf
+   - uncomment the line `#net.ipv4.ip_forward=1` so it looks like this `net.ipv4.ip_forward=1`
+- create a new file called no-default-route inside /etc/dhcp/dhclient-enter-hooks.d with the following inside
+   ``` bash
+   #!/bin/sh
+   # prevent dhclient-script from setting default route every time it gets
+   # a new dhcpoffer for any interface.
+   
+   INTERFACE_NO_DEFAULT_ROUTE="eno1"
+   DEBUG_FILE="/tmp/dhclient-nodefroute.debug"
+   
+   echo "Interface ${interface} entered DHCP because of $reason." >> $DEBUG_FILE
+   
+   case "$reason" in
+     BOUND|RENEW|REBIND|REBOOT|TIMEOUT)
+   
+       echo "New DHCP connection because of $reason." >> $DEBUG_FILE
+   
+       echo "dhcp for interface ${interface}" >> $DEBUG_FILE
+   
+       echo "interface ${interface} == $INTERFACE_NO_DEFAULT_ROUTE" >> $DEBUG_FILE
+       if [ ${interface} = $INTERFACE_NO_DEFAULT_ROUTE ]; then
+           echo "interface ${interface} does match ${INTERFACE_NO_DEFAULT_ROUTE}, not setting default route." >> $DEBUG_FILE
+           unset new_routers
+       else
+           echo "default route for ${interface}" >> $DEBUG_FILE
+       fi
+       ;;
+   esac
+   ```
+- make the this file executable   
+   `sudo chmod a+x //etc/dhcp/dhclient-enter-hooks.d/no-default-route`
 
 ### 4. Configure Switches
 #### Find out witch Ports needs to be patched for vlan
