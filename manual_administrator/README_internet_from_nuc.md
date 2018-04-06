@@ -95,19 +95,19 @@ Take a look at the switch and note the Port Number from the connected NUC and Ro
 - Go to "VLAN-Management -> Create VLAN" 
    Add a new VLAN with id 10 and name internet
    
-![cisco_create_vlan](manual_administrator/doc/cisco_create_vlan.png)
+![cisco_create_vlan](doc/cisco_create_vlan.png)
    
 - Go to "VLAN-Management -> Interface Settings"
    Select the Ports you have identified for VLAN. 
    Edit Settings, change VLAN Mode from Trunk to General
    
-![cisco_interface_setting](manual_administrator/doc/cisco_interface_setting.png)
+![cisco_interface_setting](doc/cisco_interface_setting.png)
    
 - Go to "VLAN-MAnagement -> Port to VLAN"
    Select VLAN id 10 on dropdown menue
    Check Member and Tagged for the identified Ports
    
-![cisco_port_to_vlan](manual_administrator/doc/cisco_port_to_vlan.png)
+![cisco_port_to_vlan](doc/cisco_port_to_vlan.png)
    
 - Save Settings
 
