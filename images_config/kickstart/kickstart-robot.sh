@@ -369,6 +369,15 @@ function DisableFailsafeBoot {
     fi
 }
 
+function NonInteractiveFSCKFIX {
+    printHeader "NonInteractiveFSCKFIX"
+    if [ "$DISTRO" == "trusty" ]; then
+        sed -i '/FSCKFIX\=no/c\FSCKFIX\=yes' /etc/default/rcS
+    elif [ "$DISTRO" == "xenial" ]; then
+        sed -i '/FSCKFIX\=no/c\FSCKFIX\=yes' /lib/init/vars.sh
+    fi
+}
+
 function InstallAptCacher {
     printHeader "InstallAptCacher"
     #disable local forward to 10.0.1.1 cacher
@@ -479,6 +488,7 @@ InstallCobCommand
 RemoveModemanager
 DisableUpdatePopup
 DisableFailsafeBoot
+NonInteractiveFSCKFIX
 InstallRealsense
 InstallCareOBot
 InstallAptCacher
