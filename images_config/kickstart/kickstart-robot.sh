@@ -360,11 +360,13 @@ function DisableUpdatePopup {
     sed -i 's/Prompt\=lts/Prompt\=never/g' /etc/update-manager/release-upgrades
 }
 
-# Observe if we still need it under xenial
-# Not functional under xenial
 function DisableFailsafeBoot {
     printHeader "DisableFailsafeBoot"
-    sed -i 's/start on \(filesystem and static-network-up\) or failsafe-boot/start on filesystem and static-network-up/g' /etc/init/rc-sysinit.conf
+    if [ "$DISTRO" == "trusty" ]; then
+        sed -i 's/start on \(filesystem and static-network-up\) or failsafe-boot/start on filesystem and static-network-up/g' /etc/init/rc-sysinit.conf
+    elif [ "$DISTRO" == "xenial" ]; then
+        : #ToDo: not functional under xenial
+    fi
 }
 
 function InstallAptCacher {
@@ -476,7 +478,7 @@ InstallNetData
 InstallCobCommand
 RemoveModemanager
 DisableUpdatePopup
-#DisableFailsafeBoot
+DisableFailsafeBoot
 InstallRealsense
 InstallCareOBot
 InstallAptCacher
