@@ -379,6 +379,8 @@ fi
 if [ ! -e "/var/log/installer/kickstart_robot_finished" ]; then
   echo -e "${yellow}\n${NC}"
   echo -e "${yellow}WARN: 'kickstart-robot.sh' did not finish correctly during stick setup.${NC}"
+  echo -e "${yellow}WARN: Some of the following steps might not be executed on your robot:${NC}"
+  grep -E '^[[:space:]]*([[:alnum:]_]+[[:space:]]*\(\)|function[[:space:]]+[[:alnum:]_]+)' /u/robot/git/setup_cob4/images_config/kickstart/kickstart-robot.sh
   echo -e "${yellow}WARN: Please investigate '/var/log/installer/syslog' to see what went wrong.${NC}"
   echo -e "${yellow}WARN: 'grep' for 'Execute Kickstart-Function'...${NC}"
 
