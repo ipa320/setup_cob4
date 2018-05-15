@@ -29,6 +29,7 @@ INFO: The following upstart variants are available: \n
 EOF
 )
 
+yellow='\e[0;33m'
 green='\e[0;32m'
 red='\e[0;31m'
 NC='\e[0m' # No Color
@@ -376,10 +377,21 @@ else
 fi
 
 if [ ! -e "/var/log/installer/kickstart_robot_finished" ]; then
-  echo -e "\n${red}FATAL: 'kickstart-robot.sh' did not finish correctly during stick setup."
-  echo -e "\n${red}FATAL: Please investigate '/var/log/installer/syslog' to see what went wrong."
-  echo -e "\n${red}FATAL: 'grep' for 'Execute Kickstart-Function'..."
-  exit
+  echo -e "${yellow}\n${NC}"
+  echo -e "${yellow}WARN: 'kickstart-robot.sh' did not finish correctly during stick setup.${NC}"
+  echo -e "${yellow}WARN: Some of the following steps might not be executed on your robot:${NC}"
+  grep -E '^[[:space:]]*([[:alnum:]_]+[[:space:]]*\(\)|function[[:space:]]+[[:alnum:]_]+)' /u/robot/git/setup_cob4/images_config/kickstart/kickstart-robot.sh
+  echo -e "${yellow}WARN: Please investigate '/var/log/installer/syslog' to see what went wrong.${NC}"
+  echo -e "${yellow}WARN: 'grep' for 'Execute Kickstart-Function'...${NC}"
+
+  echo -e "\nDo you want to continue now anyway (y/n)?"
+  read answer
+
+  if echo "$answer" | grep -iq "^y" ;then
+    :
+  else
+    exit
+  fi
 fi
 
 if [ ! -d /u/robot/git/setup_cob4 ]; then
