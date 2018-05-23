@@ -126,7 +126,7 @@ stop_session(){
   PC=$where_session
   USER=$who_session
   if [ -z "$PC" ]; then
-    echo "$arg_session_stop not found"
+    echo "$arg_session_stop not found... aborting"
     exit
   fi
   pid_command='tmux list-panes -s -F "#{pane_pid}" -t '
@@ -148,6 +148,9 @@ stop_session(){
     if [[ $command == *'roscore'* ]]; then
       echo -e "${red}Ignoring roscore, to kill the core please use the command: cob-command stop_core${NC}"
       echo -e "${grey}\n ${NC}"
+    elif [[ $command == *'slack'* ]]; then
+      echo -e "${red}Ignoring slack, to kill the slack-session please use the command: cob-command stop_slack${NC}"
+      echo -e "${grey}\n ${NC}"
     else
       su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
       if [ ! -z "$PID" ]; then
@@ -156,6 +159,14 @@ stop_session(){
       su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
     fi
   else
+    su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
+    if [ ! -z "$PID" ]; then
+      while su $standard_user -l -c "ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 "; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && sleep 1; done
+    fi
+    su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
+  fi
+
+  if ! $lock_slack; then
     su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
     if [ ! -z "$PID" ]; then
       while su $standard_user -l -c "ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 "; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && sleep 1; done
@@ -219,13 +230,14 @@ sub_help(){
   echo "    start [<file path>]"
   echo "    stop [-a] [<session_name>]"
   echo "    stop_core"
+  echo "    stop_slack"
   echo "    reboot"
   echo ""
 }
 
 sub_ls(){
   echo -e "${blue}===========================================${NC}"
-  echo "Listing sessions...."
+  echo "Listing sessions..."
   echo -e "${blue}===========================================${NC}"
   echo -e "${grey}\n ${NC}"
   list_sessions
@@ -233,7 +245,7 @@ sub_ls(){
 
 sub_find(){
   echo -e "${blue}===========================================${NC}"
-  echo "Finding sessions...."
+  echo "Finding sessions..."
   echo -e "${blue}===========================================${NC}"
   echo -e "${grey}\n ${NC}"
   if [ -z "$arg_session_name" ]; then
@@ -249,14 +261,14 @@ sub_find(){
 
 sub_start(){
   echo -e "${blue}===========================================${NC}"
-  echo "Starting sessions...."
+  echo "Starting sessions..."
   echo -e "${blue}===========================================${NC}"
   echo -e "${grey}\n ${NC}"
   arg_upstart_file_path=$1
   if ! [ -z "$arg_upstart_file_path" ]; then
     upstart_file_path=$arg_upstart_file_path
   fi
-  echo "Reading file "$upstart_file_path"...."
+  echo "Reading file "$upstart_file_path"..."
   parse_yaml $upstart_file_path
   IFS="="
   num=0
@@ -290,27 +302,15 @@ sub_start(){
 
 sub_stop(){
   echo -e "${blue}===========================================${NC}"
-  echo "Stopping sessions...."
+  echo "Stopping sessions..."
   echo -e "${blue}===========================================${NC}"
   echo -e "${grey}\n ${NC}"
   arg_session_name=$1
   if ${all}; then
-    arg_upstart_file_path=$1
-    if ! [ -z "$arg_upstart_file_path" ]; then
-      upstart_file_path=$arg_upstart_file_path
-    fi
-    echo "Reading file "$upstart_file_path"...."
-    parse_yaml $upstart_file_path
-    IFS="="
-    num=0
-    while read -r name value ; do
-      if [[ $name == *'session_name' ]]; then
-        num=$((num+1))
-        sessions[$num]=$value
-      fi
-    done < /tmp/cob
-    for ((n=1; n <= $num; n++)); do
-      stop_session ${sessions[$n]}
+    sessions_list=$(list_sessions)
+    for i in $sessions_list; do
+      stop_session $i
+    done
   elif ! [ -z "$arg_session_name" ]; then
     stop_session $arg_session_name
   else
@@ -355,7 +355,7 @@ sub_stop(){
 
 sub_stop_core(){
   echo -e "${blue}===========================================${NC}"
-  echo "Stopping the core...."
+  echo "Stopping the core..."
   echo -e "${blue}===========================================${NC}"
   echo -e "${grey}\n ${NC}"
   killall -9 roscore
@@ -365,9 +365,20 @@ sub_stop_core(){
   stop_session roscore
 }
 
+sub_stop_slack(){
+  echo -e "${blue}===========================================${NC}"
+  echo "Stopping slack..."
+  echo -e "${blue}===========================================${NC}"
+  echo -e "${grey}\n ${NC}"
+  killall -9 slack
+  wait $!
+  lock_slack=false
+  stop_session slack
+}
+
 sub_reboot(){
   echo -e "${blue}===========================================${NC}"
-  echo "Rebooting the robot...."
+  echo "Rebooting the robot..."
   echo -e "${blue}===========================================${NC}"
   echo -e "${grey}\n ${NC}"
   cob-shutdown
@@ -375,7 +386,7 @@ sub_reboot(){
 
 sub_start_gui(){
   echo -e "${blue}===========================================${NC}"
-  echo "Starting VM...."
+  echo "Starting VM..."
   echo -e "${blue}===========================================${NC}"
   echo -e "${grey}\n ${NC}"
   rm -rf /tmp/runningVMS
@@ -391,7 +402,7 @@ sub_start_gui(){
 
 sub_stop_gui(){
   echo -e "${blue}===========================================${NC}"
-  echo "Stopping the Windows VM...."
+  echo "Stopping the Windows VM..."
   echo -e "${blue}===========================================${NC}"
   echo -e "${grey}\n ${NC}"
   su mimic -c "ssh -o ConnectTimeout=15 $ROBOT-h1 'export DISPLAY=:0 && vboxmanage controlvm myrobot-win acpipowerbutton'"
@@ -403,6 +414,7 @@ verbose=false
 all=false
 subcommand=$1
 lock_core=true
+lock_slack=true
 unset PID
 
 case $subcommand in
