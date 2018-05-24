@@ -1,0 +1,17 @@
+[Unit]
+Description=service handling slack connection
+Wants=network-online.target
+After=network.target network-online.target NetworkManager.service NetworkManager-wait-online.service
+
+[Service]
+Type=simple
+RemainAfterExit=no
+ExecStart=/bin/bash -c "/usr/bin/tmux -2 new-session -d -s slack && \
+    /usr/bin/tmux -2 send -t slack 'python `rospack find slack`/scripts/slack_service.py  my_token my_channel my_username' ENTER"
+ExecStop=/usr/bin/tmux kill-session -t slack
+Restart=on-failure
+User=msh
+
+[Install]
+WantedBy=multi-user.target
+

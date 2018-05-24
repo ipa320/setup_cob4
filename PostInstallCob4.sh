@@ -300,6 +300,33 @@ function InstallUpstart {
   sudo sed -i "s/myrobot/$robot_name/g" /usr/sbin/cob-start
   sudo sed -i "s/CHECK_LIST/$check_client_list/g" /usr/sbin/cob-start
 
+  # install slack service
+  echo -e "\nDo you want to install the slack system service (y/n)?"
+  read answer
+
+  if echo "$answer" | grep -iq "^y" ;then
+    echo -e "\nEnter slack TOKEN:"
+    read token
+    echo -e "\nEnter slack CHANNEL:"
+    read channel
+    echo -e "\nEnter slack USERNAME:"
+    read username
+    if [ $(lsb_release -sc) == "trusty" ]; then # install upstart
+      sudo cp -f /u/robot/git/setup_cob4/upstart/slack.conf /etc/init/slack.conf
+      sudo sed -i "s/my_token/$token/g" /etc/systemd/system/slack.service
+      sudo sed -i "s/my_channel/$channel/g" /etc/systemd/system/slack.service
+      sudo sed -i "s/my_username/$username/g" /etc/systemd/system/slack.service
+    elif  [ $(lsb_release -sc) == "xenial" ]; then # install systemd
+      sudo cp -f /u/robot/git/setup_cob4/upstart/slack.service /etc/systemd/system/slack.service
+      sudo sed -i "s/my_token/$token/g" /etc/systemd/system/slack.service
+      sudo sed -i "s/my_channel/$channel/g" /etc/systemd/system/slack.service
+      sudo sed -i "s/my_username/$username/g" /etc/systemd/system/slack.service
+      sudo systemctl enable slack.service
+    fi
+  else
+    :
+  fi
+
   echo "install upstart done"
 }
 
@@ -405,6 +432,11 @@ fi
 echo -e "${green}===========================================${NC}"
 echo "                INITIAL MENU"
 echo -e "${green}===========================================${NC}"
+
+if [ -z $ROS_DISTRO ]; then
+  echo -e "${red}\nNo ROS_DISTRO available, please source ROS first\n${NC}"
+  exit 1
+fi
 
 echo -e $usage
 read -p "Please select an installation option: " choice
