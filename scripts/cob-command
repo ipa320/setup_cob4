@@ -144,20 +144,13 @@ stop_session(){
     command=$(ps -p $PID -o args)
   fi
   command=${command#* }
-  if $lock_core; then
-    if [[ $command == *'roscore'* ]]; then
-      echo -e "${red}Ignoring roscore, to kill the core please use the command: cob-command stop_core${NC}"
-      echo -e "${grey}\n ${NC}"
-    elif [[ $command == *'slack'* ]]; then
-      echo -e "${red}Ignoring slack, to kill the slack-session please use the command: cob-command stop_slack${NC}"
-      echo -e "${grey}\n ${NC}"
-    else
-      su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
-      if [ ! -z "$PID" ]; then
-        while su $standard_user -l -c "ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 "; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && sleep 1; done
-      fi
-      su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
-    fi
+
+  if [[ $command == *'roscore'* ]] && $lock_core; then
+    echo -e "${red}Ignoring roscore, to kill the core please use the command: cob-command stop_core${NC}"
+    echo -e "${grey}\n ${NC}"
+  elif [[ $command == *'slack'* ]] && $lock_slack; then
+    echo -e "${red}Ignoring slack, to kill the slack-session please use the command: cob-command stop_slack${NC}"
+    echo -e "${grey}\n ${NC}"
   else
     su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
     if [ ! -z "$PID" ]; then
@@ -166,13 +159,6 @@ stop_session(){
     su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
   fi
 
-  if ! $lock_slack; then
-    su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
-    if [ ! -z "$PID" ]; then
-      while su $standard_user -l -c "ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 "; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && sleep 1; done
-    fi
-    su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
-  fi
 }
 
 start_session(){
