@@ -433,6 +433,11 @@ echo -e "${green}===========================================${NC}"
 echo "                INITIAL MENU"
 echo -e "${green}===========================================${NC}"
 
+if [ -z $ROS_DISTRO ]; then
+  echo -e "${red}\nNo ROS_DISTRO available, please source ROS first\n${NC}"
+  exit 1
+fi
+
 echo -e $usage
 read -p "Please select an installation option: " choice
 
