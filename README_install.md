@@ -7,11 +7,12 @@
 1. <a href="#Installation">Automatic installation</a>
 2. <a href="#Extra-Installation">Extra installation</a>
      1. <a href="#Asus">Asus Xtion</a>
-     2. <a href="#Hands">Hand configuration</a>
-     3. <a href="#Mimic">Mimic</a>
-     4. <a href="#Touch">Calibration touchscreen</a>
-     5. <a href="#NetData">Netdata tool</a>
-     6. <a href="#CiscoFirmware">Update CISCO Switch Firmware</a>
+     2. <a href="#HandsBluetooth">Hand configuration Bluetooth</a>
+     3. <a href="#HandsWlan">Hand configuration Wlan</a>
+     4. <a href="#Mimic">Mimic</a>
+     5. <a href="#Touch">Calibration touchscreen</a>
+     6. <a href="#NetData">Netdata tool</a>
+     7. <a href="#CiscoFirmware">Update CISCO Switch Firmware</a>
 
 
 ### 1. Automatic installation <a id="Installation"/>
@@ -38,7 +39,7 @@ sudo update-initramfs -u
 ```
 
 
-#### 2.2. Hands configuration <a id="Hands"/>
+#### 2.2. Hands configuration Bluetooth<a id="HandsBluetooth"/>
 
 The hands use a bluetooth connection to receive the commands and send the link positions to ROS. This requires the configuration of the bluetooth devices on the hands (Raspberry pcs) and on the torso pc, also some upstart jobs are needed to launch the hand driver on boot. An image of the operative system can be copied to a new SD card and changing the hostname of the pc and the network configuration the hand pc is installed.
 
@@ -114,7 +115,124 @@ script
 end script
 ```
 
-#### 2.3. Mimic <a id="Mimic"/>
+#### 2.3. Hands configuration Wlan<a id="HandsWlan"/>
+Download raspberry image from here:
+```
+wget usb stick von Benni
+```
+
+Flash the raspberry image to the sd card
+```
+sudo dd bs=4M if=ubuntu_gripper.img of=/dev/sdX conv=fsync
+```
+
+Put the sdcard into the Raspberry and start it up.
+
+Log into the raspberry via ssh or use mouse, tastatur and monitor.
+```
+ssh robot@raspberry_ip
+```
+
+Set root password
+```
+sudo passwd root
+```
+
+Set hostname
+```
+sudo vim /etc/hostname
+sudo vim /etc/hosts
+```
+
+Update system time
+```
+sudo date --set="2018-12-06 15:30:00.000"
+```
+
+Update setup_cob4 repo (only possible if ipa320/setup_cob4 is updated)
+```
+cd git/setup_cob4
+git fetch origin
+git merge origin/master
+```
+
+Copy cob-hand.service to /etc/systemd/system
+```
+sudo cp cob-hand.service /etc/systemd/system
+```
+
+Replace my_component_name with correct name inside the systemd unit. Eg. gripper_left or gripper_right
+```
+sudo vim /etc/systemd/system/cob-hand.service
+```
+
+And enable the service with the command:
+```
+cd /etc/systemd/system
+sudo systemctl enable cob_hand.service
+```
+
+Set ip to base pc's address inside chrony config.
+```
+cd
+sudo vim /etc/chrony/chrony.conf
+
+server 10.4.x.11 minpoll 0 maxpoll ....
+```
+
+Modify bashrc
+```
+vim .bashrc
+
+export ROBOT=cob4-x
+export ROBOT_ENV=xxx
+export ROS_MASTER_URI=http://10.4.x.11:11311
+```
+
+Network wifi setup:
+- put the following to /etc/network/interfaces
+```
+auto wlan0
+iface wlan0 inet dhcp
+wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+```
+- put the connection details into /etc/wpa_supplicant/wpa_supplicant.conf
+```
+country=DE
+
+network={
+    ssid="cob4-x-direct"
+    psk="care-o-bot"
+}
+```
+- remove the network-manager
+```
+sudo apt-get remove network-manager
+```
+
+Log into base pc and copyid from base to gripper
+```
+ssh-copy-id hostname
+```
+
+ssh to other pcs on the robot
+```
+ssh b1
+ssh t1
+ssh t2
+ssh t3
+ssh s1
+ssh h1
+ssh 10.4.x.11
+ssh 10.4.x.21
+ssh 10.4.x.22
+ssh 10.4.x.23
+ssh 10.4.x.31
+ssh 10.4.x.41
+```
+
+
+#### 2.4. Mimic <a id="Mimic"/>
 
 The mimic should be installed on head pc. A special user "mimic" has to be created to control the display. After create the user add the following lines to */etc/lightdm/lightdm.conf* :
 
@@ -138,7 +256,7 @@ Comment[en_US]=
 Comment=
 ```
 
-#### 2.4. Calibration touchscreen <a id="Touch"/>
+#### 2.5. Calibration touchscreen <a id="Touch"/>
 
 Install xinput-calibrator:
 ```
@@ -154,7 +272,7 @@ export DISPLAY=:0 && xinput-calibrator
 ```
 once calibration is finished the terminal will show instructions on how to keep the calibration persistent.
 
-#### 2.5. Netdata tool <a id="NetData"/>
+#### 2.6. Netdata tool <a id="NetData"/>
 
 Install the dependencies:
 ```
@@ -172,7 +290,7 @@ The tool is available under the address http://*hostname*:19999
 
 For further information take a look at the official installation guide: https://github.com/firehol/netdata/wiki/Installation
 
-#### 2.6. Update CISCO Switch Firmware (for old switches)<a id="CiscoFirmware"/>
+#### 2.7. Update CISCO Switch Firmware (for old switches)<a id="CiscoFirmware"/>
 
 Issue: http://www.viktorious.nl/2013/11/05/cisco-sg200-08-nfs/
 

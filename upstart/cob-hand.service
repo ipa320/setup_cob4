@@ -1,0 +1,17 @@
+[Unit]
+Description=cob hand bringup
+Wants=network-online.target
+After=network.target network-online.target NetworkManager.service NetworkManager-wait-online.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=/bin/sleep 60
+ExecStart=/bin/bash -c "/usr/bin/tmux -2 new-session -d -s cob_hand && \
+    /usr/bin/tmux -2 send -t cob_hand '/u/robot/git/setup_cob4/scripts/run-with-core.py \
+    roslaunch cob_bringup schunk_sdhx_local.launch component_name:=my_component_name' ENTER"
+ExecStop=/usr/bin/tmux kill-session -t cob_hand
+User=robot
+
+[Install]
+WantedBy=multi-user.target
