@@ -7,7 +7,7 @@ if [ "$USER" != "robot" ]; then
 	exit
 fi
 
-if [ "$HOSTNAME" != "$robot_name-b1" ]; then
+if [ "$HOSTNAME" != "b1" ]; then
 	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC"
 	exit
 fi
