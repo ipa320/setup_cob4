@@ -5,7 +5,8 @@
 ### Contents
 
 1. <a href="#Installation">Automatic installation</a>
-2. <a href="#Extra-Installation">Extra installation</a>
+2. <a href="#PostInstall">Post-Installation</a>
+3. <a href="#Extra-Installation">Extra installation</a>
      1. <a href="#Asus">Asus Xtion</a>
      2. <a href="#HandsBluetooth">Hand configuration Bluetooth</a>
      3. <a href="#HandsWlan">Hand configuration Wlan</a>
@@ -25,9 +26,21 @@ The Care-O-bot pcs can be installed using a pre-created image via a bootable USB
 
 Fur further information about the creation and customization of images please see the following link: [Image configuration manual](images_config/README_images.md)
 
-### 2. Extra Installation <a id="Extra-Installation"/>
+### 2. PostInstall <a id="PostInstall"/>
+for setting up the robot's PC's software (you must be the robot user to do so)
+- clone `setup_cob4` : `cd ~/git && git clone https://github.com/ipa320/setup_cob4`
+- execute post install steps: `/u/robot/git/setup_cob4/PostInstall.sh`
+- add ws: `cd ~/git && mkdir -p care-o-bot/src`
+- clone `cob_robots`: `cd ~/git/care-o-bot/src && git clone https://github.com/ipa320/cob_robots`
+- init wstool (should already be installed, if not, use `sudo apt-get install python-wstool`): `cd ~/git/care-o-bot/src && wstool init && mv cob_robots/.travis.rosinstall .rosinstall`
+- get all necessary packages: `cd ~/git/care-o-bot/src && wstool update`
+- init rosdep: `cd ~/git/care-o-bot && sudo rosdep init`
+- install rosdep packages: `cd ~/git/care-o-bot/ && rosdep update && rosdep install --from-paths src --ignore-src -r -y`
+- build: `cd ~/git/care-o-bot/ && catkin build`
 
-#### 2.1. Asus Xtion <a id="Asus"/>
+### 3. Extra Installation <a id="Extra-Installation"/>
+
+#### 3.1. Asus Xtion <a id="Asus"/>
 
 The Asus Xtion cameras are only properly supported by USB 2.0 , it is recommended to force the bios of the Computer to disable the xHCI driver. For the NUCs (5th generation) open the bios Menu go to "Advanced" -->  Devices --> USB --> xHCI Mode and choose the option "Auto", save your configuration, boot linux and disable the usbhid module:
 ```
@@ -39,7 +52,7 @@ sudo update-initramfs -u
 ```
 
 
-#### 2.2. Hands configuration Bluetooth<a id="HandsBluetooth"/>
+#### 3.2. Hands configuration Bluetooth<a id="HandsBluetooth"/>
 
 The hands use a bluetooth connection to receive the commands and send the link positions to ROS. This requires the configuration of the bluetooth devices on the hands (Raspberry pcs) and on the torso pc, also some upstart jobs are needed to launch the hand driver on boot. An image of the operative system can be copied to a new SD card and changing the hostname of the pc and the network configuration the hand pc is installed.
 
@@ -115,7 +128,7 @@ script
 end script
 ```
 
-#### 2.3. Hands configuration Wlan<a id="HandsWlan"/>
+#### 3.3. Hands configuration Wlan<a id="HandsWlan"/>
 Download raspberry image from here:
 ```
 wget usb stick von Benni
@@ -232,7 +245,7 @@ ssh 10.4.x.41
 ```
 
 
-#### 2.4. Mimic <a id="Mimic"/>
+#### 3.4. Mimic <a id="Mimic"/>
 
 The mimic should be installed on head pc. A special user "mimic" has to be created to control the display. After create the user add the following lines to */etc/lightdm/lightdm.conf* :
 
@@ -256,7 +269,7 @@ Comment[en_US]=
 Comment=
 ```
 
-#### 2.5. Calibration touchscreen <a id="Touch"/>
+#### 3.5. Calibration touchscreen <a id="Touch"/>
 
 Install xinput-calibrator:
 ```
@@ -272,7 +285,7 @@ export DISPLAY=:0 && xinput-calibrator
 ```
 once calibration is finished the terminal will show instructions on how to keep the calibration persistent.
 
-#### 2.6. Netdata tool <a id="NetData"/>
+#### 3.6. Netdata tool <a id="NetData"/>
 
 Install the dependencies:
 ```
@@ -290,7 +303,7 @@ The tool is available under the address http://*hostname*:19999
 
 For further information take a look at the official installation guide: https://github.com/firehol/netdata/wiki/Installation
 
-#### 2.7. Update CISCO Switch Firmware (for old switches)<a id="CiscoFirmware"/>
+#### 3.7. Update CISCO Switch Firmware (for old switches)<a id="CiscoFirmware"/>
 
 Issue: http://www.viktorious.nl/2013/11/05/cisco-sg200-08-nfs/
 
