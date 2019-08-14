@@ -1,0 +1,29 @@
+#!/bin/bash
+
+if [ "$USER" != "robot" ]; then
+	echo 'FATAL: CAN ONLY BE EXECUTED AS "robot" USER'
+	exit
+fi
+
+if [ "$HOSTNAME" != "b1" ]; then
+	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC"
+	exit
+fi
+
+#retrieve client_list variables
+source /u/robot/git/setup_cob4/helper_client_list.sh
+
+#kill user's processes
+sudo pkill -U $1
+
+echo "Executing deluser"
+echo $(sudo /usr/sbin/deluser --remove-home $1)
+
+echo "Syncing passwd file to other cob-pcs"
+for i in $client_list_ip
+do
+	echo "sync passwd on $i"
+	sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$i:/etc/
+done
+
+echo "done deleting user"

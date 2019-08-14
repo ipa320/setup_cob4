@@ -1,0 +1,5 @@
+[user]
+	email = myuser@myrobot
+	name = myuser@myrobot
+[lfs]
+        allowincompletepush = true

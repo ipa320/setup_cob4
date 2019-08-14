@@ -1,4 +1,4 @@
 # enable scroling
-set -g mouse on
+#set -g mouse on
 # extend history
 set -g history-limit 10000

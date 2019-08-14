@@ -1,0 +1,2 @@
+#!/bin/bash
+/usr/sbin/cob-command stop --upstart

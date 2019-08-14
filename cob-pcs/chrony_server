@@ -1,7 +1,7 @@
-server 0.de.pool.ntp.org offline minpoll 5 iburst
-server 1.de.pool.ntp.org offline minpoll 5 iburst
-server 2.de.pool.ntp.org offline minpoll 5 iburst
-server 3.de.pool.ntp.org offline minpoll 5 iburst
+server 0.de.pool.ntp.org minpoll 5 iburst
+server 1.de.pool.ntp.org minpoll 5 iburst
+server 2.de.pool.ntp.org minpoll 5 iburst
+server 3.de.pool.ntp.org minpoll 5 iburst
 
 makestep 0.1 100
 
@@ -42,13 +42,11 @@ dumpdir /var/lib/chrony
 
 # Let computer be a server when it is unsynchronised.
 
-local stratum 3
+local stratum 4
 
 # Allow computers on the unrouted nets to use the server.
 
-allow 10/8
-allow 192.168/16
-allow 172.16/12
+allow 10.4/16
 
 # This directive forces `chronyd' to send a message to syslog if it
 # makes a system clock adjustment larger than a threshold value in seconds.

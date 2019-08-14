@@ -1,0 +1,13 @@
+[Unit]
+Description=Mounts the robots nfs user home folders from b1
+After=network.target
+
+[Mount]
+What=b1:/
+Where=/u
+Type=nfs4
+Options=_netdev,auto
+TimeoutSec=120
+
+[Install]
+WantedBy=multi-user.target

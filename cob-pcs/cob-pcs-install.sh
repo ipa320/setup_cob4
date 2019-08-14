@@ -17,7 +17,7 @@ for client in $client_list_hostnames; do
 	echo "Installing <<"$*">> on $client"
 	echo "-------------------------------------------"
 	echo ""
-	ssh $client "sudo apt-get install $* -y --force-yes"
+	ssh $client "sudo apt-get install $* -y --allow-downgrades --allow-unauthenticated"
 	ret=${PIPESTATUS[0]}
 	if [ $ret != 0 ] ; then
 		echo "apt-get return an error (error code: $ret), aborting..."

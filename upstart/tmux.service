@@ -1,0 +1,14 @@
+[Unit]
+Description=service starting initial tmux server
+Wants=network-online.target
+After=network.target network-online.target NetworkManager.service NetworkManager-wait-online.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/tmux -2 new -d -s empty
+ExecStop=/usr/bin/tmux -2 kill-server
+User=mojin
+
+[Install]
+WantedBy=multi-user.target

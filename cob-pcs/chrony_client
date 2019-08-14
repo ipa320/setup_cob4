@@ -43,9 +43,7 @@ dumpdir /var/lib/chrony
 
 # Allow computers on the unrouted nets to use the server.
 
-allow 10/8
-allow 192.168/16
-allow 172.16/12
+#allow 10.4/16
 
 # This directive forces `chronyd' to send a message to syslog if it
 # makes a system clock adjustment larger than a threshold value in seconds.
