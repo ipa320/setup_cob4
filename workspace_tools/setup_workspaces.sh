@@ -94,14 +94,12 @@ function install_dependencies {
     # enable script cancelation on first error
     set -e
 
-    if [ "$mode" == "robot" ]; then
-        echo -e "${yellow}Enter 'robot' password:${NC}"
-        su robot -c "
+    if [ "$mode" == "robot" ]; then        
         unset CMAKE_PREFIX_PATH
         source $chained_ws
         catkin init --reset
         catkin clean -y
-        rosdep install --as-root pip:true --from-path src -i -y"
+        rosdep install --as-root pip:true --from-path src -i -y
     else
         echo -e "${red}ERROR: Wrong mode, expecting [robot]. Got: $mode ${NC}"
         exit 2
@@ -134,14 +132,11 @@ fi
 if [ "$mode" == "robot" ]; then
     echo -e "${blue}Installation on robot! ${NC}"
     rosdep update
-    echo -e "${yellow}Enter 'robot' password ${NC}"
-    su robot -c "rosdep update"
     export mode
     export SCRIPTPATH
     export -f setup_ws
     export -f install_dependencies
-    echo -e "${yellow}Enter 'robot' password: ${NC}"
-    su robot -c "setup_ws ~/git/care-o-bot /opt/ros/${ROS_DISTRO}/setup.bash ${SCRIPTPATH}/setup_robot_ws_${ROS_DISTRO}_default.rosinstall"
+    setup_ws ~/git/care-o-bot /opt/ros/${ROS_DISTRO}/setup.bash ${SCRIPTPATH}/setup_robot_ws_${ROS_DISTRO}_default.rosinstall
 else
     echo -e "${red}ERROR: Wrong mode, expecting [robot]. Got: $mode ${NC}"
     exit 2
