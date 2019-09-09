@@ -129,16 +129,17 @@ sudo dd bs=4M if=ubuntu_gripper.img of=/dev/sdX conv=fsync
 Put the sdcard into the Raspberry and start it up.
 
 Log into the raspberry via ssh or use mouse, tastatur and monitor.
+The ip is usually 10.4.x.51 for left and 10.4.x.52 for right gripper if the router has already static leases for them
 ```
 ssh robot@raspberry_ip
 ```
 
-Set root password
+Set root password (default robot passwd)
 ```
 sudo passwd root
 ```
 
-Set hostname
+Set hostname to either cob4-x-gl (for gripper left) or cob4-x-gr (for gripper right)
 ```
 sudo vim /etc/hostname
 sudo vim /etc/hosts
@@ -156,9 +157,9 @@ git fetch origin
 git merge origin/master
 ```
 
-Copy cob-hand.service to /etc/systemd/system
+Copy cob-hand.service from setup_cob4 repo to /etc/systemd/system
 ```
-sudo cp cob-hand.service /etc/systemd/system
+sudo cp ~/git/setup_cob4/upstart/cob-hand.service /etc/systemd/system
 ```
 
 Replace my_component_name with correct name inside the systemd unit. Eg. gripper_left or gripper_right
@@ -210,12 +211,12 @@ network={
 sudo apt-get remove network-manager
 ```
 
-Log into base pc and copyid from base to gripper
+Log into base pc and copyid from base to gripper pc you are currently configuring
 ```
 ssh-copy-id hostname
 ```
 
-ssh to other pcs on the robot
+ssh to other pcs from the gripper pc (raspberry)
 ```
 ssh b1
 ssh t1

@@ -1,6 +1,7 @@
 [Unit]
 Description=bringup cob
-After=network-online.target
+Wants=tmux.service
+After=tmux.service
 
 [Service]
 Type=oneshot

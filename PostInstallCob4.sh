@@ -11,7 +11,8 @@ INFO: This script is a helper tool for the setup and installation of Care-O-bot:
 2. Setup robot user\n
 3. Setup mimic user\n
 4. Setup devices (e.g. udev for laser scanners)\n
-5. Install upstart\n
+5. Install system services (upstart,...)\n
+50. Setup capabilities: cepstral voices\n
 99. Full installation\n
 EOF
 )
@@ -20,12 +21,7 @@ upstart_selection=$(cat << "EOF"
 INFO: The following upstart variants are available: \n
 0. skip (do not update upstart configuration)\n
 1. cob_bringup\n
-2. unity_bringup\n
-3. msh_cob_robots\n
-4. msh_unity_robots\n
-5. hdg_cob_robots\n
-6. hdg_unity_robots\n
-7. custom upstart\n
+2. custom upstart\n
 EOF
 )
 
@@ -34,18 +30,20 @@ green='\e[0;32m'
 red='\e[0;31m'
 NC='\e[0m' # No Color
 
-if [ "$USER" != "robot" ]; then
-  echo -e "\n${red}FATAL: CAN ONLY BE EXECUTED AS robot USER${NC}"
-  exit
-fi
-
-if [[ ${HOSTNAME} != *"b1"* ]];then
-  echo -e "\n${red}FATAL: CAN ONLY BE EXECUTED ON BASE PC${NC}"
-  exit
-fi
-
 #### retrieve client_list variables
 source /u/robot/git/setup_cob4/helper_client_list.sh
+
+#### check hostname
+function check_hostname () {
+  if [[ ${HOSTNAME} != *"$1"* ]];then
+    echo -e "\n${red}FATAL: CAN ONLY BE EXECUTED ON PC $1${NC}"
+    exit
+  fi
+}
+
+function get_search_domain () {
+  grep search /etc/resolv.conf | sed -e "s/search //"
+}
 
 #### DEFINE SPECIFIC LIST OF PCs
 function query_pc_list {
@@ -63,8 +61,9 @@ function query_pc_list {
   fi
 }
 
-#### Setup root user
+#### SETUP ROOT USER
 function SetupRootUser {
+  check_hostname "b1"
   echo -e "\n${green}INFO:setup root user${NC}\n"
 
   query_pc_list "$client_list_hostnames"
@@ -100,8 +99,9 @@ function SetupRootUser {
   echo "setup root user done"
 }
 
-#### Setup Robot user
+#### SETUP ROBOT USER
 function SetupRobotUser {
+  check_hostname "b1"
   echo -e "\n${green}INFO:Setup Robot User${NC}\n"
 
   query_pc_list "$client_list_hostnames"
@@ -109,9 +109,9 @@ function SetupRobotUser {
 
   /u/robot/git/setup_cob4/cob-adduser robot
 
-  source /opt/ros/$ros_distro/setup.bash 
+  source /opt/ros/$ros_distro/setup.bash
 
-  if grep -q ROBOT "/u/robot/.bashrc"; then
+  if grep "source /u/robot/setup/user.bashrc" /u/robot/.bashrc > /dev/null; then
     echo ".bashrc already configured"
   else
     /u/robot/git/setup_cob4/cob-adduser robot
@@ -134,11 +134,12 @@ function SetupRobotUser {
   echo "setup robot user done"
 }
 
-#### SETUP MIMIC
+#### SETUP MIMIC USER
 function SetupMimicUser {
+  check_hostname "b1"
   echo -e "\n${green}INFO:Setup Mimic User${NC}\n"
 
-  query_pc_list "$robot_name-h1"
+  query_pc_list "h1"
   pc_head=$LIST
   if [ -z "$pc_head" ]; then
     echo "no head pc, skipping setup mimic user"
@@ -212,38 +213,111 @@ EOF"
     sudo ssh $pc_head "sed -i 's/LOCK_SCREEN=true/LOCK_SCREEN=false/g' $LOCK_PATH"
   elif [ $(lsb_release -sc) == "xenial" ]; then
     sudo -u mimic -i ssh $pc_head 'dbus-launch gsettings set org.gnome.desktop.screensaver lock-enabled false'
-  fi  
+  fi
 
   sudo -u mimic -i ssh $pc_head 'dbus-launch gsettings set org.gnome.desktop.session idle-delay 0'
 
   #Background
-  sudo su mimic -c 'cp /u/robot/git/setup_cob4/mimic.jpg /u/mimic/mimic.jpg'
+  sudo su mimic -c 'cp -f /u/robot/git/setup_cob4/mimic.jpg /u/mimic/mimic.jpg'
   command_setbackground="dbus-launch gsettings set org.gnome.desktop.background picture-uri file:/u/mimic/mimic.jpg"
   sudo su mimic -c "ssh $pc_head $command_setbackground"
 
   echo "setup mimic user done"
 }
 
-#### INSTALL UPSTART
-function InstallUpstart {
-  echo -e "\n${green}INFO: Install Upstart${NC}\n"
+#### SETUP DEVICES
+function SetupDevices {
+  check_hostname "b1"
+  echo -e "\n${green}INFO: Setup udev rules for the scanners ${NC}\n"
 
-  sudo apt-get install nmap
+  ## ScanFront ##
+  ScanFrontAttr1='ATTRS{bInterfaceNumber}=="00"'
+
+  ## ScanLeft ##
+  ScanLeftAttr1='ATTRS{bInterfaceNumber}=="01"'
+
+  ## ScanRight ##
+  ScanRightAttr1='ATTRS{bInterfaceNumber}=="00"'
+
+  for file in /dev/ttyUSB*; do
+    sudo chmod 666 $file
+    sudo rm -f /tmp/usb${file: -1}
+    sudo udevadm info -a -p $(udevadm info -q path -n $file) > /tmp/usb${file: -1}
+    sudo chmod 666 /tmp/usb${file: -1}
+  done
+
+  results=()
+  count=0
+
+  for file in /tmp/usb*; do
+    if grep --quiet 'ATTRS{serial}=="F' $file; then
+      result=$(ls -l |grep -R 'ATTRS{serial}=="F' $file)
+      echo "found scanner with $result"
+      results[$count]=$result
+      count=$((count+1))
+    fi
+  done
+
+  echo "found $count scanners: $results"
+
+  if [[ ${results[0]} == ${results[1]} ]]; then
+    ATTRSSerialFL=${results[0]}
+    ATTRSSerialR=${results[2]}
+  elif [[ ${results[1]} == ${results[2]} ]]; then
+    ATTRSSerialFL=${results[1]}
+    ATTRSSerialR=${results[0]}
+  elif [[ ${results[0]} == ${results[2]} ]]; then
+    ATTRSSerialFL=${results[0]}
+    ATTRSSerialR=${results[1]}
+  fi
+
+  ATTRSSerialFL="$( echo "$ATTRSSerialFL" | sed 's/ //g' )"
+  ATTRSSerialR="$( echo "$ATTRSSerialR" | sed 's/ //g' )"
+
+  sudo sed -i -re "s/(ScanFrontAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
+  sudo sed -i -re "s/(ScanLeftAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
+  sudo sed -i -re "s/(ScanRightAttr2=).*/\1'${ATTRSSerialR}'/g" /etc/init.d/udev_cob.sh
+
+  echo "setup devices done"
+}
+
+#### INSTALL SYSTEM SERVICES
+function InstallSystemServices {
+  check_hostname "b1"
+  echo -e "\n${green}INFO: Install System Services (upstart,...)${NC}\n"
 
   if [ $(lsb_release -sc) == "trusty" ]; then
     sudo cp -f /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
   elif  [ $(lsb_release -sc) == "xenial" ]; then
+    echo "Installing cob service"
     sudo cp -f /u/robot/git/setup_cob4/upstart/cob.service /etc/systemd/system/cob.service
     sudo systemctl enable cob.service
-  fi
-  sudo cp -f /u/robot/git/setup_cob4/upstart/cob-start /usr/sbin/cob-start
-  sudo cp -f /u/robot/git/setup_cob4/upstart/cob-stop /usr/sbin/cob-stop
-  sudo cp -f /u/robot/git/setup_cob4/scripts/cob-command /usr/sbin/cob-command
-  sudo sed -i "s/myrosdistro/$ros_distro/g" /usr/sbin/cob-command
 
+    query_pc_list "$client_list_hostnames"
+    pc_list=$LIST
+    for i in $pc_list; do
+        echo "Installing tmux service on $i"
+        sudo -u root -i ssh robot@$i 'sudo cp -f /u/robot/git/setup_cob4/upstart/tmux.service /etc/systemd/system/tmux.service'
+        sudo -u root -i ssh robot@$i 'sudo systemctl enable tmux.service'
+
+        echo "Installing chrony-wait service on $i"
+        sudo -u root -i ssh robot@$i 'sudo cp -f /u/robot/git/setup_cob4/upstart/chrony-wait.service /etc/systemd/system/chrony-wait.service'
+        sudo -u root -i ssh robot@$i 'sudo systemctl enable chrony-wait.service'
+    done
+  fi
+  sudo cp -f /u/robot/git/setup_cob4/scripts/cob-command /usr/sbin/cob-command
+  sudo cp -f /u/robot/git/setup_cob4/scripts/cob-start /usr/sbin/cob-start
+  sudo cp -f /u/robot/git/setup_cob4/scripts/cob-stop /usr/sbin/cob-stop
+  sudo cp -f /u/robot/git/setup_cob4/scripts/cob-shutdown /usr/sbin/cob-shutdown
+  sudo cp -f /u/robot/git/setup_cob4/scripts/cob-powerbutton /usr/sbin/cob-powerbutton
+  sudo sed -i "s/myrosdistro/$ros_distro/g" /usr/sbin/cob-command
+  sudo sed -i '/action/c\action=/usr/sbin/cob-powerbutton' /etc/acpi/events/powerbtn
+
+  sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-command"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-command|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-command||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-command" -e "}" /etc/sudoers
   sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-start"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-start|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-start||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-start" -e "}" /etc/sudoers
   sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-stop|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-stop||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-stop" -e "}" /etc/sudoers
-  sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-command"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-command|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-command||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-command" -e "}" /etc/sudoers
+  sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-shutdown|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-shutdown||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown" -e "}" /etc/sudoers
+  sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-powerbutton"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-powerbutton|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-powerbutton||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-powerbutton" -e "}" /etc/sudoers
 
   # install cob.yaml
   echo -e "\n${green}INFO:UPSTART CONFIGURATION:${NC}"
@@ -254,18 +328,8 @@ function InstallUpstart {
   else
     if [[ "$choice" == 1 ]] ; then
       path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/cob_bringup.yaml"
-    elif [[ "$choice" == 2 ]] ; then
-      path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/unity_bringup.yaml"
-    elif [[ "$choice" == 3 ]] ; then
-      path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/msh_cob_robots.yaml"
-    elif [[ "$choice" == 4 ]] ; then
-      path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/msh_unity_robots.yaml"
-    elif [[ "$choice" == 5 ]] ; then
-      path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/hdg_cob_robots.yaml"
-    elif [[ "$choice" == 6 ]] ; then
-      path_to_cob_yaml="/u/robot/git/setup_cob4/upstart/hdg_unity_robots.yaml"
     else
-      echo -e "${green}==>${NC} Please specify the path of your custom upstart configuration file (fully quantified filename): "
+      echo -e "${green}==>${NC} Please provide fully qualified path of your custom upstart configuration file (find them e.g. in X_bringup of your scenario): "
       read path_to_cob_yaml
     fi
     echo "installing the following upstart configuration: $path_to_cob_yaml"
@@ -297,65 +361,75 @@ function InstallUpstart {
       ssh $client "sudo update-rc.d check_cameras.sh defaults"
     done
   fi
-  sudo sed -i "s/myrobot/$robot_name/g" /usr/sbin/cob-start
   sudo sed -i "s/CHECK_LIST/$check_client_list/g" /usr/sbin/cob-start
 
-  echo "install upstart done"
+  echo "install system services done"
 }
 
-#### SETUP SCANNERS
-function SetupDevices {
-  echo -e "\n${green}INFO: Setup udev rules for the scanners ${NC}\n"
+#### SETUP_CAPABILITIES
+function SetupCapabilitiesCepstralVoices {
+  check_hostname "h1"
+  echo -e "\n${green}INFO: Setup Capabilities: CEPSTRAL VOICES${NC}\n"
 
-  ## ScanFront ##
-  ScanFrontAttr1='ATTRS{bInterfaceNumber}=="00"'
-  
-  ## ScanLeft ##
-  ScanLeftAttr1='ATTRS{bInterfaceNumber}=="01"'
-  
-  ## ScanRight ##
-  ScanRightAttr1='ATTRS{bInterfaceNumber}=="00"'
-  
-  for file in /dev/ttyUSB*; do
-    sudo chmod 666 $file
-    sudo rm /tmp/usb${file: -1}
-    sudo udevadm info -a -p $(udevadm info -q path -n $file) > /tmp/usb${file: -1}
-    sudo chmod 666 /tmp/usb${file: -1}
-  done
-  
-  results=()
-  count=0
-
-  for file in /tmp/usb*; do
-    if grep --quiet 'ATTRS{serial}=="F' $file; then
-      result=$(ls -l |grep -R 'ATTRS{serial}=="F' $file)
-      echo "found scanner with $result"
-      results[$count]=$result
-      count=$((count+1))
-    fi
-  done
-
-  echo "found $count scanners: $results"
-
-  if [[ ${results[0]} == ${results[1]} ]]; then
-    ATTRSSerialFL=${results[0]}
-    ATTRSSerialR=${results[2]}
-  elif [[ ${results[1]} == ${results[2]} ]]; then
-    ATTRSSerialFL=${results[1]}
-    ATTRSSerialR=${results[0]}
-  elif [[ ${results[0]} == ${results[2]} ]]; then
-    ATTRSSerialFL=${results[0]}
-    ATTRSSerialR=${results[1]}
+  #download voices
+  DIR_PREFIX="/u/robot/voices/cepstral/"
+  CEPSTRAL_DAVID="Cepstral_David_x86-64-linux_6.2.3.873"
+  CEPSTRAL_DIANE="Cepstral_Diane_x86-64-linux_6.2.3.873"
+  CEPSTRAL_MATTHIAS="Cepstral_Matthias_x86-64-linux_6.2.3.873"
+  CEPSTRAL_KATRIN="Cepstral_Katrin_x86-64-linux_6.2.3.873"
+  if [ ! -e "$DIR_PREFIX$CEPSTRAL_DAVID.tar.gz" ]; then
+    bash -c "wget http://www.cepstral.com/downloads/installers/linux64/$CEPSTRAL_DAVID.tar.gz -P $DIR_PREFIX"
   fi
-  
-  ATTRSSerialFL="$( echo "$ATTRSSerialFL" | sed 's/ //g' )"
-  ATTRSSerialR="$( echo "$ATTRSSerialR" | sed 's/ //g' )"
-  
-  sudo sed -i -re "s/(ScanFrontAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
-  sudo sed -i -re "s/(ScanLeftAttr2=).*/\1'${ATTRSSerialFL}'/g" /etc/init.d/udev_cob.sh
-  sudo sed -i -re "s/(ScanRightAttr2=).*/\1'${ATTRSSerialR}'/g" /etc/init.d/udev_cob.sh
+  if [ ! -e "$DIR_PREFIX$CEPSTRAL_DIANE.tar.gz" ]; then
+    bash -c "wget http://www.cepstral.com/downloads/installers/linux64/$CEPSTRAL_DIANE.tar.gz -P $DIR_PREFIX"
+  fi
+  if [ ! -e "$DIR_PREFIX$CEPSTRAL_MATTHIAS.tar.gz" ]; then
+    bash -c "wget http://www.cepstral.com/downloads/installers/linux64/$CEPSTRAL_MATTHIAS.tar.gz -P $DIR_PREFIX"
+  fi
+  if [ ! -e "$DIR_PREFIX$CEPSTRAL_KATRIN.tar.gz" ]; then
+    bash -c "wget http://www.cepstral.com/downloads/installers/linux64/$CEPSTRAL_KATRIN.tar.gz -P $DIR_PREFIX"
+  fi
+  #extract voices
+  if [ ! -d "$DIR_PREFIX$CEPSTRAL_DAVID" ]; then
+    bash -c "tar -xzvf $DIR_PREFIX$CEPSTRAL_DAVID.tar.gz -C $DIR_PREFIX"
+  fi
+  if [ ! -d "$DIR_PREFIX$CEPSTRAL_DIANE" ]; then
+    bash -c "tar -xzvf $DIR_PREFIX$CEPSTRAL_DIANE.tar.gz -C $DIR_PREFIX"
+  fi
+  if [ ! -d "$DIR_PREFIX$CEPSTRAL_MATTHIAS" ]; then
+    bash -c "tar -xzvf $DIR_PREFIX$CEPSTRAL_MATTHIAS.tar.gz -C $DIR_PREFIX"
+  fi
+  if [ ! -d "$DIR_PREFIX$CEPSTRAL_KATRIN" ]; then
+    bash -c "tar -xzvf $DIR_PREFIX$CEPSTRAL_KATRIN.tar.gz -C $DIR_PREFIX"
+  fi
+  #cepstral conf
+  sudo touch /etc/ld.so.conf.d/cepstral.conf
+  sudo sh -c 'echo "/opt/swift/lib" > /etc/ld.so.conf.d/cepstral.conf'
+  sudo ldconfig
+  bash -c "sudo /u/robot/git/care-o-bot/src/cob_driver/cob_sound/fix_swift_for_precise.sh"
+  #install and register voices
+  if [ ! -e "/opt/swift/voices/David/license.txt" ]; then
+    bash -c "cd $DIR_PREFIX$CEPSTRAL_DAVID && sudo ./install.sh"
+    echo -e "\nPlease register DAVID:"
+    bash -c "sudo swift --reg-voice"
+  fi
+  if [ ! -e "/opt/swift/voices/Diane/license.txt" ]; then
+    bash -c "cd $DIR_PREFIX$CEPSTRAL_DIANE && sudo ./install.sh"
+    echo -e "Please register DIANE:"
+    bash -c "sudo swift --reg-voice"
+  fi
+  if [ ! -e "/opt/swift/voices/Matthias/license.txt" ]; then
+    bash -c "cd $DIR_PREFIX$CEPSTRAL_MATTHIAS && sudo ./install.sh"
+    echo -e "Please register MATTHIAS:"
+    bash -c "sudo swift --reg-voice"
+  fi
+  if [ ! -e "/opt/swift/voices/Katrin/license.txt" ]; then
+    bash -c "cd $DIR_PREFIX$CEPSTRAL_KATRIN && sudo ./install.sh"
+    echo -e "Please register KATRIN:"
+    bash -c "sudo swift --reg-voice"
+  fi
 
-  echo "setup devices done"
+  echo "setup cepstral voices done"
 }
 
 ########################################################################
@@ -365,18 +439,29 @@ function SetupDevices {
 if [[ "$1" =~ "--help" ]]; then echo -e $usage; exit 0; fi
 
 #### check prerequisites
-robot_name="${HOSTNAME//-b1}"
-ros_distro='indigo'
+if [ "$USER" != "robot" ]; then
+  echo -e "\n${red}FATAL: CAN ONLY BE EXECUTED AS robot USER${NC}"
+  exit
+fi
+
+robot_name=$(get_search_domain)
 if [ $(lsb_release -sc) == "trusty" ]; then
   ros_distro='indigo'
+  source /opt/ros/indigo/setup.bash
 elif [ $(lsb_release -sc) == "xenial" ]; then
   ros_distro='kinetic'
+  source /opt/ros/kinetic/setup.bash
 else
   echo -e "\n${red}FATAL: Script only supports indigo and kinetic"
   exit
 fi
 
-if [ ! -e "/var/log/installer/kickstart_robot_finished" ]; then
+if [ -z $ROS_DISTRO ]; then
+  echo -e "${red}\nNo ROS_DISTRO available, please source ROS first\n${NC}"
+  exit 1
+fi
+
+if [ ! -e "/etc/kickstart_finished" ]; then
   echo -e "${yellow}\n${NC}"
   echo -e "${yellow}WARN: 'kickstart-robot.sh' did not finish correctly during stick setup.${NC}"
   echo -e "${yellow}WARN: Some of the following steps might not be executed on your robot:${NC}"
@@ -398,7 +483,15 @@ if [ ! -d /u/robot/git/setup_cob4 ]; then
   mkdir /u/robot/git
   git clone https://github.com/ipa320/setup_cob4 /u/robot/git/setup_cob4
 else
-  git --work-tree=/u/robot/git/setup_cob4 --git-dir=/u/robot/git/setup_cob4/.git pull origin master
+  echo -e "\nDo you want to pull setup_cob4 from ipa320 master branch (y/n)?"
+  read answer
+
+  if echo "$answer" | grep -iq "^y" ;then
+    echo -e "\nUpdating setup_cob4 from ipa320 master branch..."
+    git --work-tree=/u/robot/git/setup_cob4 --git-dir=/u/robot/git/setup_cob4/.git pull https://github.com/ipa320/setup_cob4 master
+  else
+    echo -e "\nNot updating setup_cob4"
+  fi
 fi
 
 
@@ -418,13 +511,15 @@ elif [[ "$choice" == 3 ]]; then
 elif [[ "$choice" == 4 ]]; then
   SetupDevices
 elif [[ "$choice" == 5 ]]; then
-  InstallUpstart
+  InstallSystemServices
+elif [[ "$choice" == 50 ]]; then
+  SetupCapabilitiesCepstralVoices
 elif [[ "$choice" == 99 ]]; then
   SetupRootUser
   SetupRobotUser
   SetupMimicUser
   SetupDevices
-  InstallUpstart
+  InstallSystemServices
 else
   echo -e "\n${red}INFO: Invalid install option. Exiting. ${NC}\n"
 fi
