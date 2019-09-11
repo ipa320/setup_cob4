@@ -43,8 +43,9 @@ if [[ $# -gt 0 ]]; then
 fi
 
 check_hostname "b1"
-echo -e $usage
-read -p "Please select a sync option: " choice
+#echo -e $usage
+#read -p "Please select a sync option: " choice
+choice="1"
 
 if [[ "$choice" == 1 ]]; then
   ## upgrade local pc
