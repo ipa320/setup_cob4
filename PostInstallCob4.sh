@@ -47,7 +47,6 @@ function get_search_domain () {
 
 #### DEFINE SPECIFIC LIST OF PCs
 function query_pc_list {
-  echo -e "\n${green}INFO:QUERY_PC_LIST${NC}\n"
   echo -e "${green} PC_LIST:${NC} $1"
   echo -e "\nDo you want to use the suggested pc list (y/n)?"
   read answer
@@ -66,6 +65,7 @@ function SetupRootUser {
   check_hostname "b1"
   echo -e "\n${green}INFO:setup root user${NC}\n"
 
+  echo -e "\n${yellow}Please confirm CLIENT_LIST for SetupRootUser${NC}\n"
   query_pc_list "$client_list_hostnames"
   pc_list=$LIST
 
@@ -104,6 +104,7 @@ function SetupRobotUser {
   check_hostname "b1"
   echo -e "\n${green}INFO:Setup Robot User${NC}\n"
 
+  echo -e "\n${yellow}Please confirm CLIENT_LIST for SetupRobotUser${NC}\n"
   query_pc_list "$client_list_hostnames"
   pc_list=$LIST
 
@@ -139,6 +140,7 @@ function SetupMimicUser {
   check_hostname "b1"
   echo -e "\n${green}INFO:Setup Mimic User${NC}\n"
 
+  echo -e "\n${yellow}Please confirm CLIENT_LIST for SetupMimicUser${NC}\n"
   query_pc_list "h1"
   pc_head=$LIST
   if [ -z "$pc_head" ]; then
@@ -286,6 +288,10 @@ function InstallSystemServices {
   check_hostname "b1"
   echo -e "\n${green}INFO: Install System Services (upstart,...)${NC}\n"
 
+  echo -e "\n${yellow}Please confirm CLIENT_LIST for InstallSystemServices${NC}\n"
+  query_pc_list "$client_list_hostnames"
+  client_list=$LIST
+
   if [ $(lsb_release -sc) == "trusty" ]; then
     sudo cp -f /u/robot/git/setup_cob4/upstart/cob.conf /etc/init/cob.conf
   elif  [ $(lsb_release -sc) == "xenial" ]; then
@@ -293,18 +299,22 @@ function InstallSystemServices {
     sudo cp -f /u/robot/git/setup_cob4/upstart/cob.service /etc/systemd/system/cob.service
     sudo systemctl enable cob.service
 
-    query_pc_list "$client_list_hostnames"
-    pc_list=$LIST
-    for i in $pc_list; do
-        echo "Installing tmux service on $i"
-        sudo -u root -i ssh robot@$i 'sudo cp -f /u/robot/git/setup_cob4/upstart/tmux.service /etc/systemd/system/tmux.service'
-        sudo -u root -i ssh robot@$i 'sudo systemctl enable tmux.service'
+    for i in $client_list; do
+      echo "Installing tmux service on $i"
+      sudo -u root -i ssh robot@$i 'sudo cp -f /u/robot/git/setup_cob4/upstart/tmux.service /etc/systemd/system/tmux.service'
+      sudo -u root -i ssh robot@$i 'sudo systemctl enable tmux.service'
 
-        echo "Installing chrony-wait service on $i"
-        sudo -u root -i ssh robot@$i 'sudo cp -f /u/robot/git/setup_cob4/upstart/chrony-wait.service /etc/systemd/system/chrony-wait.service'
-        sudo -u root -i ssh robot@$i 'sudo systemctl enable chrony-wait.service'
+      echo "Installing chrony-wait service on $i"
+      sudo -u root -i ssh robot@$i 'sudo cp -f /u/robot/git/setup_cob4/upstart/chrony-wait.service /etc/systemd/system/chrony-wait.service'
+      sudo -u root -i ssh robot@$i 'sudo systemctl enable chrony-wait.service'
+
+      # disable systemd suspension handling
+      sudo -u root -i ssh robot@$i "sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target"
+      sudo -u root -i ssh robot@$i "dbus-launch gsettings set org.gnome.settings-daemon.plugins.power button-power 'shutdown'"
     done
   fi
+
+  # install cob scripts
   sudo cp -f /u/robot/git/setup_cob4/scripts/cob-command /usr/sbin/cob-command
   sudo cp -f /u/robot/git/setup_cob4/scripts/cob-start /usr/sbin/cob-start
   sudo cp -f /u/robot/git/setup_cob4/scripts/cob-stop /usr/sbin/cob-stop
@@ -318,6 +328,8 @@ function InstallSystemServices {
   sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-stop"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-stop|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-stop||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-stop" -e "}" /etc/sudoers
   sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-shutdown|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-shutdown||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown" -e "}" /etc/sudoers
   sudo sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-powerbutton"' | sudo sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-powerbutton|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-powerbutton||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-powerbutton" -e "}" /etc/sudoers
+
+  sudo sed -i "s/CLIENT_LIST/$client_list/g" /usr/sbin/cob-start
 
   # install cob.yaml
   echo -e "\n${green}INFO:UPSTART CONFIGURATION:${NC}"
@@ -339,29 +351,26 @@ function InstallSystemServices {
     sudo sed -i "s/myrosdistro/$ros_distro/g" /etc/ros/cob.yaml
   fi
 
-  # get client_list
-  echo -e "\n${green}INFO:CLIENT LIST:${NC}"
-  query_pc_list "$client_list_hostnames"
-  client_list=$LIST
-  sudo sed -i "s/CLIENT_LIST/$client_list/g" /usr/sbin/cob-start
-
-  # get check_client_list
-  echo -e "\n${green}INFO:CHECK CLIENT LIST:${NC}"
-  query_pc_list ""
-  check_client_list=$LIST
-
-  if [ $(lsb_release -sc) == "trusty" ]; then
-    # install check scripts on pc
-    for client in $check_client_list; do
-      echo "-------------------------------------------"
-      echo "Executing on $client"
-      echo "-------------------------------------------"
-      echo ""
-      ssh $client "sudo cp -f /u/robot/git/setup_cob4/scripts/check_cameras.sh /etc/init.d/check_cameras.sh"
-      ssh $client "sudo update-rc.d check_cameras.sh defaults"
-    done
-  fi
+  # setup camera checks - outdated
+  check_client_list=""
   sudo sed -i "s/CHECK_LIST/$check_client_list/g" /usr/sbin/cob-start
+  ## get check_client_list
+  #echo -e "\n${yellow}Please confirm CLIENT_LIST for CAMERA_CHECKS${NC}\n"
+  #query_pc_list ""
+  #check_client_list=$LIST
+
+  #if [ $(lsb_release -sc) == "trusty" ]; then
+    ## install check scripts on pc
+    #for client in $check_client_list; do
+      #echo "-------------------------------------------"
+      #echo "Executing on $client"
+      #echo "-------------------------------------------"
+      #echo ""
+      #ssh $client "sudo cp -f /u/robot/git/setup_cob4/scripts/check_cameras.sh /etc/init.d/check_cameras.sh"
+      #ssh $client "sudo update-rc.d check_cameras.sh defaults"
+    #done
+  #fi
+  #sudo sed -i "s/CHECK_LIST/$check_client_list/g" /usr/sbin/cob-start
 
   echo "install system services done"
 }

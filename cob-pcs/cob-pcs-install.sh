@@ -14,6 +14,17 @@ source /u/robot/git/setup_cob4/helper_client_list.sh
 
 for client in $client_list_hostnames; do
 	echo "-------------------------------------------"
+	echo "Updating $client"
+	echo "-------------------------------------------"
+	echo ""
+	ssh $client "sudo apt-get update"
+	ret=${PIPESTATUS[0]}
+	if [ $ret != 0 ] ; then
+		echo "apt-get return an error (error code: $ret), aborting..."
+		exit 1
+	fi
+	echo ""
+	echo "-------------------------------------------"
 	echo "Installing <<"$*">> on $client"
 	echo "-------------------------------------------"
 	echo ""
