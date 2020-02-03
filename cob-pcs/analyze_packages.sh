@@ -40,16 +40,24 @@ for client in $client_list_hostnames; do
   echo -e "${green}-------------------------------------------${NC}"
   echo ""
   declare -a commands=(
-    "diff ~/.dpkg_installed_${array_hostnames[0]}.txt ~/.dpkg_installed_$client.txt; echo \$?;"
-    "diff ~/.pip_installed_${array_hostnames[0]}.txt ~/.pip_installed_$client.txt; echo \$?;"
+    "diff --side-by-side --suppress-common-lines ~/.dpkg_installed_${array_hostnames[0]}.txt ~/.dpkg_installed_$client.txt; echo \$?;"
+    "diff --side-by-side --suppress-common-lines ~/.pip_installed_${array_hostnames[0]}.txt ~/.pip_installed_$client.txt; echo \$?;"
   )
   for command in "${commands[@]}"; do
     echo "----> executing: $command"
     result=$(ssh $client $command)
     ret=$(echo "$result" | tail -n1)
     if [ $ret != 0 ] ; then
-      echo -e "${yellow}Found a difference between ${array_hostnames[0]} and $client, please merge/sync/update the install files in '~/git/setup_cob4/cob-pcs' and create a PR${NC}"
-      echo "$result"
+      FILE1=$(echo $command | cut -d' ' -f4)
+      FILE2=$(echo $command | cut -d' ' -f5)
+      echo -e "${red}Found a difference between ${array_hostnames[0]} ($FILE1) and $client ($FILE2).${NC}"
+      echo -e "${red}Please merge/sync/update the install files in '~/git/setup_cob4/cob-pcs' and create a PR!${NC}"
+      echo -e "\n${yellow}Do you want to see diff (y/n)?${NC}"
+      read answer
+      if echo "$answer" | grep -iq "^y" ;then
+        echo -e "${blue} column left: $FILE1 - column right: $FILE2${NC}"
+        echo "$result"
+      fi
     fi
   done
   echo ""
