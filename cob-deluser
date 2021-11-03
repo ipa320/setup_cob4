@@ -1,29 +1,42 @@
 #!/bin/bash
 
+SCRIPT=$(readlink -f "$0")
+SCRIPTPATH=$(dirname "$SCRIPT")
+
+red='\e[0;31m'    # ERROR
+# shellcheck disable=SC2034
+yellow='\e[0;33m' # USER_INPUT
+green='\e[0;32m'  # STATUS_PROGRESS
+# shellcheck disable=SC2034
+blue='\e[1;34m'   # INFORMATION
+NC='\e[0m' # No Color
+
 if [ "$USER" != "robot" ]; then
 	echo 'FATAL: CAN ONLY BE EXECUTED AS "robot" USER'
 	exit
 fi
 
-if [ "$HOSTNAME" != "b1" ]; then
-	echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC"
+if [ "$HOSTNAME" != "b1" ] && [ "$2" != "--local" ]; then
+	echo -e "${red}FATAL: CAN ONLY BE EXECUTED ON BASE PC${NC}"
+	echo -e "use option --local for deleting on local PC"
+	echo -e "(e.g. cob-deluser <username> --local)"
 	exit
 fi
 
-#retrieve client_list variables
-source /u/robot/git/setup_cob4/helper_client_list.sh
+# shellcheck source=./helper_client_list.sh
+source "$SCRIPTPATH"/helper_client_list.sh
 
 #kill user's processes
-sudo pkill -U $1
+sudo pkill -U "$1"
 
 echo "Executing deluser"
-echo $(sudo /usr/sbin/deluser --remove-home $1)
+sudo /usr/sbin/deluser --remove-home "$1"
 
 echo "Syncing passwd file to other cob-pcs"
 for i in $client_list_ip
 do
 	echo "sync passwd on $i"
-	sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$i:/etc/
+	sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@"$i":/etc/
 done
 
-echo "done deleting user"
+echo -e "${green}done deleting user${NC}"

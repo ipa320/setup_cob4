@@ -1,13 +1,14 @@
 [Unit]
 Description=bringup cob
 Wants=tmux.service
-After=tmux.service
+After=tmux.service cob-devices.service
 
 [Service]
 Type=oneshot
-RemainAfterExit=yes
-ExecStart=/bin/bash -c "/usr/sbin/cob-start"
-ExecStop=/bin/bash -c "/usr/sbin/cob-stop"
+RemainAfterExit=no
+Environment=PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages
+Environment=ROS_DISTRO=noetic
+ExecStart=/usr/sbin/cob-start
 TimeoutStopSec=60
 User=root
 

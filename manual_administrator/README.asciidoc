@@ -360,7 +360,7 @@ sudo apt-get install ros-indigo-care-o-bot-robot
 We setup a special bash environment to be used on the Care-O-bot pcs. The environments differ on each pc. Copy the +cob.bash.bashrc.pcY+ to +/etc/cob.bash.bashrc+ on each pc, where Y is b, t, s or h depending of the component, b for base pc, t for torso pcs, s for sensorring pc and h for head pc.
 
 ----
-sudo cp ~/git/setup_cob4/cob-pcs/cob.bash.bashrc.pcY /etc/cob.bash.bashrc
+sudo cp -f ~/git/setup_cob4/cob-pcs/cob.bash.bashrc.pcY /etc/cob.bash.bashrc
 ----
 
 All users have a pre-configured bash environment too, therefore copy +user.bashrc+ to +∼/.bashrc+

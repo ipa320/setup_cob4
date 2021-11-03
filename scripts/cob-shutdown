@@ -1,2 +1,3 @@
 #!/usr/bin/env bash
-/usr/sbin/cob-command shutdown
+
+/usr/sbin/robmuxinator "$@" shutdown

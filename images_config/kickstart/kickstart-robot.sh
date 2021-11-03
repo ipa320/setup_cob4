@@ -1,9 +1,5 @@
 #!/bin/bash
-
-function logFile {
-    touch /root/kickstart_log
-    $1 >> /root/kickstart_log
-}
+set -e # force the script to exit if any error occurs
 
 function printHeader {
     echo "#############################################"
@@ -16,23 +12,17 @@ function SetLocalAptCacher {
     unset http_proxy
     touch /etc/apt/apt.conf.d/01proxy
 
-    SERVERNAME=$(echo ${HOSTNAME%-*}-b1)
-    if grep -q 'Acquire::http { Proxy "http://10.0.1.1:3142"; };' /etc/apt/apt.conf.d/01proxy ; then
+    SERVERNAME="b1"
+    if grep -q 'Acquire::http { Proxy "http://10.0.1.2:3142"; };' /etc/apt/apt.conf.d/01proxy ; then
         echo "Proxy already in /etc/apt/apt.conf.d/01proxy, skipping SetLocalAptCacher"
-    fi 
+    fi
     if grep -q 'Acquire::http { Proxy "http://'$SERVERNAME':3142"; };' /etc/apt/apt.conf.d/01proxy ; then
         rm /etc/apt/apt.conf.d/01proxy
         touch /etc/apt/apt.conf.d/01proxy
-        echo 'Acquire::http { Proxy "http://10.0.1.1:3142"; };' >>  /etc/apt/apt.conf.d/01proxy
+        echo 'Acquire::http { Proxy "http://10.0.1.2:3142"; };' >>  /etc/apt/apt.conf.d/01proxy
     else
-        echo 'Acquire::http { Proxy "http://10.0.1.1:3142"; };' >>  /etc/apt/apt.conf.d/01proxy
+        echo 'Acquire::http { Proxy "http://10.0.1.2:3142"; };' >>  /etc/apt/apt.conf.d/01proxy
     fi
-}
-
-function AddGnomePPA {
-    printHeader "AddGnomePPA"
-    add-apt-repository ppa:gnome3-team/gnome3 -y
-    apt-get update
 }
 
 function EnableAptSources {
@@ -48,21 +38,6 @@ function UpgradeAptPackages {
     apt-get dist-upgrade -y
 }
 
-function UpgradeKernel {
-    printHeader "UpgradeKernel"
-    if [ "$DISTRO" == "trusty" ]; then
-        apt-get install --install-recommends linux-generic-lts-xenial -y --allow
-    fi
-}
-
-function InstallHWEnableStacks {
-    printHeader "InstallHWEnabledStacks"
-    if [ "$DISTRO" == "trusty" ]; then
-        apt-get install --install-recommends linux-generic-lts-xenial xserver-xorg-core-lts-xenial xserver-xorg-lts-xenial xserver-xorg-video-all-lts-xenial xserver-xorg-input-all-lts-xenial libwayland-egl1-mesa-lts-xenial -y
-        dpkg-reconfigure xserver-xorg-lts-xenial
-    fi
-}
-
 function NFSSetup {
     printHeader "NFSSetup"
     if [ "$INSTALL_TYPE" == "master" ]; then
@@ -75,29 +50,71 @@ function NFSSetup {
         fi
     elif [ "$INSTALL_TYPE" == "slave" ]; then
         apt-get install nfs-common autofs -y
-        HOSTNAME=$(cat /etc/hostname)
 
-        SERVERNAME=$(echo ${HOSTNAME%-*}-b1)
+        SERVERNAME="b1"
         echo $SERVERNAME
-        touch /etc/auto.direct
-        if grep -q "/u  -fstype=nfs4    $SERVERNAME:/" /etc/auto.direct && grep -q "/-  /etc/auto.direct" /etc/auto.master ; then
-            echo "NFS setup already in /etc/auto.direct or /etc/auto.master, skipping NFSSetup for slave"
-        else
-            echo "/u  -fstype=nfs4    $SERVERNAME:/" >> /etc/auto.direct
-            echo "/-  /etc/auto.direct" >> /etc/auto.master
-        fi
-        update-rc.d autofs defaults
-        service autofs restart
-        modprobe nfs
+        cp "$SETUP_COB4_DIR"/setup_cob4/upstart/u.mount /etc/systemd/system
+        systemctl daemon-reload
+        systemctl enable u.mount
     fi
+}
+
+function SetupPowerSettings {
+    printHeader "SetupPowerSettings"
+
+    # in Ubuntu >= 18.04 the powerbutton is also handled by logind
+    if [ "$OS_VERSION" != "xenial" ]; then
+        if grep -q "HandlePowerKey" /etc/systemd/logind.conf; then
+            sed -i -E 's/^#?HandlePowerKey.*$/HandlePowerKey=ignore/g' /etc/systemd/logind.conf
+        else
+            echo "HandlePowerKey=ignore" >> /etc/systemd/logind.conf
+        fi
+    fi
+
+    # set default gnome power settings, these settings are the defaults for all users
+    # 16.04 and >= 18.04 have the same default values in the gschema.xaml.
+
+    #set default power-button-action
+    ln=$(grep -n '<key name="power-button-action"' /usr/share/glib-2.0/schemas/org.gnome.settings-daemon.plugins.power.gschema.xml | cut -d : -f 1)
+    if [ -n "$ln" ]; then
+        ln=$((ln + 1))
+        sed -i "${ln}s/suspend/nothing/" /usr/share/glib-2.0/schemas/org.gnome.settings-daemon.plugins.power.gschema.xml
+    fi
+
+    #set default button-power
+    ln=$(grep -n '<key name="button-power"' /usr/share/glib-2.0/schemas/org.gnome.settings-daemon.plugins.power.gschema.xml | cut -d : -f 1)
+    if [ -n "$ln" ]; then
+        ln=$((ln + 1))
+        sed -i "${ln}s/suspend/shutdown/" /usr/share/glib-2.0/schemas/org.gnome.settings-daemon.plugins.power.gschema.xml
+    fi
+
+    #disable suspend on ac
+    ln=$(grep -n '<key name="sleep-inactive-ac-type"' /usr/share/glib-2.0/schemas/org.gnome.settings-daemon.plugins.power.gschema.xml | cut -d : -f 1)
+    if [ -n "$ln" ]; then
+        ln=$((ln + 1))
+        sed -i "${ln}s/suspend/nothing/" /usr/share/glib-2.0/schemas/org.gnome.settings-daemon.plugins.power.gschema.xml
+    fi
+
+    #disable suspend on bat
+    ln=$(grep -n '<key name="sleep-inactive-battery-type"' /usr/share/glib-2.0/schemas/org.gnome.settings-daemon.plugins.power.gschema.xml | cut -d : -f 1)
+    if [ -n "$ln" ]; then
+        ln=$((ln + 1))
+        sed -i "${ln}s/suspend/nothing/" /usr/share/glib-2.0/schemas/org.gnome.settings-daemon.plugins.power.gschema.xml
+    fi
+
+    # disable systemd suspension, hibernation and hybrid-sleep handling
+    systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
 }
 
 function AddUsers {
     printHeader "AddUsers"
 
+    #initially set root password
+    echo "root:$PASSWORD" | chpasswd -e
+
     #add robot-local user (preseedd seems to have a bug adding the user before postscript execution, results in overwritten group and user ids)
     useradd -b /home -d /home/robot-local -m -s /bin/bash -k /etc/skel robot-local
-    echo 'robot-local:$1$.8rMo3Kc$hwkXrTTshYmLa9iplJchz.' | chpasswd -e
+    echo "robot-local:$PASSWORD" | chpasswd -e
 
     #Give robot-local full sudo rights
     if grep -q "robot-local ALL=(ALL) NOPASSWD: ALL" /etc/sudoers ; then
@@ -106,15 +123,22 @@ function AddUsers {
         echo "robot-local ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
     fi
 
-    if [ "$INSTALL_TYPE" == "master" ]; then      
+    if [ "$INSTALL_TYPE" == "master" ]; then
 
         #Add robot user
         mkdir /u
         mount --bind /home /u
         useradd -b /u -d /u/robot -m -s /bin/bash -k /etc/skel robot
-        echo 'robot:$1$.8rMo3Kc$hwkXrTTshYmLa9iplJchz.' | chpasswd -e
+        echo "robot:$PASSWORD" | chpasswd -e
+
+        #copy setup_cob4 from stick
+        mkdir -p /u/robot/git
+        cp -r "$SETUP_COB4_DIR"/setup_cob4 /u/robot/git/
+        chown -hR robot:robot /u/robot/git
+        chmod -R u+rw /u/robot/git
     fi
-    #Give robot user full rights for sudo
+
+    #Give robot user full rights for sudo - both master and slave pcs
     if grep -q "robot ALL=(ALL) NOPASSWD: ALL" /etc/sudoers ; then
         echo "found robot NOPASSWD in sudoers already, skipping GiveFullRights to robot"
     else
@@ -124,22 +148,24 @@ function AddUsers {
 
 function InstallROS {
     printHeader "InstallROS"
-    if grep -q "deb http://packages.ros.org/ros/ubuntu $DISTRO main" /etc/apt/sources.list.d/ros-latest.list ; then
+    if grep -q "deb http://packages.ros.org/ros/ubuntu $OS_VERSION main" /etc/apt/sources.list.d/ros-latest.list ; then
         echo "Ros sources already setup. Skipping setup"
     else
-        echo "deb http://packages.ros.org/ros/ubuntu $DISTRO main" > /etc/apt/sources.list.d/ros-latest.list
-        apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
+        echo "deb http://packages.ros.org/ros/ubuntu $OS_VERSION main" > /etc/apt/sources.list.d/ros-latest.list
+        apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
     fi
 
     apt-get update
-    if [ "$DISTRO" == "trusty" ]; then
-        apt-get install ros-indigo-ros-base -y
-    elif [ "$DISTRO" == "xenial" ]; then
-        apt-get install ros-kinetic-ros-base -y
+    apt-get install ros-"$ROS_VERSION"-ros-base -y
+    if [ "$OS_VERSION" == "xenial" ]; then
+        apt-get install build-essential python-catkin-tools python-wstool -y
+        apt-get install python-rosinstall python-rosinstall-generator -y
+        apt-get install python-pip python-rosdep -y
+    elif [ "$OS_VERSION" == "focal" ]; then
+        apt-get install build-essential python3-catkin-tools python3-osrf-pycommon python3-wstool -y
+        apt-get install python3-rosinstall python3-rosinstall-generator -y
+        apt-get install python3-pip python3-rosdep -y
     fi
-    apt-get install python-rosinstall python-rosinstall-generator python-wstool -y
-    apt-get install python-catkin-tools -y
-    apt-get install python-pip -y
 }
 
 function SetupGrubRecFail {
@@ -152,17 +178,11 @@ function SetupGrubRecFail {
     fi
 }
 
-#only needed if the default kickseed setting is not working (test it)
-function SetupLocale {
-    printHeader "SetupLocale"
-    locale-gen en_US.UTF-8
-    update-locale LANG=en_US.UTF-8
-}
-
 function KeyboardLayout {
     printHeader "KeyboardLayout"
     L='de' && sed -i 's/XKBLAYOUT=\"\w*"/XKBLAYOUT=\"'$L'\"/g' /etc/default/keyboard
-    apt-get install console-data -y -f
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get install console-data -y -f -q
     dpkg-reconfigure keyboard-configuration
 }
 
@@ -171,121 +191,133 @@ function ConfigureSSH {
     apt-get install openssh-server -y
 
     if grep -q "X11Forwarding" /etc/ssh/sshd_config; then
-        sed -i 's/X11Forwarding.*$/X11Forwarding yes/g' /etc/ssh/sshd_config
+        sed -i -E 's/^#?X11Forwarding.*$/X11Forwarding yes/g' /etc/ssh/sshd_config
     else
         echo "X11Forwarding yes" >> /etc/ssh/sshd_config
     fi
     if grep -q "X11UseLocalhost" /etc/ssh/sshd_config; then
-        sed -i 's/X11UseLocalhost.*$/X11UseLocalhost no/g' /etc/ssh/sshd_config
+        sed -i -E 's/^#?X11UseLocalhost.*$/X11UseLocalhost no/g' /etc/ssh/sshd_config
     else
         echo "X11UseLocalhost no" >> /etc/ssh/sshd_config
     fi
     if grep -q "PermitRootLogin" /etc/ssh/sshd_config; then
-        sed -i 's/PermitRootLogin.*$/PermitRootLogin yes/g' /etc/ssh/sshd_config
+        sed -i -E 's/^#?PermitRootLogin.*$/PermitRootLogin yes/g' /etc/ssh/sshd_config
     else
         echo "PermitRootLogin yes">> /etc/ssh/sshd_config
     fi
     if grep -q "ClientAliveInterval" /etc/ssh/sshd_config; then
-        sed -i 's/ClientAliveInterval.*$/ClientAliveInterval 60/g' /etc/ssh/sshd_config
+        sed -i -E 's/^#?ClientAliveInterval.*$/ClientAliveInterval 60/g' /etc/ssh/sshd_config
     else
         echo "ClientAliveInterval 60" >> /etc/ssh/sshd_config
     fi
-    
+
     systemctl restart ssh
 }
 
 function ChronySetup {
     printHeader "ChronySetup"
-    apt-get install chrony -y -f
+    apt-get install chrony ntpdate -y -f
     if [ "$INSTALL_TYPE" == "master" ]; then
-        wget -O /etc/chrony/chrony.conf https://raw.githubusercontent.com/ipa320/setup_cob4/master/cob-pcs/chrony_server
-
+        cp "$SETUP_COB4_DIR"/setup_cob4/cob-pcs/chrony_server /etc/chrony/chrony.conf
     elif [ "$INSTALL_TYPE" == "slave" ]; then
-        HOSTNAME=$(cat /etc/hostname)
-        SERVERNAME=$(echo ${HOSTNAME%-*}-b1)
-        wget -O /etc/chrony/chrony.conf https://raw.githubusercontent.com/ipa320/setup_cob4/master/cob-pcs/chrony_client
+        SERVERNAME="b1"
+        cp "$SETUP_COB4_DIR"/setup_cob4/cob-pcs/chrony_client /etc/chrony/chrony.conf
         sed -i "s/server_ip/${SERVERNAME}/g" /etc/chrony/chrony.conf
     fi
-    
+
+    # only needed in xenial. Newer ubuntu versions already deliver
+    # the service configs and scripts via the dep package
+    if [ "$OS_VERSION" == "xenial" ]; then
+        systemctl disable chrony.service
+        cp "$SETUP_COB4_DIR"/setup_cob4/upstart/chronyd.service /etc/systemd/system
+
+        cp "$SETUP_COB4_DIR"/setup_cob4/scripts/chronyd-starter.sh /usr/lib/systemd/scripts
+        chmod 755 /usr/lib/systemd/scripts/chronyd-starter.sh
+
+        mkdir -p /usr/lib/chrony
+        cp "$SETUP_COB4_DIR"/setup_cob4/scripts/chrony-helper /usr/lib/chrony
+        chmod 755 /usr/lib/chrony/chrony-helper
+
+        systemctl enable chronyd.service
+        systemctl daemon-reload
+    fi
+
+
     # allow everybody to call 'sudo service chrony restart'
-    if grep -q  "%users ALL=NOPASSWD:/usr/sbin/service chrony restart" /etc/sudoers ; then
-        echo "NOPASSWD already for all users in /usr/sbin/service chrony restart, skipping"
+    if grep -q  "%users ALL=NOPASSWD:/bin/systemctl restart chronyd" /etc/sudoers ; then
+        echo "NOPASSWD already for all users in /bin/systemctl restart chronyd, skipping"
     else
-        echo "%users ALL=NOPASSWD:/usr/sbin/service chrony restart" >> /etc/sudoers
+        echo "%users ALL=NOPASSWD:/bin/systemctl restart chronyd" >> /etc/sudoers
+    fi
+
+    #disable ntpdate sync on network interface up
+    FILE=/etc/network/if-up.d/ntpdate
+    if [ -f "$FILE" ]; then
+        rm $FILE
     fi
 }
 
-#udev rules
 function SetupUdevRules {
     printHeader "SetupUdevRules"
-    wget -O /etc/udev/rules.d/98-led.rules https://raw.githubusercontent.com/ipa320/setup_cob4/master/udev_rules/98-led.rules
-    if [ "$INSTALL_TYPE" == "master" ]; then
-            wget -O /etc/init.d/udev_cob.sh https://raw.githubusercontent.com/ipa320/setup_cob4/master/udev_rules/udev_cob.sh
-            chmod +x /etc/init.d/udev_cob.sh
-            update-rc.d udev_cob.sh defaults
-    elif [ "$INSTALL_TYPE" == "slave" ]; then
-        wget -O /etc/udev/rules.d/99-gripper.rules https://raw.githubusercontent.com/ipa320/setup_cob4/master/udev_rules/99-gripper.rules
+    cp "$SETUP_COB4_DIR"/setup_cob4/udev_rules/98-led.rules /etc/udev/rules.d/98-led.rules
+    cp "$SETUP_COB4_DIR"/setup_cob4/udev_rules/99-phidgets.rules /etc/udev/rules.d/99-phigets.rules
+    if [ "$INSTALL_TYPE" == "slave" ]; then
+        cp "$SETUP_COB4_DIR"/setup_cob4/udev_rules/99-gripper.rules /etc/udev/rules.d/99-gripper.rules
     fi
 }
 
 function InstallGitLFS {
     printHeader "InstallGitLFS"
-    curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
-    apt-get install git-lfs
-    git lfs install
+    if [ "$OS_VERSION" == "xenial" ]; then
+        curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
+    fi
+    apt-get install git-lfs -y
+    # git lfs install
 }
 
 function SetupDefaultBashEnv {
     printHeader "SetupDefaultBashEnv"
     if [ "$INSTALL_TYPE" == "master" ]; then
-        wget -O /etc/cob.bash.bashrc https://raw.githubusercontent.com/ipa320/setup_cob4/master/cob-pcs/cob.bash.bashrc.b
-
+        cp -f "$SETUP_COB4_DIR"/setup_cob4/cob-pcs/cob.bash.bashrc.b /etc/cob.bash.bashrc
     elif [ "$INSTALL_TYPE" == "slave" ]; then
-        ROBOT=$(echo ${HOSTNAME%-*})
-        if [[ "$HOSTNAME" == "$ROBOT-t"* ]]; then
-            wget -O /etc/cob.bash.bashrc https://raw.githubusercontent.com/ipa320/setup_cob4/master/cob-pcs/cob.bash.bashrc.t
-        fi
-
-        if [[ "$HOSTNAME" == "$ROBOT-h"* ]]; then
-            wget -O /etc/cob.bash.bashrc https://raw.githubusercontent.com/ipa320/setup_cob4/master/cob-pcs/cob.bash.bashrc.h
-        fi
-
-        if [[ "$HOSTNAME" == "$ROBOT-s"* ]]; then
-            wget -O /etc/cob.bash.bashrc https://raw.githubusercontent.com/ipa320/setup_cob4/master/cob-pcs/cob.bash.bashrc.s
+        if [[ "$HOSTNAME" == "t"* ]]; then
+            cp -f "$SETUP_COB4_DIR"/setup_cob4/cob-pcs/cob.bash.bashrc.t /etc/cob.bash.bashrc
+        elif [[ "$HOSTNAME" == "h"* ]]; then
+            cp -f "$SETUP_COB4_DIR"/setup_cob4/cob-pcs/cob.bash.bashrc.h /etc/cob.bash.bashrc
+        elif [[ "$HOSTNAME" == "s"* ]]; then
+            cp -f "$SETUP_COB4_DIR"/setup_cob4/cob-pcs/cob.bash.bashrc.s /etc/cob.bash.bashrc
+        else
+            cp -f "$SETUP_COB4_DIR"/setup_cob4/cob-pcs/cob.bash.bashrc.s /etc/cob.bash.bashrc # unused sensorring as default
         fi
     fi
 }
 
-function InstallShutdown {
-    printHeader "InstallShutdown"
-    if [ "$INSTALL_TYPE" == "master" ]; then
-        wget -O /usr/sbin/cob-shutdown https://raw.githubusercontent.com/ipa320/setup_cob4/master/scripts/cob-shutdown
-        chmod +x /usr/sbin/cob-shutdown
+function InstallCobScripts {
+    printHeader "InstallCobScripts"
 
-        sed -i 's/etc\/acpi\/powerbtn.sh/usr\/sbin\/cob-shutdown/g' /etc/acpi/events/powerbtn
-        if grep -q  "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown" /etc/sudoers ; then
-            echo "NOPASSWD already for all users in /usr/sbin/cob-shutdown, skipping InstallShutdown"
-        else
-            echo "%users ALL=NOPASSWD:/usr/sbin/cob-shutdown" >> /etc/sudoers
-        fi
-    fi
+    # prerequisites for robmuxinator
+    sudo -H pip3 install argcomplete
+    sudo -H pip3 install paramiko
+    sudo activate-global-python-argcomplete
 }
 
 function NetworkSetup {
     printHeader "NetworkSetup"
-    INTERFACE=`ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}'`
+    if [ "$OS_VERSION" == "xenial" ]; then
+        INTERFACE=$(ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}')
 
-    if [ "$INSTALL_TYPE" == "master" ]; then
-        wget -O /etc/network/interfaces.backup https://raw.githubusercontent.com/ipa320/setup_cob4/master/cob-pcs/networkInterfacesMaster
-    elif [ "$INSTALL_TYPE" == "slave" ]; then
-        wget -O /etc/network/interfaces.backup https://raw.githubusercontent.com/ipa320/setup_cob4/master/cob-pcs/networkInterfacesSlave
+        if [ "$INSTALL_TYPE" == "master" ]; then
+            cp -f "$SETUP_COB4_DIR"/setup_cob4/cob-pcs/networkInterfacesMaster /etc/network/interfaces
+        elif [ "$INSTALL_TYPE" == "slave" ]; then
+            cp -f "$SETUP_COB4_DIR"/setup_cob4/cob-pcs/networkInterfacesSlave /etc/network/interfaces
+        fi
+
+        sed -i "s/eth0/$INTERFACE/g" /etc/network/interfaces
+
+        systemctl restart networking
+    elif [ "$OS_VERSION" == "focal" ]; then
+        cp -f "$SETUP_COB4_DIR"/setup_cob4/cob-pcs/60-can.network /etc/systemd/network
     fi
-
-    sed -i "s/eth0/$INTERFACE/g" /etc/network/interfaces.backup
-
-    echo "mv /etc/network/interfaces.backup /etc/network/interfaces && ifup -a && sed -i '/fixnet.sh/d' /etc/rc.local && rm -f /fixnet.sh" > /fixnet.sh
-    sed -i '$ibash /fixnet.sh' /etc/rc.local
-    systemctl restart networking
 }
 
 function SetupEtcHosts {
@@ -294,16 +326,16 @@ function SetupEtcHosts {
 
     sed -i "s/$HOSTNAME.wlrob.net\t//g" /etc/hosts
 
-    ROBOTNAME=$(echo ${HOSTNAME%-*})
-    ROBOT_NUM=$(echo ${ROBOTNAME##*-})
+    ROBOTNAME="${HOSTNAME%-*}"
+    ROBOT_NUM="${ROBOTNAME##*-}"
 
     PC_LS=(
-    "10.4.${ROBOT_NUM}.41	${ROBOTNAME}-h1"
-    "10.4.${ROBOT_NUM}.31	${ROBOTNAME}-s1"
-    "10.4.${ROBOT_NUM}.23	${ROBOTNAME}-t3"
-    "10.4.${ROBOT_NUM}.22	${ROBOTNAME}-t2"
-    "10.4.${ROBOT_NUM}.21	${ROBOTNAME}-t1"
-    "10.4.${ROBOT_NUM}.11	${ROBOTNAME}-b1"
+    "10.4.${ROBOT_NUM}.41	h1"
+    "10.4.${ROBOT_NUM}.31	s1"
+    "10.4.${ROBOT_NUM}.23	t3"
+    "10.4.${ROBOT_NUM}.22	t2"
+    "10.4.${ROBOT_NUM}.21	t1"
+    "10.4.${ROBOT_NUM}.11	b1"
     )
 
     for ((i = 0; i < ${#PC_LS[@]}; i++))
@@ -318,36 +350,42 @@ function SetupEtcHosts {
 
 function InstallCandumpTools {
     printHeader "InstallCandumpTools"
-    wget -O /usr/local/bin/socket_buffer.py https://raw.githubusercontent.com/ipa320/setup_cob4/master/scripts/socket_buffer.py
+    cp "$SETUP_COB4_DIR"/setup_cob4/scripts/socket_buffer.py /usr/local/bin/socket_buffer.py
     chmod +x /usr/local/bin/socket_buffer.py
-}
-
-#TODO: only newest NoMachine ?!?
-#Not possible because there is no ftp server or something else availible. Just the newest version is on their download page
-function InstallNoMachine {
-    printHeader "InstallNoMachine"
-    NOMACHINE_VERSION=6.0.66_2
-    wget -O /root/nomachine_${NOMACHINE_VERSION}_amd64.deb http://download.nomachine.com/download/6.0/Linux/nomachine_${NOMACHINE_VERSION}_amd64.deb
-    dpkg -i /root/nomachine_${NOMACHINE_VERSION}_amd64.deb
 }
 
 function InstallNetData {
     printHeader "InstallNetData"
-    apt-get install zlib1g-dev uuid-dev libmnl-dev gcc make git autoconf autoconf-archive autogen automake pkg-config curl -y
-    git clone https://github.com/firehol/netdata.git --depth=1 /root/netdata
-    cd /root/netdata
-    yes | ./netdata-installer.sh
-    cd
-    rm -r /root/netdata
+    bash <(curl -Ss https://my-netdata.io/kickstart.sh) all --dont-wait
 }
 
-function InstallCobCommand {
-    printHeader "InstallCobCommand"
-    if [ "$INSTALL_TYPE" == "master" ]; then
-        wget -O /usr/sbin/cob-command https://raw.githubusercontent.com/ipa320/setup_cob4/master/scripts/cob-command
-        chmod +x /usr/sbin/cob-command
-        sh -c 'echo "%users ALL=NOPASSWD:/usr/sbin/cob-command"' | sed -i -e "\|%users ALL=NOPASSWD:/usr/sbin/cob-command|h; \${x;s|%users ALL=NOPASSWD:/usr/sbin/cob-command||;{g;t};a\\" -e "%users ALL=NOPASSWD:/usr/sbin/cob-command" -e "}" /etc/sudoers
-    fi
+function InstallDocker {
+    printHeader "InstallDocker"
+    # https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
+    apt-get update
+    apt-get install apt-transport-https ca-certificates curl gnupg -y
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+    apt-get update
+    apt-get install docker-ce docker-ce-cli containerd.io -y
+    #     docker run hello-world  # test docker
+
+    # https://docs.docker.com/compose/install/#install-compose-on-linux-systems
+    curl -L "https://github.com/docker/compose/releases/download/1.28.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    chmod +x /usr/local/bin/docker-compose
+    docker-compose --version  # test docker-compose
+
+    # libcrypto++6 for navigation license server
+    apt-get install libcrypto++6 -y
+}
+
+function InstallDebugTools {
+    #This is the machine check exception logger
+    #useful for debugging machine crashes
+    printHeader "InstallDebugTools"
+    apt-get install rasdaemon -y
+    apt-get install iperf -y
+    apt-get install stress stress-ng -y
 }
 
 function RemoveModemanager {
@@ -355,140 +393,163 @@ function RemoveModemanager {
     apt-get purge modemmanager -y
 }
 
+function DisableSpacenavDeamon {
+    #Disable this because it is spamming the syslog
+    #and we do not need it
+    printHeader "DisableSpacenavDeamon"
+    if [ "$OS_VERSION" == "xenial" ]; then
+        systemctl disable spacenavd.service
+    fi
+}
+
 function DisableUpdatePopup {
     printHeader "DisableUpdatePopup"
     sed -i 's/Prompt\=lts/Prompt\=never/g' /etc/update-manager/release-upgrades
 }
 
-function DisableFailsafeBoot {
-    printHeader "DisableFailsafeBoot"
-    if [ "$DISTRO" == "trusty" ]; then
-        sed -i 's/start on \(filesystem and static-network-up\) or failsafe-boot/start on filesystem and static-network-up/g' /etc/init/rc-sysinit.conf
-    elif [ "$DISTRO" == "xenial" ]; then
-        : #ToDo: not functional under xenial
-    fi
-}
-
 function NonInteractiveFSCKFIX {
     printHeader "NonInteractiveFSCKFIX"
-    if [ "$DISTRO" == "trusty" ]; then
-        sed -i '/FSCKFIX\=no/c\FSCKFIX\=yes' /etc/default/rcS
-    elif [ "$DISTRO" == "xenial" ]; then
-        sed -i '/FSCKFIX\=no/c\FSCKFIX\=yes' /lib/init/vars.sh
-    fi
+    sed -i '/FSCKFIX\=no/c\FSCKFIX\=yes' /lib/init/vars.sh
 }
 
-function InstallAptCacher {
-    printHeader "InstallAptCacher"
-    #disable local forward to 10.0.1.1 cacher
-    if grep -q 'Acquire::http { Proxy "http://10.0.1.1:3142"; };' /etc/apt/apt.conf.d/01proxy ; then
-        rm /etc/apt/apt.conf.d/01proxy
-    fi
-    if grep -q 'Acquire::http::Proxy "http://10.0.1.1:3142/";' /etc/apt/apt.conf ; then
-        sed -i 's!Acquire::http::Proxy "http://10.0.1.1:3142/";!!g' /etc/apt/apt.conf
-    fi
+function ConfigureDefaultSoundcard {
+    printHeader "ConfigureDefaultSoundcard"
+    apt-get install alsa-base alsa-tools -y
+    sed -i 's/options snd-usb-audio index=-2/options snd-usb-audio index=0/g' /etc/modprobe.d/alsa-base.conf
+}
 
-    HOSTNAME=$(cat /etc/hostname)
-    SERVERNAME=$(echo ${HOSTNAME%-*}-b1)
-    if [ "$INSTALL_TYPE" == "master" ]; then
-        apt-get install apt-cacher-ng -y
-        sed -i 's/\# PassThroughPattern: .\*/PassThroughPattern: .\*/g' /etc/apt-cacher-ng/acng.conf
-        systemctl restart apt-cacher-ng
-    elif [ "$INSTALL_TYPE" == "slave" ]; then
-        touch /etc/apt/apt.conf.d/01proxy
+function ConfigureOtherServices {
+    printHeader "ConfigureOtherServices"
+    systemctl disable apt-daily.service
+    systemctl disable apt-daily.timer
 
-        if grep -q 'Acquire::http { Proxy "http://10.0.1.1:3142"; };' /etc/apt/apt.conf.d/01proxy ; then
-            rm /etc/apt/apt.conf.d/01proxy
-            touch /etc/apt/apt.conf.d/01proxy
-        fi
-        if grep -q 'Acquire::http { Proxy "http://'$SERVERNAME':3142"; };' /etc/apt/apt.conf.d/01proxy ; then
-            echo "Proxy already in /etc/apt/apt.conf.d/01proxy, skipping InstallAptCacher"
-        else
-            echo 'Acquire::http { Proxy "http://'$SERVERNAME':3142"; };' >>  /etc/apt/apt.conf.d/01proxy
-        fi
-    fi
+    systemctl disable apt-daily-upgrade.service
+    systemctl disable apt-daily-upgrade.timer
+
+    systemctl disable motd-news.service
+    systemctl disable motd-news.timer
 }
 
 function InstallRealsense {
     printHeader "InstallRealsense"
-    if [ "$DISTRO" == "xenial" ]; then
-        echo 'deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main' | tee /etc/apt/sources.list.d/realsense-public.list
-        apt-key adv --keyserver keys.gnupg.net --recv-key 6F3EFCDE
-        apt-get update
-        apt-get install realsense-uvcvideo -y
-        apt-get install ros-kinetic-librealsense -y
-        apt-get install ros-kinetic-realsense-camera -y
-    fi
+
+    apt-key adv --keyserver keys.gnupg.net --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE
+    add-apt-repository "deb https://librealsense.intel.com/Debian/apt-repo $OS_VERSION main" -u
+    apt-get update
+    apt-get install librealsense2-dkms librealsense2-udev-rules librealsense2-utils -y
+    modinfo uvcvideo | grep "version:" || echo "librealsense check failed! check output of modinfo uvcvideo | grep \"version:\""
 }
 
 function InstallCareOBot {
     printHeader "InstallCareOBot"
-    if [ "$DISTRO" == "trusty" ]; then
-        apt-get install ros-indigo-care-o-bot-robot -y
-    elif [ "$DISTRO" == "xenial" ]; then
-        apt-get install ros-kinetic-care-o-bot-robot -y
+    #ToDo: use `--download-only` as long as realsense dependencies try to apply patches to file that do not exist with latest kernel
+    apt-get install ros-"$ROS_VERSION"-camera-calibration -y
+    apt-get install ros-"$ROS_VERSION"-rqt* -y
+    #apt-get install ros-$ROS_VERSION-care-o-bot-robot -y --download-only        # not released into noetic
+}
+
+function InstallAptCacher {
+    printHeader "InstallAptCacher"
+    #disable local forward to 10.0.1.2 cacher
+    if grep -q 'Acquire::http { Proxy "http://10.0.1.2:3142"; };' /etc/apt/apt.conf.d/01proxy ; then
+        rm /etc/apt/apt.conf.d/01proxy
+    fi
+    if grep -q 'Acquire::http::Proxy "http://10.0.1.2:3142/";' /etc/apt/apt.conf ; then
+        sed -i 's!Acquire::http::Proxy "http://10.0.1.2:3142/";!!g' /etc/apt/apt.conf
+    fi
+
+    SERVERNAME="b1"
+    if [ "$INSTALL_TYPE" == "master" ]; then
+        apt-get install apt-cacher-ng -y
+        sed -i 's/\# PassThroughPattern: .\*/PassThroughPattern: .\*/g' /etc/apt-cacher-ng/acng.conf
+        systemctl restart apt-cacher-ng
+    fi
+
+    touch /etc/apt/apt.conf.d/01proxy
+
+    if grep -q 'Acquire::http { Proxy "http://10.0.1.2:3142"; };' /etc/apt/apt.conf.d/01proxy ; then
+        rm /etc/apt/apt.conf.d/01proxy
+        touch /etc/apt/apt.conf.d/01proxy
+    fi
+    if grep -q 'Acquire::http { Proxy "http://'$SERVERNAME':3142"; };' /etc/apt/apt.conf.d/01proxy ; then
+        echo "Proxy already in /etc/apt/apt.conf.d/01proxy, skipping InstallAptCacher"
+    else
+        echo 'Acquire::http { Proxy "http://'$SERVERNAME':3142"; };' >>  /etc/apt/apt.conf.d/01proxy
+        echo 'Acquire::https { Proxy "https://"; };' >>  /etc/apt/apt.conf.d/01proxy
     fi
 }
 
 function FinishKickstartRobot {
     printHeader "FinalizeKickstartRobot"
-    touch /var/log/installer/kickstart_robot_finished
+    #needed just for testing success of kickstart-robot.sh during PostInstallCob4.sh
 }
 
 ########################################################################
 ############################# INITIAL MENU #############################
 ########################################################################
 
-if [ $# -ne 2 ]; then
+if [ $# -eq 2 ]; then
+    # shellcheck disable=SC2016
+    PASSWORD='$1$.8rMo3Kc$hwkXrTTshYmLa9iplJchz.'  # default password
+elif [ $# -eq 3 ]; then
+    PASSWORD=$3
+else
     echo "ERROR: wrong number of arguments, expecting:"
-    echo "kickstart-robot.sh [master|slave] [xenial|trusty]"
+    echo "kickstart-robot.sh OS_VERSION INSTALL_TYPE [PASSWORD]"
     exit 1
 fi
 
-if [ "$1" != "master" ] && [ "$1" != "slave" ]; then
-    echo "ERROR: please provide argument [master|slave] [xenial|trusty]. Got: $1 $2"
-    exit 2
-elif [ "$2" != "xenial" ] && [ "$2" != "trusty" ]; then
-    echo "ERROR: please provide argument [master|slave] [xenial|trusty]. Got: $1 $2"
-    exit 2
-else
-    INSTALL_TYPE=$1
-    DISTRO=$2
-    echo "Starting kickstart robot - using install type: $INSTALL_TYPE for distro $DISTRO"
+if [ "$1" != "xenial" ] && [ "$1" != "focal" ]; then
+    echo "ERROR: OS_VERSION '$1' not supported - only: [xenial/focal]"
+    exit 1
+fi
+if [ "$2" != "master" ] && [ "$2" != "slave" ]; then
+    echo "ERROR: INSTALL_TYPE '$2' not supported - only: [master/slave]"
+    exit 1
 fi
 
-if [ ! -z "$http_proxy" ]; then
+OS_VERSION=$1
+INSTALL_TYPE=$2
+
+if [ "$OS_VERSION" == "xenial" ]; then
+    ROS_VERSION="kinetic"
+    SETUP_COB4_DIR="/media/cdrom"
+elif [ "$OS_VERSION" == "focal" ]; then
+    ROS_VERSION="noetic"
+    SETUP_COB4_DIR="/tmp"
+fi
+
+if [ "$http_proxy" ]; then
     echo "http_proxy is set from preseed. Unsetting and setup apt cacher"
     unset http_proxy
     SetLocalAptCacher
 fi
-AddGnomePPA
+
 EnableAptSources
 UpgradeAptPackages
-UpgradeKernel
-InstallHWEnableStacks
 NFSSetup
+SetupPowerSettings
 AddUsers
 InstallROS
 SetupGrubRecFail
-#SetupLocale
 KeyboardLayout
 ConfigureSSH
 ChronySetup
 SetupUdevRules
 InstallGitLFS
 SetupDefaultBashEnv
-InstallShutdown
+InstallCobScripts
 NetworkSetup
 SetupEtcHosts
 InstallCandumpTools
-InstallNoMachine
 InstallNetData
-InstallCobCommand
+InstallDocker
+InstallDebugTools
 RemoveModemanager
+DisableSpacenavDeamon
 DisableUpdatePopup
-DisableFailsafeBoot
 NonInteractiveFSCKFIX
+ConfigureDefaultSoundcard
 InstallRealsense
 InstallCareOBot
 InstallAptCacher

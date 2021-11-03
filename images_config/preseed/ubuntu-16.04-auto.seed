@@ -7,11 +7,14 @@ d-i preseed base-installer/install-recommends boolean false
 # Install only security updates automatically
 d-i preseed pkgsel/update-policy select unattended-upgrades
 
-#d-i live-installer/net-image string http://10.1.1.2/trusty-server-amd64/install/filesystem.squashfs
-
 ###################
 ### Partitioning
-d-i partman-auto/disk string /dev/sda
+#d-i partman-auto/disk string /dev/nvme0n1
+#d-i partman/early_command string \
+#  PRIMARYDISK=$(/bin/lsblk -lbn --output SIZE,NAME | sort -n | tail -n 1 | cut -d" " -f2);\
+#  debconf-set partman-auto/disk "/dev/$PRIMARYDISK";
+d-i partman/early_command string \
+  debconf-set partman-auto/disk "$(list-devices disk | head -n1)";
 
 # The presently available methods are:
 # - regular: use the usual partition types for your architecture
@@ -53,6 +56,3 @@ d-i keyboard-configuration/xkb-keymap select de
 
 
 #################################################################
-
-
-

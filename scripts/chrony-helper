@@ -11,10 +11,10 @@ chronyc=/usr/bin/chronyc
 chrony_conf=/etc/chrony/chrony.conf
 chrony_service=chrony.service
 helper_dir=/run/chrony-helper
-added_servers_file=$helper_dir/added_servers
+added_servers_file="$helper_dir"/added_servers
 
-dhclient_servers_files=/var/lib/dhcp/chrony.servers.*
-dnssrv_servers_files=$helper_dir/dnssrv@*
+dhclient_servers_files=(/var/lib/dhcp/chrony.servers.*)
+dnssrv_servers_files=("$helper_dir"/dnssrv@*)
 dnssrv_timer_prefix=chrony-dnssrv@
 
 chrony_command() {
@@ -26,8 +26,8 @@ is_running() {
 }
 
 get_servers_files() {
-    echo "$dhclient_servers_files"
-    echo "$dnssrv_servers_files"
+    echo "${dhclient_servers_files[@]}"
+    echo "${dnssrv_servers_files[@]}"
 }
 
 is_update_needed() {
@@ -45,31 +45,36 @@ update_daemon() {
         return 0
     fi
 
-    all_servers_with_args=$(cat $(get_servers_files) 2> /dev/null)
+    all_servers_with_args=$(cat "$(get_servers_files)" 2> /dev/null)
 
     all_servers=$(
         echo "$all_servers_with_args" |
-            while read server serverargs; do
+            while read -r server serverargs; do
                 echo "$server"
             done | sort -u)
     added_servers=$( (
         cat $added_servers_file 2> /dev/null
         echo "$all_servers_with_args" |
-            while read server serverargs; do
+            while read -r server serverargs; do
                 [ -z "$server" ] && continue
                 chrony_command "add server $server $serverargs" &> /dev/null &&
                     echo "$server"
             done) | sort -u)
 
     comm -23 <(echo -n "$added_servers") <(echo -n "$all_servers") |
-        while read server; do
+        while read -r server; do
             chrony_command "delete $server" &> /dev/null
         done
 
     added_servers=$(comm -12 <(echo -n "$added_servers") <(echo -n "$all_servers"))
 
-    [ -n "$added_servers" ] && echo "$added_servers" > $added_servers_file ||
+    if [ -n "$added_servers" ]; 
+    then 
+        echo "$added_servers" > $added_servers_file
+
+    else
         rm -f $added_servers_file
+    fi
 }
 
 get_dnssrv_servers() {
@@ -81,9 +86,11 @@ get_dnssrv_servers() {
     fi
 
     output=$(dig "$name" srv +short +ndots=2 +search 2> /dev/null)
+    # shellcheck disable=SC2181
     [ $? -ne 0 ] && return 0
-
-    echo "$output" | while read prio weight port target; do
+    
+    # shellcheck disable=SC2034
+    echo "$output" | while read -r prio weight port target; do
         server=${target%.}
         [ -z "$server" ] && continue
         echo "$server port $port iburst"
@@ -111,13 +118,20 @@ update_dnssrv_servers() {
     check_dnssrv_name "$name" || return 1
 
     servers=$(get_dnssrv_servers "$name")
-    [ -n "$servers" ] && echo "$servers" > "$srv_file" || rm -f "$srv_file"
+    if [ -n "$servers" ]; 
+    then 
+        echo "$servers" > "$srv_file"
+    else
+        rm -f "$srv_file"
+    fi
+
 }
 
 set_dnssrv_timer() {
-    local state=$1 name=$2
-    local srv_file=$helper_dir/dnssrv@$name servers
-    local timer=$dnssrv_timer_prefix$(systemd-escape "$name").timer
+    local state name srv_file timer
+    state=$1 name=$2
+    srv_file=$helper_dir/dnssrv@$name servers
+    timer=$dnssrv_timer_prefix$(systemd-escape "$name").timer
 
     check_dnssrv_name "$name" || return 1
 
@@ -154,8 +168,13 @@ is_source_line() {
 }
 
 list_static_sources() {
-    while read line; do
-        is_source_line "$line" && echo "$line" || :
+    while read -r line; do
+        if is_source_line "$line"; 
+        then 
+            echo "$line"
+        else
+            :
+        fi
     done < $chrony_conf
 }
 
@@ -164,11 +183,11 @@ set_static_sources() {
 
     new_config=$(
         sources=$(
-            while read line; do
+            while read -r line; do
                 is_source_line "$line" && echo "$line"
             done)
 
-        while read line; do
+        while read -r line; do
             if ! is_source_line "$line"; then
                 echo "$line"
                 continue
@@ -177,8 +196,8 @@ set_static_sources() {
             tmp_sources=$(
                 local removed=0
 
-                echo "$sources" | while read line2; do
-                    [ "$removed" -ne 0 -o "$line" != "$line2" ] && \
+                echo "$sources" | while read -r line2; do
+                    [ "$removed" -ne 0 ] || [ "$line" != "$line2" ] && \
                         echo "$line2" || removed=1
                 done)
 

@@ -1,9 +1,26 @@
-roscore:
-  session_name: roscore
-  user: robot
-  command: "roscore"
-bringup:
-  session_name: bringup
-  user: robot
-  command: "roslaunch cob_bringup robot.launch"
-  pre_condition: "until /opt/ros/myrosdistro/env.sh rostopic list; do sleep 1; done"
+# documentation https://github.com/ipa320/setup_cob4/tree/master/scripts
+
+timeout: 120
+
+# define hosts of robot
+hosts:
+  b1:
+    os: linux
+    user: robot
+    port: 22
+    check_nfs: false
+
+# define sessions of hosts
+sessions:
+  roscore:
+    host: b1
+    user: robot
+    command: "roscore"
+    prio: 0
+    wait_for_core: false
+    locked: true
+  bringup:
+    host: b1
+    user: robot
+    command: "roslaunch cob_bringup robot.launch"
+    prio: 1

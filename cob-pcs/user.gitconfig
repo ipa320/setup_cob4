@@ -3,3 +3,5 @@
 	name = myuser@myrobot
 [lfs]
         allowincompletepush = true
+[credential]
+	helper = cache --timeout=300

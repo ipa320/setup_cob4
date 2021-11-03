@@ -1,5 +1,8 @@
 #!/bin/bash
 
+SCRIPT=$(readlink -f "$0")
+SCRIPTPATH=$(dirname "$SCRIPT")
+
 red='\e[0;31m'    # ERROR
 yellow='\e[0;33m' # USER_INPUT
 green='\e[0;32m'  # STATUS_PROGRESS
@@ -7,20 +10,23 @@ blue='\e[1;34m'   # INFORMATION
 NC='\e[0m' # No Color
 
 function get_search_domain () {
-	grep search /etc/resolv.conf | sed -e "s/search //"
+	grep "^search" /etc/resolv.conf | sed -e "s/^search //"
 }
 
-robot_name=$(get_search_domain)
-master_ip=`hostname -I | awk '{print $1}'`
+if [ "$2" == "--local" ]; then
+	master_ip="127.0.1.1"
+else
+	master_ip=$(hostname -I | awk '{print $1}')
+fi
 
 function upload_ssh_router () {
 	echo -e "${green}uploading ssh_key to router${NC}"
 	#echo "master_ip: $master_ip"
 	router_ip=${master_ip: : -1}
 	#echo "router_ip: $router_ip"
-	new_key=$( sudo -u $1 cat /u/$1/.ssh/id_rsa.pub )
+	new_key=$( sudo -u "$1" cat "$home_prefix/$1/.ssh/id_rsa.pub" )
 	echo "new key: $new_key"
-	keys=$(ssh root@$router_ip "nvram get sshd_authorized_keys")
+	keys=$(ssh root@"$router_ip" "nvram get sshd_authorized_keys")
 	echo "keys: $keys"
 	if [[ $keys = *$new_key* ]]; then
 		echo "already there"
@@ -32,8 +38,9 @@ function upload_ssh_router () {
 		keys="${keys}"$'\n'"${new_key}"
 	fi
 	echo "combined keys: $keys"
-	ssh root@$router_ip "nvram set sshd_authorized_keys=\"$keys\""
-	ssh root@$router_ip "nvram commit"
+	# shellcheck disable=SC2029
+	ssh root@"$router_ip" "nvram set sshd_authorized_keys=\"$keys\""
+	ssh root@"$router_ip" "nvram commit"
 	echo -e "${green}done uploading ssh_key to router${NC}"
 }
 
@@ -42,134 +49,170 @@ if [ "$USER" != "robot" ]; then
 	exit
 fi
 
-if [ "$HOSTNAME" != "b1" ]; then
+if [ "$HOSTNAME" != "b1" ] && [ "$2" != "--local" ]; then
 	echo -e "${red}FATAL: CAN ONLY BE EXECUTED ON BASE PC${NC}"
+	echo -e "use option --local for setting up on local PC"
+	echo -e "(e.g. cob-adduser <username> --local)"
 	exit
 fi
 
-#retrieve client_list variables
-source /u/robot/git/setup_cob4/helper_client_list.sh
+if [ "$2" == "--local" ]; then
+	home_prefix="/home"
+else
+	home_prefix="/u"
+fi
+
+# set user_name for better readability
+user_name=$1
+
+# shellcheck source=./helper_client_list.sh
+source "$SCRIPTPATH"/helper_client_list.sh
 
 echo -e "${green}Executing adduser${NC}"
-sudo /usr/sbin/adduser $1 --gecos "" --home /u/$1
-sudo adduser $1 dialout
-sudo adduser $1 cdrom
-sudo adduser $1 floppy
-sudo adduser $1 audio
-sudo adduser $1 video
-sudo adduser $1 plugdev
-sudo adduser $1 users
+sudo /usr/sbin/adduser "$user_name" --gecos "" --home "$home_prefix/$user_name"
+sudo adduser "$user_name" dialout
+sudo adduser "$user_name" cdrom
+sudo adduser "$user_name" floppy
+sudo adduser "$user_name" audio
+sudo adduser "$user_name" video
+sudo adduser "$user_name" plugdev
+sudo adduser "$user_name" users
+sudo adduser "$user_name" docker
+sudo chmod 666 /var/run/docker.sock # change permission of docker.sock for others until next reboot (default 660)
+
+# necessary to avoid asking for pw when calling e.g. sudo cob-stop
+echo -e "${yellow}Enter ${user_name} user password to execute ssh-copy-id to su user${NC}"
+sudo ssh-copy-id "$user_name"@localhost
 
 echo -e "${green}Syncing passwd file to other cob-pcs${NC}"
 for i in $client_list_ip
 do
 	echo "sync passwd on $i"
-	sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@$i:/etc/
+	sudo rsync -e ssh -avz /etc/passwd /etc/shadow /etc/group root@"$i":/etc/
 done
 
-if [ "$1" != "" ]; then
+if [ "$user_name" != "" ]; then
 	echo -e "${green}Setup bash environment${NC}"
-	if grep "source /u/$1/setup/user.bashrc" /u/$1/.bashrc > /dev/null
+	if [ "$2" == "--local" ]; then
+		sudo cp -f $home_prefix/robot/git/setup_cob4/cob-pcs/cob.bash.bashrc.b /etc/cob.bash.bashrc
+	fi
+	if grep "source $home_prefix/$user_name/setup/user.bashrc" "$home_prefix/$user_name/.bashrc" > /dev/null
 	then :
 	else
-		sudo -u $1 bash -c "echo 'source /u/$1/setup/user.bashrc' >> /u/$1/.bashrc"
+		sudo -u "$user_name" bash -c "echo 'source $home_prefix/$user_name/setup/user.bashrc' >> $home_prefix/$user_name/.bashrc"
 	fi
 
-	sudo mkdir -p /u/$1/setup && sudo cp -f /u/robot/git/setup_cob4/cob-pcs/user.bashrc /u/$1/setup/user.bashrc
-	sudo chown -R $1:$1 /u/$1/setup
+	sudo mkdir -p "$home_prefix/$user_name/setup" && sudo cp -f "$home_prefix/robot/git/setup_cob4/cob-pcs/user.bashrc" "$home_prefix/$user_name/setup/user.bashrc"
+	sudo chown -R "$user_name":"$user_name" "$home_prefix/$user_name/setup"
 
-	sudo cp /u/robot/git/setup_cob4/cob-pcs/user.gitconfig /u/$1/.gitconfig
-	if [ $(lsb_release -sc) == "trusty" ]; then
-		sudo cp /u/robot/git/setup_cob4/cob-pcs/tmux.conf.trusty /u/$1/.tmux.conf
-		sudo chown $1:$1 /u/$1/.tmux.conf
-	elif [ $(lsb_release -sc) == "xenial" ]; then
-		sudo cp /u/robot/git/setup_cob4/cob-pcs/tmux.conf.xenial /u/$1/.tmux.conf
-		sudo chown $1:$1 /u/$1/.tmux.conf
+	sudo cp "$home_prefix/robot/git/setup_cob4/cob-pcs/user.gitconfig" "$home_prefix/$user_name/.gitconfig"
+	if [ "$(lsb_release -sc)" == "xenial" ]; then
+		sudo cp "$home_prefix/robot/git/setup_cob4/cob-pcs/tmux.conf.xenial" "$home_prefix/$user_name/.tmux.conf"
+		sudo chown "$user_name":"$user_name" "$home_prefix/$user_name/.tmux.conf"
+	elif [ "$(lsb_release -sc)" == "focal" ]; then
+		sudo cp "$home_prefix/robot/git/setup_cob4/cob-pcs/tmux.conf.focal" "$home_prefix/$user_name/.tmux.conf"
+		sudo chown "$user_name":"$user_name" "$home_prefix/$user_name/.tmux.conf"
 	else
-		echo -e "\n${red}FATAL: Script only supports indigo and kinetic${NC}"
+		echo -e "\n${red}FATAL: Script only supports kinetic and noetic${NC}"
 		exit
 	fi
 
-	if [ -z "$robot_name" ]; then
-		echo -e "\n${red}'robot_name' is empty. Is your network correctly set up (i.e. system restarted)?${NC}"
-		echo -e "${yellow}Specify 'robot_name' to be set as ROBOT in 'user.bashrc'${NC}"
-		read robot_name
-	fi
 	if [ -z "$master_ip" ]; then
 		echo -e "\n${red}'master_ip' is empty. Is your network correctly set up (i.e. system restarted)?${NC}"
 		echo -e "${yellow}Specify 'master_ip' to be set as ROS_MASTER_URI in 'user.bashrc'${NC}"
-		read master_ip
+		read -r master_ip
 	fi
 
-	sudo sed -i "s/mymasterip/$master_ip/g" /u/$1/setup/user.bashrc
-	sudo sed -i "s/myrobot/$robot_name/g" /u/$1/setup/user.bashrc
-	sudo sed -i "s/mydistro/$ROS_DISTRO/g" /u/$1/setup/user.bashrc
-
+	echo -e "${yellow}Specify ROBOT to be set in 'user.bashrc' (ENTER will set ROBOT=$(get_search_domain))${NC}"
+	read -r robot_name
+	if [ -z "$robot_name" ]; then
+		robot_name=$(get_search_domain)
+		echo -e "${blue}ROBOT is set to '$robot_name'${NC}"
+	fi
 	echo -e "\n${yellow}Specify ROBOT_ENV to be set in 'user.bashrc'${NC}"
-	read robot_env
-	sudo sed -i "s/export ROBOT_ENV=empty/export ROBOT_ENV=$robot_env/g" /u/$1/setup/user.bashrc
+	read -r robot_env
+	echo -e "${blue}ROBOT_ENV is set to '$robot_env'${NC}"
 
-	sudo sed -i "s/myuser/$1/g" /u/$1/.gitconfig
-	sudo sed -i "s/myrobot/$robot_name/g" /u/$1/.gitconfig
-	sudo chown $1:$1 /u/$1/.gitconfig
+	sudo sed -i "s/mymasterip/$master_ip/g" "$home_prefix/$user_name/setup/user.bashrc"
+	sudo sed -i "s/myrobot/$robot_name/g" "$home_prefix/$user_name/setup/user.bashrc"
+	sudo sed -i "s/mydistro/$ROS_DISTRO/g" "$home_prefix/$user_name/setup/user.bashrc"
 
-	if [ ! -f /u/$1/.ssh/id_rsa ]; then
+	sudo sed -i "s/export ROBOT_ENV=empty/export ROBOT_ENV=$robot_env/g" "$home_prefix/$user_name/setup/user.bashrc"
+
+	sudo sed -i "s/myuser/$user_name/g" "$home_prefix/$user_name/.gitconfig"
+	sudo sed -i "s/myrobot/$robot_name/g" "$home_prefix/$user_name/.gitconfig"
+	sudo chown "$user_name":"$user_name" "$home_prefix/$user_name/.gitconfig"
+
+	if [ ! -f "$home_prefix/$user_name/.ssh/id_rsa" ]; then
 		echo -e "\n${green}Create new ssh key${NC}"
-		sudo -u $1 ssh-keygen -f /u/$1/.ssh/id_rsa -N ""
+		sudo -u "$user_name" ssh-keygen -m PEM -f "$home_prefix/$user_name/.ssh/id_rsa" -N ""
 	fi
 
 	echo -e "\n${green}Accepting host fingerprints${NC}"
-	sudo -u $1 cat /u/$1/.ssh/id_rsa.pub | ssh $1@b1 "cat >> /u/$1/.ssh/authorized_keys"
-	echo "login to $1@localhost"
-	sudo -u $1 ssh $1@localhost 'exit'
+	# shellcheck disable=SC2029
+	sudo -u "$user_name" cat "$home_prefix/$user_name/.ssh/id_rsa.pub" | ssh "$user_name"@b1 "cat >> $home_prefix/$user_name/.ssh/authorized_keys"
+	echo "login to $user_name@localhost"
+	sudo -u "$user_name" ssh "$user_name"@localhost 'exit'
 
 	# login to all pcs using ip
 	for i in $client_list_ip
 	do
-		echo "login to $1@$i"
-		sudo -u $1 ssh $1@$i 'exit'
+		echo "login to $user_name@$i"
+		sudo -u "$user_name" ssh "$user_name"@"$i" 'exit'
 	done
 
 	# login to all pcs using hostname
 	for i in $client_list_hostnames
 	do
-		echo "login to $1@$i"
-		sudo -u $1 ssh $1@$i 'exit'
+		echo "login to $user_name@$i"
+		sudo -u "$user_name" ssh "$user_name"@"$i" 'exit'
 	done
 
 	# add github.com to known_hosts
-	sudo su -c "ssh-keyscan -H github.com >> /u/$1/.ssh/known_hosts" $1
+	sudo su -c "ssh-keyscan -H github.com >> $home_prefix/$user_name/.ssh/known_hosts" "$user_name"
 
 	# upload key to github
-	echo -e "\n${yellow}Do you want to upload the ssh key to github (y/n)?${NC}"
-	read answer
+	echo -e "\n${yellow}Do you want to upload the ssh key to github (y/N)?${NC}"
+	read -r answer
 	if echo "$answer" | grep -iq "^y" ;then
 		echo -e "\n${yellow}Enter github user name where you want the key to be uploaded:${NC}"
-		read USER
-		KEY=$( sudo -u $1 cat /u/$1/.ssh/id_rsa.pub )
-		TITLE=$1@$robot_name
+		read -r USER
+		echo -e "\n${yellow}Enter a valid Personal Access Token for '$USER':${NC}"
+		read -r TOKEN
+		KEY=$( sudo -u "$user_name" cat "$home_prefix/$user_name/.ssh/id_rsa.pub" )
+		if [ "$2" != "--local" ]; then
+			TITLE="$user_name"@"$robot_name"
+		else
+			TITLE="$user_name"@$HOSTNAME
+		fi
 		JSON=$( printf '{"title": "%s", "key": "%s"}' "$TITLE" "$KEY" )
-		curl -s -u $USER -d "$JSON" "https://api.github.com/user/keys"
+		curl -s -u "$USER":"$TOKEN" -d "$JSON" "https://api.github.com/user/keys"
 	fi
 
-	# upload key to router
-	echo -e "\n${yellow}Do you want to upload the ssh key to the router (y/n)?${NC}"
-	read answer
-	if echo "$answer" | grep -iq "^y" ;then
-		upload_ssh_router $1
+	if [ "$2" != "--local" ]; then
+		# upload key to router
+		echo -e "\n${yellow}Do you want to upload the ssh key to the router (y/N)?${NC}"
+		read -r answer
+		if echo "$answer" | grep -iq "^y" ;then
+			upload_ssh_router "$user_name"
+		fi
 	fi
 
 	if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then
-		sudo su -c "rosdep init"
+		echo -e "${blue}rosdep init${NC}"
+		if ! sudo su -c "rosdep init"; then
+			echo -e "${red}FATAL: rosdep init failed!${NC}"
+			exit
+		fi
 	fi
 
 	# setting up ROS workspace
 	echo -e "\n${green}Setting up ROS workspace${NC}"
-	sudo su -c "rosdep update > /dev/null" $1
-	sudo su -c "mkdir -p ~/git/care-o-bot/src > /dev/null" $1
-	sudo -u $1 ssh $1@localhost 'source ~/setup/user.bashrc && cd ~/git/care-o-bot && catkin init > /dev/null'
-	sudo -u $1 ssh $1@localhost 'source ~/setup/user.bashrc && cd ~/git/care-o-bot && catkin config -DCMAKE_BUILD_TYPE=Release > /dev/null'
-	sudo -u $1 ssh $1@localhost 'source ~/setup/user.bashrc && cd ~/git/care-o-bot && catkin build > /dev/null'
+	sudo su -c "rosdep update > /dev/null" "$user_name"
+	sudo su -c "mkdir -p ~/git/care-o-bot/src > /dev/null" "$user_name"
+	sudo su -c "source ~/setup/user.bashrc && cd ~/git/care-o-bot && catkin init > /dev/null" "$user_name"
+	sudo su -c "source ~/setup/user.bashrc && cd ~/git/care-o-bot && catkin config -DCMAKE_BUILD_TYPE=Release > /dev/null" "$user_name"
+	sudo su -c "source ~/setup/user.bashrc && cd ~/git/care-o-bot && catkin build > /dev/null" "$user_name"
 fi
 
 echo -e "${green}done adding user${NC}"

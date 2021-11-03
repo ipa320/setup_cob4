@@ -1,0 +1,89 @@
+#!/bin/bash
+
+# shellcheck disable=SC2034
+blue='\e[1;34m'
+# shellcheck disable=SC2034
+black='\e[0;30m'
+# shellcheck disable=SC2034
+grey='\e[0;37m'
+# shellcheck disable=SC2034
+red='\e[0;31m'
+green='\e[1;32m'
+NC='\e[0m' # No Color
+
+SLACK_HOST=127.0.0.1
+SLACK_PORT=2002
+
+#### retrieve client_list variables
+# shellcheck source=./helper_client_list.sh
+source /u/robot/git/setup_cob4/helper_client_list.sh
+host_names_expected="HOST_NAMES_EXPECTED"
+
+zmq_push () {
+while read -r m;
+    do
+        echo -e "$(printf '\\x01\\x00\\x%02x\\x00%s' $((1 + ${#m})) "$m")" | nc "$@" >/dev/null
+    done
+}
+
+error=false
+error_string=""
+uptime_master=0
+
+#remove trailing whitespace
+client_list_hostnames=${client_list_hostnames%% }
+host_names_expected=${host_names_expected%% }
+if [ "$client_list_hostnames" = "$host_names_expected" ]; then
+  echo "client_list_hostnames is fine: $client_list_hostnames, (expected: $host_names_expected)"
+else
+  msg="client_list_hostnames is incorrect: $client_list_hostnames, (expected: $host_names_expected); "
+  error_string+=$msg
+  error=true
+  echo "$msg"
+fi
+
+for client in $client_list_hostnames; do
+  echo -e "${green}-------------------------------------------${NC}"
+  echo -e "${green}Checking $client${NC}"
+  echo -e "${green}-------------------------------------------${NC}"
+  echo ""
+  declare -a commands=(
+    "echo \$(awk '{print \$1}' /proc/uptime) / 60 | bc" # uptime in min
+    #"pgrep -f '(^|/)cpu_monitor'" # check whether ros node is running
+  )
+  for command in "${commands[@]}"; do
+    echo "----> executing: $command"
+    # shellcheck disable=SC2029
+    output=$(ssh "$client" "$command")
+    ret=${PIPESTATUS[0]}
+    if [ "$ret" != 0 ] ; then
+      msg="$command return an error on $client (error code: $ret); "
+      error_string+=$msg
+      error=true
+      echo "$msg"
+      continue
+    else
+      echo "uptime is: $output min"
+      if [ "$client" = "b1" ]; then
+        uptime_master=$output
+        continue
+      else
+        uptime_slave=$output
+        uptime_diff=$(( uptime_master - uptime_slave ))
+        if [ "$uptime_diff" -lt -5  ] || [ "$uptime_diff" -gt 5 ]; then
+            msg="$client uptime_error: uptime=$uptime_slave, uptime_master=$uptime_master, uptime_diff=$uptime_diff; "
+            error_string+=$msg
+            error=true
+            echo "$msg"
+        fi
+      fi
+    fi
+  done
+  echo ""
+done
+
+#send error_string to slack
+if [ "$error" = true ]; then
+  error_string="ERROR: $error_string Troubleshooting: uptime_error can only be resolved with 'cob-shutdown' - Starte mich neu (cob-shutdown)."
+  echo "$error_string" | zmq_push $SLACK_HOST $SLACK_PORT
+fi

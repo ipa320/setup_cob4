@@ -23,8 +23,10 @@ export ROBOT_ENV=empty
 export ROSLAUNCH_SSH_UNKNOWN=1
 export ROS_MASTER_URI=http://mymasterip:11311
 export ROS_IP=`hostname -I | awk '{print $1}'`
+export ROSCONSOLE_FORMAT='[${severity}] [${time}]: ${node}(${function}): ${message}'
 
-# DONT TOUCH THIS BELOW THE LINE !!!
+# DONT TOUCH ANYTHING BELOW THIS LINE !!!
+unset CMAKE_PREFIX_PATH
 if [ -e $MY_CATKIN_WORKSPACE/devel/setup.bash ]; then
     source $MY_CATKIN_WORKSPACE/devel/setup.bash
 elif [ -e /u/robot/git/care-o-bot/devel/setup.bash ]; then
@@ -36,5 +38,5 @@ fi
 echo -e "Your CMAKE_PREFIX_PATH:\n$CMAKE_PREFIX_PATH\n"
 
 # ROSJAVA settings
-export ROSJAVA_WORKSPACE=~/git/rosjava_ws
-export ROS_MAVEN_DEPLOYMENT_REPOSITORY=$ROSJAVA_WORKSPACE/devel/share/maven
+#export ROSJAVA_WORKSPACE=~/git/rosjava_ws
+#export ROS_MAVEN_DEPLOYMENT_REPOSITORY=$ROSJAVA_WORKSPACE/devel/share/maven

@@ -18,6 +18,7 @@ export ROS_DISTRO='indigo'
 
 # but as ~-relative paths from that won't work as we are root,
 # so we make sure we have ros sourced:
+# shellcheck disable=SC1090
 source /opt/ros/$ROS_DISTRO/setup.bash
 
 # the above line would suffice if we'd use the joystick_drivers from

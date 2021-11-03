@@ -1,5 +1,7 @@
 #!/bin/bash
+
 blue='\e[1;34m'
+#shellcheck disable=SC2034
 black='\e[0;30m'
 grey='\e[0;37m'
 red='\e[0;31m'
@@ -7,38 +9,78 @@ green='\e[1;32m'
 
 standard_user="robot"
 
-ProgName=$(basename $0)
+ProgName=$(basename "$0")
 upstart_file_path="/etc/ros/cob.yaml"
 upstart_sessions=()
 
+SLACK_HOST=127.0.0.1
+SLACK_CLIENT_PORT=2002
+SLACK_BRIDGE_PORT=2003
+DBWB_HOST=127.0.0.1
+DBWB_PORT=5577
+
+HOST=$(hostname)
 #### retrieve client_list variables
+# shellcheck source=./helper_client_list.sh
 source /u/robot/git/setup_cob4/helper_client_list.sh
+
+#### retrieve component_list variables
+# shellcheck source=./helper_component_list.sh
+source /u/robot/git/setup_cob4/helper_component_list.sh
+
+guess_os_system(){
+  nmap_ret=$(nmap -O --osscan-guess --max-os-tries 2 --max-retries 5 "$1")
+
+  if [[ $(echo "$nmap_ret" | grep -c "Windows") -gt 0 ]]; then
+    echo "Windows"
+  elif [[ $(echo "$nmap_ret" | grep -c "Linux") -gt 0 ]]; then
+    echo "Linux"
+  else
+    echo "Unknown"
+  fi
+}
+
+zmq_push () {
+  while read -r m;
+    do
+      echo -e "$(printf '\\x01\\x00\\x%02x\\x00%s' $((1 + ${#m})) "$m")" | nc "$@" >/dev/null
+    done
+}
+
+send_event () {
+  echo "{\"category\":\"cob-command\", \"data\": {}, \"eventId\":\"$1\", \"name\":\"$2\"}" | zmq_push $DBWB_HOST $DBWB_PORT
+}
 
 # get all users that run a tmux process/session
 get_user_list(){
   pos=0
   for get_user_client in $client_list_hostnames; do
-    current_users=$(su $standard_user -l -c "ssh $get_user_client 'ps aux | grep tmux '" |  sed '/grep/d' | awk '{ print $1 }'| sort | uniq)
-    users_list[$pos]=$current_users
-    pos=$((pos+1))
+    if [[ ! $get_user_client == *"sps"* ]]; then
+      current_users=$(su $standard_user -l -c "ssh $get_user_client 'ps aux | grep tmux '" |  sed '/grep/d' | awk '{ print $1 }'| sort | uniq)
+      users_list[$pos]=$current_users
+      pos=$((pos+1))
+    fi
   done
 }
 
 get_pid(){
   pid="$1"
-  for child in $(ps -o pid  --no-headers --ppid $pid); do
+  for child in $(ps -o pid  --no-headers --ppid "$pid"); do
     [[ "$$" -eq "$child" ]]
-    echo $(ps -o pid= -p $child)
+    ps -o pid= -p "$child"
   done
 }
 
 parse_yaml(){
-  local prefix=$2
-  local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+  local s
+  local w
+  local fs
+  s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+  # shellcheck disable=SC1087
   sed -ne "s|^\($s\):|\1|" \
         -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
-        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
-  awk -F$fs '{
+        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  "$1" |
+  awk -F"$fs" '{
       indent = length($1)/2;
       vname[indent] = $2;
       for (i in vname) {if (i > indent) {delete vname[i]}}
@@ -61,9 +103,9 @@ list_sessions(){
       echo "  sessions by $list_user"
       sessions_list=""
       num=0
-      sessions_list=$(su $list_user -l -c "ssh $list_client 'tmux list-sessions'" | awk '{print $1}')
+      sessions_list=$(su "$list_user" -l -c "ssh $list_client 'tmux list-sessions'" | awk '{print $1}')
       ret=${PIPESTATUS[0]}
-      if [ $ret != 0 ] ; then
+      if [ "$ret" != 0 ] ; then
         break
       else
         for session_name in $sessions_list; do
@@ -78,16 +120,16 @@ list_sessions(){
             pid_command='tmux list-panes -s -F "#{pane_pid}" -t '
             quom="'"
             ssh_command="ssh $list_client $quom$pid_command${sessions[$n]}$quom"
-            tmux_pid=$(su $list_user -l -c "$ssh_command")
+            tmux_pid=$(su "$list_user" -l -c "$ssh_command")
 
             unset PID
             ppid_ssh_command="ssh $list_client 'ps -o pid= --ppid $tmux_pid'"
-            PID=$(su $list_user -l -c "$ppid_ssh_command")
+            PID=$(su "$list_user" -l -c "$ppid_ssh_command")
 
             if [ -z "$PID" ]; then
               command=""
             else
-              command=$(su $list_user -l -c "ssh $list_client 'ps -p $PID -o args'")
+              command=$(su "$list_user" -l -c "ssh $list_client 'ps -p $PID -o args'")
             fi
             echo "      pc: $list_client"
             echo "      user: $list_user"
@@ -108,9 +150,9 @@ find_session(){
   unset session_found
   for find_client in $client_list_hostnames; do
     for find_user in ${users_list[$find_user_pos]}; do
-      sessions_list=$(su $find_user -l -c "ssh $find_client 'tmux list-sessions' 2>&1")
+      sessions_list=$(su "$find_user" -l -c "ssh $find_client 'tmux list-sessions' 2>&1")
       ret=${PIPESTATUS[0]}
-      if [ $ret != 0 ] ; then
+      if [ "$ret" != 0 ] ; then
         false
       else
         sessions_list="${sessions_list//:}"
@@ -132,7 +174,7 @@ stop_session(){
   echo "       Stopping $arg_session_stop"
   echo -e "${green}===========================================${NC}"
   echo -e "${grey}\n ${NC}"
-  find_session $arg_session_stop
+  find_session "$arg_session_stop"
   if [ -z "$session_found" ]; then
     echo -e "${grey}INFO: can't find session $arg_session_stop ${NC}"
     echo -e "${grey} ${NC}"
@@ -150,24 +192,33 @@ stop_session(){
   pid_command='tmux list-panes -s -F "#{pane_pid}" -t '
   quom="'"
   ssh_command="ssh $PC $quom$pid_command$arg_session_stop$quom"
-  tmux_pid=$(su $USER -l -c "$ssh_command")
+  tmux_pid=$(su "$USER" -l -c "$ssh_command")
 
   unset PID
   ppid_ssh_command="ssh $PC 'ps -o pid= --ppid $tmux_pid'"
-  PID=$(su $u -l -c "$ppid_ssh_command")
+  PID=$(su "$USER" -l -c "$ppid_ssh_command")
 
   if [[ $arg_session_stop == *'roscore'* ]] && $lock_core && ! $force; then
     echo -e "${red}Ignoring roscore, to kill the core please use the command: cob-command stop_core${NC}"
+    echo -e "${grey}\n ${NC}"
+  elif [[ $arg_session_stop == *'slack'* ]] && $lock_slack && ! $force; then
+    echo -e "${red}Ignoring slack, to kill the slack-session please use the command: cob-command stop_slack${NC}"
+    echo -e "${grey}\n ${NC}"
+  elif [[ $arg_session_stop == *'dbwb_server'* ]] && $lock_dbwb_server && ! $force; then
+    echo -e "${red}Ignoring dbwb-server${NC}"
+    echo -e "${grey}\n ${NC}"
+  elif [[ $arg_session_stop == *'dbwb_client'* ]] && $lock_dbwb_client && ! $force; then
+    echo -e "${red}Ignoring dbwb-client${NC}"
     echo -e "${grey}\n ${NC}"
   elif [[ $arg_session_stop == *'empty'* ]] && $lock_empty && ! $force; then
     echo -e "${red}Ignoring empty${NC}"
     echo -e "${grey}\n ${NC}"
   else
-    su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
-    if [ ! -z "$PID" ]; then
-      while su $standard_user -l -c "ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 "; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && su $USER -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'" && sleep 1; done
+    su "$USER" -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'"
+    if [ -n "$PID" ]; then
+      while su $standard_user -l -c "ssh $PC stat /proc/$PID \> /dev/null 2\>\&1 "; do echo "still waiting for $arg_session_stop to stop (PID $PID)" && su "$USER" -l -c "ssh $PC 'tmux send -t $arg_session_stop C-c'" && sleep 1; done
     fi
-    su $USER -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
+    su "$USER" -l -c "ssh $PC 'tmux kill-session -t $arg_session_stop'"
   fi
 
 }
@@ -198,15 +249,12 @@ start_session(){
   echo "Pre condition: $arg_pre_condition"
   echo -e "${green}===========================================${NC}"
   echo -e "${grey}\n ${NC}"
-  find_session $arg_session_name > /dev/null
-  if ! [[ $arg_command == *'ros'* ]]; then
-    echo -e "${red}ERROR: only ros commands are allow${NC}"
-    echo -e "${grey} ${NC}"
-  elif ! [ -z "$session_found" ]; then
+  find_session "$arg_session_name" > /dev/null
+  if [ -n "$session_found" ]; then
     echo -e "${red}ERROR: $arg_session_name session already exists${NC}"
     echo -e "${grey} ${NC}"
   else
-    if ! [ -z "$arg_pre_condition" ]; then
+    if [ -n "$arg_pre_condition" ]; then
       arg_command=$arg_pre_condition' && '$arg_command
     fi
     send_command=${arg_command//" "/"\ "}
@@ -219,17 +267,20 @@ start_session(){
 }
 
 sub_help(){
-  echo "Usage: $ProgName command -options <arguments>\n"
-  echo "Commands:"
-  echo "    ls [-v]"
-  echo "    find <session_name>"
-  echo "    start [<file path>]"
-  echo "    stop [-f] [-a|-u|<session_name>]"
-  echo "    stop_core"
-  echo "    shutdown"
-  echo "    shutdown_slaves"
-  echo "    reboot"
-  echo ""
+  echo -e "Usage: $ProgName command -options <arguments>\n"
+  echo -e "Commands:"
+  echo -e "    ls [-v]"
+  echo -e "    find <session_name>"
+  echo -e "    start [<file path>]"
+  echo -e "    stop [-f] [-a|-u|<session_name>]"
+  echo -e "    stop_core"
+  echo -e "    stop_slack"
+  echo -e "    shutdown"
+  echo -e "    shutdown_slaves"
+  echo -e "    reboot"
+  echo -e "    slack <slackmsg>"
+  echo -e "    event <eventId> <eventName>"
+  echo -e ""
 }
 
 sub_ls(){
@@ -247,11 +298,10 @@ sub_find(){
   echo -e "${grey}\n ${NC}"
   arg_session_name=$1
   if [ -z "$arg_session_name" ]; then
-      echo "no session name defined"
-      echo -e $usage
-      exit
+    echo "no session name defined"
+    exit
   fi
-  find_session $arg_session_name
+  find_session "$arg_session_name"
   if [ -z "$session_found" ]; then
     echo "can't find session $arg_session_name"
   else
@@ -262,7 +312,8 @@ sub_find(){
 }
 
 sub_start(){
-  echo cob-start
+  echo cob-start | zmq_push $SLACK_HOST $SLACK_CLIENT_PORT
+  send_event "${FUNCNAME[0]}" "${FUNCNAME[0]}"
   echo -e "${blue}===========================================${NC}"
   echo "       Calling rosnode cleanup               "
   echo -e "${blue}===========================================${NC}"
@@ -274,11 +325,11 @@ sub_start(){
   echo -e "${blue}===========================================${NC}"
   echo -e "${grey}\n ${NC}"
   arg_upstart_file_path=$1
-  if ! [ -z "$arg_upstart_file_path" ]; then
+  if [ -n "$arg_upstart_file_path" ]; then
     upstart_file_path=$arg_upstart_file_path
   fi
-  echo "Reading file "$upstart_file_path"..."
-  parse_yaml $upstart_file_path
+  echo "Reading file $upstart_file_path..."
+  parse_yaml "$upstart_file_path"
   num=0
   OIFS=$IFS
   IFS="="
@@ -289,7 +340,7 @@ sub_start(){
     fi
   done < /tmp/cob
   IFS=$OIFS
-  for ((n=1; n <= $num; n++)); do
+  for ((n=1; n <= num; n++)); do
     arg_session_name=${sessions[$n]}
     IFS="="
     while read -r name value
@@ -311,9 +362,11 @@ sub_start(){
     start_session
   done
 }
-
+# shellcheck disable=SC2120
 sub_stop(){
-  echo cob-stop
+  echo cob-stop | zmq_push $SLACK_HOST $SLACK_CLIENT_PORT
+  send_event "${FUNCNAME[0]}" "${FUNCNAME[0]}"
+  echo '> state.get_robot_state()' | zmq_push $SLACK_HOST $SLACK_BRIDGE_PORT
   echo -e "${blue}===========================================${NC}"
   echo "Stopping sessions..."
   echo -e "${blue}===========================================${NC}"
@@ -322,11 +375,11 @@ sub_stop(){
   if ${all}; then
     list_sessions > /dev/null
     for i in $(seq 1 ${#all_sessions[@]}); do
-      stop_session ${all_sessions[i]}
+      stop_session "${all_sessions[i]}"
     done
   elif ${upstart}; then
-    echo "Reading file "$upstart_file_path"..."
-    parse_yaml $upstart_file_path
+    echo "Reading file $upstart_file_path..."
+    parse_yaml "$upstart_file_path"
     num=0
     OIFS=$IFS
     IFS="="
@@ -337,11 +390,11 @@ sub_stop(){
       fi
     done < /tmp/cob
     IFS=$OIFS
-    for i in ${upstart_sessions[@]}; do
-      stop_session $i
+    for i in "${upstart_sessions[@]}"; do
+      stop_session "$i"
     done
-  elif ! [ -z "$arg_session_name" ]; then
-    stop_session $arg_session_name
+  elif [ -n "$arg_session_name" ]; then
+    stop_session "$arg_session_name"
   else
     echo -e "${blue}===========================================${NC}"
     echo -e "${blue}===========================================${NC}"
@@ -351,21 +404,22 @@ sub_stop(){
     echo -e "${grey}\n ${NC}"
     list_sessions > /dev/null
     for i in $(seq 1 ${#all_sessions[@]}); do
-      find_session ${all_sessions[i]}
+      find_session "${all_sessions[i]}"
       echo "$i: ${all_sessions[i]} (pc: $where_session, user: $who_session)"
     done
-    read -p "Please select a session number or 'all' to kill all the active sessions: " choice
+    echo -e "Please select a session number or 'all' to kill all the active sessions: "
+    read -r choice
     if ! [[ "$choice" =~ ^[1-${#all_sessions[@]}]+$ || "$choice" == "all" ]]; then
       echo -e "========> $choice not valid , please choose a number session between 1-${#all_sessions[@]}"
       exit
     fi
     if [[ "$choice" == "all" ]]; then
       for i in $(seq 1 ${#all_sessions[@]}); do
-        stop_session ${all_sessions[i]}
+        stop_session "${all_sessions[i]}"
       done
     else
       echo -e "========> $choice - Stopping session ${sessions[$choice]}"
-      stop_session ${sessions[$choice]}
+      stop_session "${sessions[$choice]}"
     fi
   fi
 
@@ -389,7 +443,8 @@ sub_stop(){
 }
 
 sub_stop_core(){
-  echo stop_core
+  echo stop_core | zmq_push $SLACK_HOST $SLACK_CLIENT_PORT
+  send_event "${FUNCNAME[0]}" "${FUNCNAME[0]}"
   echo -e "${blue}===========================================${NC}"
   echo "Stopping the core..."
   echo -e "${blue}===========================================${NC}"
@@ -404,59 +459,135 @@ sub_stop_core(){
   stop_session roscore
 }
 
+sub_stop_slack(){
+  echo stop_slack | zmq_push $SLACK_HOST $SLACK_CLIENT_PORT
+  send_event "${FUNCNAME[0]}" "${FUNCNAME[0]}"
+  echo -e "${blue}===========================================${NC}"
+  echo "Stopping slack..."
+  echo -e "${blue}===========================================${NC}"
+  echo -e "${grey}\n ${NC}"
+  killall -9 slack
+  wait $!
+  lock_slack=false
+  stop_session slack
+}
+
 sub_shutdown(){
-  echo cob-shutdown
+  echo cob-shutdown | zmq_push $SLACK_HOST $SLACK_CLIENT_PORT
+  send_event "${FUNCNAME[0]}" "${FUNCNAME[0]}"
   echo -e "${blue}===========================================${NC}"
   echo "Rebooting the robot..."
   echo -e "${blue}===========================================${NC}"
   echo -e "${grey}\n ${NC}"
   if [[ $HOSTNAME != *"b"* ]]; then
-      echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC, current host is $HOSTNAME"
-      exit
+    echo "FATAL: CAN ONLY BE EXECUTED ON BASE PC, current host is $HOSTNAME"
+    exit
   fi
 
   upstart=true
   sub_stop
   for client in $client_list_hostnames; do
-      if [ $client == $HOST ] ; then
-          echo "skipping $client"
-          continue
-      fi
-      echo "-------------------------------------------"
-      echo "Executing <<"shutdown">> on $client"
-      echo "-------------------------------------------"
-      echo ""
-      ssh -o ConnectTimeout=15 $client "sudo shutdown now -P 0"
+    if [[ $client == "$HOST" ]] ; then
+      echo "skipping $client"
+      continue
+    fi
+    echo -e "-------------------------------------------"
+    echo -e "Executing << \"shutdown\" >> on $client"
+    echo -e "-------------------------------------------"
+    echo -e ""
+    echo -e "Detecting OS..."
+    case $(guess_os_system "$client") in
+
+      "Windows")
+        echo "Windows OS detected"
+        net rpc shutdown -f -t 0 -C "Shutdown command received from b1" -I "$client" -U rpc_user%rpc_user
+        ;;
+
+      "Linux")
+        echo "Linux OS detected"
+        ssh -o ConnectTimeout=15 "$client" "sudo shutdown now -P 0"
+        ;;
+
+      "Unknown")
+        echo "Unknown OS detected"
+        ;;
+    esac
+    ret=${PIPESTATUS[0]}
+    if [ "$ret" != 0 ] ; then
+      echo "command return an error (error code: $ret), aborting..."
+    fi
+  done
+
+  # shutdown procedure for components
+  for component in $component_list_hostnames; do
+    echo "-------------------------------------------"
+    echo "Executing <<\"shutdown\">> on $component"
+    echo "-------------------------------------------"
+    echo ""
+    if [[ $component == "ur"* ]]; then # shutting down UR
+      ssh -o ConnectTimeout=15 root@"$component" "sudo shutdown -P 1" # session freezes on UR if now is used
       ret=${PIPESTATUS[0]}
-      if [ $ret != 0 ] ; then
-          echo "command return an error (error code: $ret), aborting..."
+      if [ "$ret" != 0 ] ; then
+        echo "command return an error (error code: $ret), aborting..."
       fi
+    else # other components have no shutdown procedure implemented
+      echo "skipping $component"
+      continue
+    fi
   done
 
   for client in $client_list_hostnames; do
-      if [ $client == $HOST ] ; then
-          echo "skipping $client"
-          continue
+    if [[ $client == "$HOST" ]] ; then
+      echo "skipping $client"
+      continue
+    fi
+    echo "-------------------------------------------"
+    echo "Executing <<waiting for>> " "$client"
+    echo "-------------------------------------------"
+    echo ""
+    Crono=0
+    while [[ $Crono -le 60 ]]; do
+      
+      if ping -qc 1 -w 3 "$client" > /dev/null ; then
+        echo "$client down"
+        break
+      else
+        Crono=$((Crono+1))
+        echo "waiting for $client"
       fi
-      echo "-------------------------------------------"
-      echo "Executing <<waiting for>> on" $client
-      echo "-------------------------------------------"
-      echo ""
+      sleep 1
+    done
+    if [[ $Crono -ge 60 ]]; then
+      echo "$client timeout reached"
+    fi
+  done
+
+  # wait procedure for components
+  for component in $component_list_hostnames; do
+    echo "-------------------------------------------"
+    echo "Executing <<waiting for>>  $component"
+    echo "-------------------------------------------"
+    echo ""
+    if [[ $component == "ur"* ]]; then # wait for UR
       Crono=0
       while [[ $Crono -le 60 ]]; do
-          ping -qc 1 -w 3 $client > /dev/null
-          if [ $? -ne 0 ] ; then
-              echo $client down
-              break
-          else
-              Crono=$((Crono+1))
-              echo "waiting for" $client
-          fi
-          sleep 1
+        
+        if ! ping -qc 1 -w 3 "$component" > /dev/null ; then
+          echo "$component down"
+          break
+        else
+          Crono=$((Crono+1))
+          echo "waiting for $component"
+        fi
+        sleep 1
       done
       if [[ $Crono -ge 60 ]]; then
-        echo $client "timeout reached"
+        echo "$component timeout reached"
       fi
+    else # other components have no wait procedure implemented
+      echo "skipping $component"
+      continue
+    fi
   done
 
   if ${shutdown_master}; then
@@ -468,19 +599,55 @@ sub_shutdown(){
 }
 
 sub_shutdown_slaves(){
-  echo shutdown_slaves
+  echo shutdown_slaves | zmq_push $SLACK_HOST $SLACK_CLIENT_PORT
+  send_event "${FUNCNAME[0]}" "${FUNCNAME[0]}"
 
   shutdown_master=false
   sub_shutdown
 }
 
 sub_reboot(){
-  echo reboot
+  echo reboot | zmq_push $SLACK_HOST $SLACK_CLIENT_PORT
+  send_event "${FUNCNAME[0]}" "${FUNCNAME[0]}"
   echo -e "${blue}===========================================${NC}"
   echo "Rebooting the robot..."
   echo -e "${blue}===========================================${NC}"
   echo -e "${grey}\n ${NC}"
   sub_shutdown
+}
+
+sub_start_gui(){
+  echo -e "${blue}===========================================${NC}"
+  echo "Starting VM..."
+  echo -e "${blue}===========================================${NC}"
+  echo -e "${grey}\n ${NC}"
+  rm -rf /tmp/runningVMS
+  su mimic -c "ssh $ROBOT-h1 'vboxmanage list runningvms'" > /tmp/runningVMS
+
+  if grep -q myrobot-win "/tmp/runningVMS"; then
+    echo "VM already running"
+  else
+    echo "starting VM..."
+    su mimic -c "ssh $ROBOT-h1 'export DISPLAY=:0 && virtualbox --startvm myrobot-win --fullscreen'"&
+  fi
+}
+
+sub_stop_gui(){
+  echo -e "${blue}===========================================${NC}"
+  echo "Stopping the Windows VM..."
+  echo -e "${blue}===========================================${NC}"
+  echo -e "${grey}\n ${NC}"
+  su mimic -c "ssh -o ConnectTimeout=15 $ROBOT-h1 'export DISPLAY=:0 && vboxmanage controlvm myrobot-win acpipowerbutton'"
+}
+
+sub_slack(){
+  echo -e "sub_slack: $# $*"
+  echo "$@" | zmq_push $SLACK_HOST $SLACK_CLIENT_PORT
+}
+
+sub_event(){
+  echo -e "sub_event: $# $*"
+  send_event "$1" "$2"
 }
 
 ##### PARSE OPTIONS AND ARGUMENTS #####
@@ -492,6 +659,9 @@ upstart=false
 shutdown_master=true
 subcommand=$1
 lock_core=true
+lock_slack=true
+lock_dbwb_server=true
+lock_dbwb_client=true
 lock_empty=true
 unset PID
 
@@ -523,7 +693,7 @@ case $subcommand in
   done
 esac
 
-sub_${subcommand} $@
+sub_"${subcommand}" "$@"
 if [ $? = 127 ]; then
   echo "Error: '$subcommand' is not a known subcommand." >&2
   exit 1
