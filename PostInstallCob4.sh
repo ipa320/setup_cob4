@@ -14,6 +14,7 @@ INFO: This script is a helper tool for the setup and installation of Care-O-bot:
 3. Setup mimic user
 4. Setup devices (e.g. systemd service and scripts for laser scanners detection)
 5. Install system services (upstart, ...)
+6. SetupWorkspaces
 9. SyncPackages
 99. Full installation
 EOF
@@ -343,6 +344,16 @@ function InstallSystemServices {
   echo -e "${green}=== INSTALL SYSTEM SERVICES DONE! ===${NC}"
 }
 
+#### SETUP WORKSPACES
+function SetupWorkspaces {
+  check_hostname "b1"
+  echo -e "${green}=== SETUP WORKSPACES ===${NC}"
+
+  "$SCRIPTPATH"/workspace_tools/setup_workspaces.sh -m robot
+
+  echo -e "${green}=== SETUP WORKSPACES DONE! ===${NC}"
+}
+
 #### SYNC PACKAGES
 function SyncPackages {
   check_hostname "b1"
@@ -443,6 +454,8 @@ elif [[ "$choice" == 4 ]]; then
   SetupDevices
 elif [[ "$choice" == 5 ]]; then
   InstallSystemServices
+elif [[ "$choice" == 6 ]]; then
+  SetupWorkspaces
 elif [[ "$choice" == 9 ]]; then
   SyncPackages
 elif [[ "$choice" == 99 ]]; then

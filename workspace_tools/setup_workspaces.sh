@@ -374,20 +374,9 @@ echo "mode='$mode', quiet=$quiet, force=$force, tagged=$tagged, install=$install
 # start setup
 if [ "$mode" == "robot" ]; then
     echo -e "${blue}Installation on robot! ${NC}"
-    if [ -z "$target_user" ]; then
-      echo -e "${yellow}Specify target user for installing non-robot_ws workspaces: ${NC}"
-      read -r target_user
-      if ! id "$target_user" &>/dev/null; then
-        echo -e "${red}FATAL: user $target_user not known ${NC}"
-        exit 1
-      fi
-    fi
-    echo -e "${green}rosdep update $target_user ${NC}"
-    sudo su "$target_user" -c "rosdep update --rosdistro=${ROS_DISTRO}"
-    target_home=$(eval echo ~"$target_user")
+    target_user="robot"
 elif [ "$mode" == "local" ]; then
     echo -e "${blue}Installation on local computer ${NC}"
-    target_home=$(eval echo ~"$USER")
 fi
 
 echo -e "${green}rosdep update $USER ${NC}"
@@ -423,9 +412,6 @@ if [ "$mode" == "robot" ]; then
 elif [ "$mode" == "local" ]; then
   : # noop
 fi
-
-echo -e "${green}setup care-o-bot ws ${NC}"
-setup_workspace "${path:-$target_home/git}"/care-o-bot "${path:-$target_home/git}"/robot_ws/${build_target}/setup.bash
 
 echo -e "\n\n${green}$SCRIPTNAME completed${NC}"
 if [ "$mode" == "robot" ]; then

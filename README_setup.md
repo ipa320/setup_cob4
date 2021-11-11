@@ -107,15 +107,15 @@ The `PostInstall` menu looks like this:
 ===========================================
                 INITIAL MENU
 ===========================================
-INFO: This script is a helper tool for the setup and installation of Care-O-bot: 
- 1. Setup root user
- 2. Setup robot user
- 3. Setup mimic user
- 4. Setup devices (e.g. udev for laser scanners)
- 5. Install system services (upstart, ...)
- 9. SyncPackages
- 99. Full installation
-
+INFO: This script is a helper tool for the setup and installation of Care-O-bot:
+1. Setup root user
+2. Setup robot user
+3. Setup mimic user
+4. Setup devices (e.g. systemd service and scripts for laser scanners detection)
+5. Install system services (upstart, ...)
+6. SetupWorkspaces
+9. SyncPackages
+99. Full installation
 Please select an installation option: 
 ```
 
@@ -166,6 +166,13 @@ In the following, hints are provided for each of the steps:**
      ```
    - Confirm `CLIENT LIST` (all six PCs), `CHECK CLIENT LIST` (should be empty)
    - Step is done successfully when `INSTALL SYSTEM SERVICES DONE!` is shown
+
+6. `SetupWorkspaces`
+   - Will setup the `robot_ws` and `care-o-bot` workspaces, i.e.
+     - initialize workspaces chain
+     - populate workspace based on rosinstall
+     - rosdep install dependencies
+     - compile workspace
 
 9. `Sync Packages`
    - Select **option 1** from the menu:
