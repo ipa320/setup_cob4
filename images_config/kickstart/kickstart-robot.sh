@@ -445,6 +445,7 @@ function InstallCareOBot {
     #ToDo: use `--download-only` as long as realsense dependencies try to apply patches to file that do not exist with latest kernel
     apt-get install ros-"$ROS_VERSION"-camera-calibration -y
     apt-get install ros-"$ROS_VERSION"-rqt* -y
+    apt-get install ros-"$ROS_VERSION"-cob* -y  # install some cob-dependencies already
     #apt-get install ros-$ROS_VERSION-care-o-bot-robot -y --download-only        # not released into noetic
 }
 
