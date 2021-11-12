@@ -1,0 +1,4 @@
+# cob scripts
+Cmnd_Alias      COB_SCRIPTS = /usr/sbin/cob-start,/usr/sbin/cob-restart,/usr/sbin/cob-stop,/usr/sbin/cob-shutdown,/usr/sbin/cob-powerbutton
+Defaults!COB_SCRIPTS  env_keep += "PYTHONPATH ROS_DISTRO"
+%users ALL=NOPASSWD:COB_SCRIPTS

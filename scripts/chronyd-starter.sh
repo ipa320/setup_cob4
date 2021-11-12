@@ -6,9 +6,10 @@ DOC="/usr/share/doc/chrony/README.container"
 CAP="cap_sys_time"
 CMD="/usr/sbin/chronyd"
 # Take any args passed, use none if nothing was specified
-EFFECTIVE_DAEMON_OPTS=${@:-""}
+EFFECTIVE_DAEMON_OPTS=${*:-""}
 
 if [ -f "${CONF}" ]; then
+    # shellcheck disable=SC1090
     . "${CONF}"
 else
     echo "<4>Warning: ${CONF} is missing"
@@ -25,6 +26,7 @@ fi
 
 # Check if -x is already set manually, don't process further if that is the case
 X_SET=0
+# shellcheck disable=SC2220
 while getopts ":x" opt; do
     case $opt in
         x)
@@ -57,7 +59,7 @@ if [ ${X_SET} -ne 1 ]; then
       echo "<4>Warning: Running in a container, likely impossible and unintended to sync system clock"
   fi
 
-  if [ ${HAS_CAP} -eq 0 -o ${IS_CONTAINER} -eq 1 ]; then
+  if [ ${HAS_CAP} -eq 0 ] || [ ${IS_CONTAINER} -eq 1 ]; then
       if [ "${EFFECTIVE_SYNC_IN_CONTAINER}" != "yes" ]; then
           echo "<5>Adding -x as fallback disabling control of the system clock, see ${DOC} to override this behavior"
           EFFECTIVE_DAEMON_OPTS="${EFFECTIVE_DAEMON_OPTS} -x"
@@ -67,4 +69,4 @@ if [ ${X_SET} -ne 1 ]; then
   fi
 fi
 
-${CMD} ${EFFECTIVE_DAEMON_OPTS}
+${CMD} "${EFFECTIVE_DAEMON_OPTS}"

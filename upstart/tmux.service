@@ -8,7 +8,7 @@ Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/bin/tmux -2 new -d -s empty
 ExecStop=/usr/bin/tmux -2 kill-server
-User=mojin
+User=robot
 
 [Install]
 WantedBy=multi-user.target

@@ -1,2 +1,14 @@
 #!/usr/bin/env bash
-/usr/sbin/cob-command shutdown
+
+SLACK_HOST=127.0.0.1
+SLACK_PORT=2002
+
+zmq_push () {
+while read -r m;
+    do
+        echo -e "$(printf '\\x01\\x00\\x%02x\\x00%s' $((1 + ${#m})) "$m")" | nc "$@" >/dev/null
+    done
+}
+
+echo "powerbutton pressed" | zmq_push $SLACK_HOST $SLACK_PORT
+/usr/sbin/robmuxinator /etc/ros/cob.yaml shutdown

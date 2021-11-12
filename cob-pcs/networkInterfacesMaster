@@ -1,10 +1,12 @@
-# interfaces(5) file used by ifup(8) and ifdown(8)
+# The loopback network interface
 auto lo
 iface lo inet loopback
 
+# The primary network interface
 auto eth0
 iface eth0 inet dhcp
 
+# CAN devices
 allow-hotplug can0
 iface can0 can static
     bitrate 500000

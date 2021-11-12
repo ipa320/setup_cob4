@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+/usr/sbin/cob-stop "$@"
+/usr/sbin/cob-start "$@"

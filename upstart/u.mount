@@ -6,8 +6,7 @@ After=network.target
 What=b1:/
 Where=/u
 Type=nfs4
-Options=_netdev,auto
-TimeoutSec=120
+Options=_netdev,auto,bg
 
 [Install]
 WantedBy=multi-user.target
