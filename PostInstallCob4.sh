@@ -314,6 +314,8 @@ function InstallSystemServices {
 
   sudo cp -f "$SCRIPTPATH"/scripts/10-cob-scripts /etc/sudoers.d/
 
+  sudo sed -i "s/myrosdistro/$ROS_DISTRO/g" /usr/sbin/robmuxinator
+
   echo -e "\n${yellow}Please confirm CLIENT_LIST for UPTIME_MONITOR${NC}\n"
   query_pc_list "$client_list_hostnames"
   host_names_expected=$LIST

@@ -11,4 +11,4 @@ while read -r m;
 }
 
 echo "powerbutton pressed" | zmq_push $SLACK_HOST $SLACK_PORT
-/usr/sbin/robmuxinator /etc/ros/cob.yaml shutdown
+/usr/sbin/robmuxinator shutdown
