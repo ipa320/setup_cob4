@@ -104,6 +104,15 @@ function SetupPowerSettings {
 
     # disable systemd suspension, hibernation and hybrid-sleep handling
     systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
+
+    # enable acpi event logging
+    if [ -f /etc/default/acpid ]; then
+        if grep -q "#OPTIONS=" /etc/default/acpid; then
+            sed -i 's/#OPTIONS=.*$/OPTIONS="--logevents"/g' /etc/default/acpid
+        else
+            echo "OPTIONS=\"--logevents\"" >> /etc/default/acpid
+        fi
+    fi
 }
 
 function AddUsers {

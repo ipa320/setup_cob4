@@ -78,6 +78,8 @@ sudo adduser "$user_name" video
 sudo adduser "$user_name" plugdev
 sudo adduser "$user_name" users
 sudo adduser "$user_name" docker
+sudo groupadd realtime  # make sure the realtime group exists
+sudo adduser "$user_name" realtime
 sudo chmod 666 /var/run/docker.sock # change permission of docker.sock for others until next reboot (default 660)
 
 # necessary to avoid asking for pw when calling e.g. sudo cob-stop
