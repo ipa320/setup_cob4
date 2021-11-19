@@ -2,10 +2,10 @@
     local-name: canopen_test_utils
     uri: git@github.com:ipa320/canopen_test_utils.git
     version: kinetic-devel
-- git:
-    local-name: cob_base_calibration
-    uri: git@github.com:mojin-robotics/cob_base_calibration.git
-    version: indigo-devel
+#- git:
+#    local-name: cob_base_calibration
+#    uri: git@github.com:mojin-robotics/cob_base_calibration.git
+#    version: indigo-devel
 - git:
     local-name: cob_calibration_data
     uri: git@github.com:ipa320/cob_calibration_data.git
