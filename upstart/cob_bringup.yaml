@@ -9,6 +9,31 @@ hosts:
     user: robot
     port: 22
     check_nfs: false
+  t1:
+    os: linux
+    user: robot
+    port: 22
+    check_nfs: true
+  t2:
+    os: linux
+    user: robot
+    port: 22
+    check_nfs: true
+  t3:
+    os: linux
+    user: robot
+    port: 22
+    check_nfs: true
+  s1:
+    os: linux
+    user: robot
+    port: 22
+    check_nfs: true
+  h1:
+    os: linux
+    user: robot
+    port: 22
+    check_nfs: true
 
 # define sessions of hosts
 sessions:
