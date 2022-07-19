@@ -1,0 +1,12 @@
+[Unit]
+Description=Setup joypad
+Wants=systemd-udevd.service
+After=systemd-udevd.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/sbin/cob-devices-joypad.sh
+
+[Install]
+WantedBy=multi-user.target

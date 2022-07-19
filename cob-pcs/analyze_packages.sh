@@ -1,8 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 
 SCRIPT=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "$SCRIPT")
+SCRIPTNAME=$(basename "$0")
 
 red='\e[0;31m'    # ERROR
 yellow='\e[0;33m' # USER_INPUT
@@ -10,10 +11,25 @@ green='\e[0;32m'  # STATUS_PROGRESS
 blue='\e[1;34m'   # INFORMATION
 NC='\e[0m' # No Color
 
+function query_pc_list {
+  echo -e "${blue}PC_LIST:${NC} $1"
+  echo -e "\n${yellow}Do you want to use the suggested pc list (y/N)?${NC}"
+  read -r answer
+
+  if echo "$answer" | grep -iq "^y" ;then
+    LIST=$1
+  else
+    echo -e "\n${yellow}Enter list of pcs to be used for ${SCRIPTNAME}:${NC}"
+    read -r LIST
+  fi
+}
+
 #### retrieve client_list variables
 # shellcheck source=./helper_client_list.sh
 source "$SCRIPTPATH"/../helper_client_list.sh
-IFS=" " read -r -a array_hostnames <<< "$client_list_hostnames"
+query_pc_list "$client_list_hostnames"
+pc_list=$LIST
+IFS=" " read -r -a array_hostnames <<< "$pc_list"  # helper to retrieve first element of list
 
 # pip is not available for focal
 if [ "$(lsb_release -sc)" == "xenial" ]; then
@@ -26,14 +42,14 @@ else
 fi
 
 # gather apt and pip version info
-for client in $client_list_hostnames; do
+for client in $pc_list; do
   echo -e "${green}-------------------------------------------${NC}"
   echo -e "${green}Analyzing packages on $client${NC}"
   echo -e "${green}-------------------------------------------${NC}"
   echo ""
   declare -a commands=(
-    "dpkg -l | grep '^ii' | awk '{print \$2 \"\t\" \$3}' | tr \"\\t\" \"=\" > ~/.dpkg_installed_$ROS_DISTRO_$client.txt"
-    "sudo -H $PIP_CMD freeze > ~/.pip_installed_$ROS_DISTRO_$client.txt"
+    "dpkg -l | grep '^ii' | awk '{print \$2 \"\t\" \$3}' | tr \"\\t\" \"=\" > $HOME/.dpkg_installed_$ROS_DISTRO_$client.txt"
+    "sudo -H $PIP_CMD freeze > $HOME/.pip_installed_$ROS_DISTRO_$client.txt"
   )
   for command in "${commands[@]}"; do
     echo "----> executing: $command"
@@ -49,14 +65,14 @@ for client in $client_list_hostnames; do
 done
 
 # show apt and pip diffs
-for client in $client_list_hostnames; do
+for client in $pc_list; do
   echo -e "${green}-------------------------------------------${NC}"
   echo -e "${green}Comparing packages on $client with ${array_hostnames[0]}${NC}"
   echo -e "${green}-------------------------------------------${NC}"
   echo ""
   declare -a commands=(
-    "diff --side-by-side --suppress-common-lines ~/.dpkg_installed_$ROS_DISTRO_${array_hostnames[0]}.txt ~/.dpkg_installed_$ROS_DISTRO_$client.txt; echo \$?;"
-    "diff --side-by-side --suppress-common-lines ~/.pip_installed_$ROS_DISTRO_${array_hostnames[0]}.txt ~/.pip_installed_$ROS_DISTRO_$client.txt; echo \$?;"
+    "diff --side-by-side --suppress-common-lines $HOME/.dpkg_installed_$ROS_DISTRO_${array_hostnames[0]}.txt $HOME/.dpkg_installed_$ROS_DISTRO_$client.txt; echo \$?;"
+    "diff --side-by-side --suppress-common-lines $HOME/.pip_installed_$ROS_DISTRO_${array_hostnames[0]}.txt $HOME/.pip_installed_$ROS_DISTRO_$client.txt; echo \$?;"
   )
   for command in "${commands[@]}"; do
     echo "----> executing: $command"
@@ -69,7 +85,7 @@ for client in $client_list_hostnames; do
       # shellcheck disable=SC2086
       FILE2=$(echo $command | cut -d' ' -f5)
       echo -e "${red}Found a difference between ${array_hostnames[0]} ($FILE1) and $client ($FILE2).${NC}"
-      echo -e "${red}Please merge/sync/update the install files in '~/git/setup_cob4/cob-pcs' and create a PR!${NC}"
+      echo -e "${red}Please merge/sync/update the install files in '$SCRIPTPATH' and create a PR!${NC}"
       echo -e "\n${yellow}Do you want to see diff (y/n)?${NC}"
       read -r answer
       if echo "$answer" | grep -iq "^y" ;then
@@ -82,7 +98,7 @@ for client in $client_list_hostnames; do
 done
 
 # clean up
-#rm ~/.dpkg_installed_$ROS_DISTRO*
-#rm ~/.pip_installed_$ROS_DISTRO*
+#rm $HOME/.dpkg_installed_$ROS_DISTRO*
+#rm $HOME/.pip_installed_$ROS_DISTRO*
 
 echo -e "${green}analyzing packages done.${NC}"

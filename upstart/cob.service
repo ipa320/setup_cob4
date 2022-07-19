@@ -1,7 +1,7 @@
 [Unit]
 Description=bringup cob
 Wants=tmux.service
-After=tmux.service cob-devices.service
+After=tmux.service cob-devices-joypad.service cob-devices-s300.service
 
 [Service]
 Type=oneshot

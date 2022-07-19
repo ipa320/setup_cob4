@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # this file is listed in /etc/rc.local to be executed on boot as user root
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # This script configures running chronyd to use NTP servers obtained from
 # DHCP and _ntp._udp DNS SRV records. Files with servers from DHCP are managed
 # externally (e.g. by a dhclient script). Files with servers from DNS SRV

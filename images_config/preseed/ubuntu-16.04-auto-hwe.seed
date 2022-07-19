@@ -1,4 +1,0 @@
-d-i preseed/include string ubuntu-16.04-auto.seed
-
-# If we're booting using the hwe kernel.
-d-i base-installer/kernel/altmeta   string hwe-16.04

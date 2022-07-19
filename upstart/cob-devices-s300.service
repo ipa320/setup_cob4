@@ -1,0 +1,12 @@
+[Unit]
+Description=Setup s300 laser scanners
+Wants=systemd-udevd.service
+After=systemd-udevd.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/sbin/cob-devices-s300.sh
+
+[Install]
+WantedBy=multi-user.target
