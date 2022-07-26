@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 
 red='\e[0;31m'    # ERROR
@@ -9,11 +9,25 @@ NC='\e[0m' # No Color
 
 SCRIPT=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "$SCRIPT")
+SCRIPTNAME=$(basename "$0")
 
 function check_hostname () {
   if [[ ${HOSTNAME} != *"$1"* ]];then
     echo -e "\n${red}FATAL: CAN ONLY BE EXECUTED ON PC $1${NC}"
     exit 1
+  fi
+}
+
+function query_pc_list {
+  echo -e "${blue}PC_LIST:${NC} $1"
+  echo -e "\n${yellow}Do you want to use the suggested pc list (y/N)?${NC}"
+  read -r answer
+
+  if echo "$answer" | grep -iq "^y" ;then
+    LIST=$1
+  else
+    echo -e "\n${yellow}Enter list of pcs to be used for ${SCRIPTNAME}:${NC}"
+    read -r LIST
   fi
 }
 
@@ -56,6 +70,12 @@ if [[ $# -gt 0 ]]; then
   done
 fi
 
+## retrieve client_list variables
+# shellcheck source=./helper_client_list.sh
+source "$SCRIPTPATH"/../helper_client_list.sh
+query_pc_list "$client_list_hostnames"
+pc_list=$LIST
+
 check_hostname "b1"
 echo -e "$usage"
 echo -e "${yellow}Please select a sync option: ${NC}"
@@ -71,6 +91,7 @@ if [[ "$choice" == 1 ]]; then
   declare -a upgradecommands=(
     "curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash $VERBOSE_OPTIONS" # verify git-lfs signature
     "sudo apt-get update $VERBOSE_OPTIONS"
+    "sudo apt-get upgrade -y $VERBOSE_OPTIONS"
     "sudo apt-get dist-upgrade -y $VERBOSE_OPTIONS"
     "sudo apt-get autoremove -y $VERBOSE_OPTIONS"
   )
@@ -91,8 +112,8 @@ if [[ "$choice" == 1 ]]; then
   PIP_OPTIONS="--upgrade"
 
   # get installed packages
-  DPKG_FILE="/u/robot/.dpkg_installed_${ROS_DISTRO}_updated.txt"
-  PIP_FILE="/u/robot/.pip_installed_${ROS_DISTRO}_updated.txt"
+  DPKG_FILE="${HOME}/.dpkg_installed_${ROS_DISTRO}_updated.txt"
+  PIP_FILE="${HOME}/.pip_installed_${ROS_DISTRO}_updated.txt"
   dpkg -l | grep '^ii' | awk '{print $2 "\t" $3}' | tr "\t" "=" > "$DPKG_FILE"
   sudo -H $PIP_CMD freeze | tee "$PIP_FILE"
 
@@ -101,8 +122,8 @@ elif [[ "$choice" == 2 ]]; then
   ## allow pip to downgrade - if needed
   PIP_OPTIONS="--force-reinstall"
 
-  DPKG_FILE="/u/robot/git/setup_cob4/cob-pcs/dpkg_installed_${ROS_DISTRO}.txt"
-  PIP_FILE="/u/robot/git/setup_cob4/cob-pcs/pip_installed_${ROS_DISTRO}.txt"
+  DPKG_FILE="${SCRIPTPATH}/dpkg_installed_${ROS_DISTRO}.txt"
+  PIP_FILE="${SCRIPTPATH}/pip_installed_${ROS_DISTRO}.txt"
   echo -e "${blue}DPKG_FILE:${NC} $DPKG_FILE"
   echo -e "${blue}PIP_FILE:${NC} $PIP_FILE"
   echo -e "\n${yellow}Do you want to use the install files (y/n)?${NC}"
@@ -133,10 +154,6 @@ if [ ! -f "$PIP_FILE" ]; then
 fi
 
 
-## retrieve client_list variables
-# shellcheck source=./helper_client_list.sh
-source "$SCRIPTPATH"/../helper_client_list.sh
-
 
 ### check whether version can be installed
 declare -a testdpkg=(
@@ -147,7 +164,7 @@ declare -a testdpkg=(
 )
 
 declare -a testpip=(
-"sudo -H $PIP_CMD install $PIP_OPTIONS PIP_PKG 2>&1 $VERBOSE_OPTIONS"
+"sudo -H $PIP_CMD install $PIP_OPTIONS -r $PIP_FILE 2>&1 $VERBOSE_OPTIONS"
 )
 
 set +e
@@ -156,7 +173,7 @@ echo -e "${green}Verifying install file${NC}"
 echo -e "${green}-------------------------------------------${NC}"
 echo ""
 # shellcheck disable=SC2154
-for client in $client_list_hostnames; do
+for client in $pc_list; do
   echo -e "${green}-------------------------------------------${NC}"
   echo -e "${green}Verifying dpkg packages on $client${NC}"
   echo -e "${green}-------------------------------------------${NC}"
@@ -185,42 +202,38 @@ for client in $client_list_hostnames; do
   echo -e "${green}-------------------------------------------${NC}"
   echo -e "${green}Verifying pip packages on $client${NC}"
   echo -e "${green}-------------------------------------------${NC}"
-  # shellcheck disable=SC2094
-  while IFS= read -r pip_pkg; do # verify each pip pkg one by one
-    for command in "${testpip[@]}"; do
-      command=${command/PIP_PKG/$pip_pkg}
-      # shellcheck disable=SC2029 disable=SC2086
-      command_head=$(echo $command | head -1)
-      echo "----> executing on $client: $command_head" "$VERBOSE_OPTIONS"
-      # shellcheck disable=SC2029 disable=SC2086
-      RESULT=$(ssh -n "$client" $command) # -n is for preventing ssh to read from standard input thus eating all remaining lines
-      ret=${PIPESTATUS[0]}
-      if [ "$ret" != 0 ] ; then
-        while IFS= read -r line; do
-          #AssertionError: XXX==VVV .dist-info directory not found
-          if [[ "$line" =~ ^AssertionError:.*  ]]; then
-            if [[ "$line" =~ .*not\ found$ ]]; then
-              tmp=$(echo "$line" | cut -d" " -f2)
-              package=$(echo "$tmp" | cut -d"=" -f1)
-              version=$(echo "$tmp" | cut -d"=" -f3)
-              sed -i "s/$package\=\=$version/$package/g" "$PIP_FILE"
-              echo -e "${red} $line ${NC}"
-              echo -e "${red} -> $package will be installed with the latest version instead ${NC}"
-            fi
-          fi
-          #No matching distribution found for XXX==VVV
-          if [[ "$line" =~ ^'No matching distribution found for'.*  ]]; then
-            tmp=$(echo "$line" | awk -F' ' '{print $NF}')
+  for command in "${testpip[@]}"; do
+    # shellcheck disable=SC2029 disable=SC2086
+    command_head=$(echo $command | head -1)
+    echo "----> executing on $client: $command_head" "$VERBOSE_OPTIONS"
+    # shellcheck disable=SC2029 disable=SC2086
+    RESULT=$(ssh -n "$client" $command) # -n is for preventing ssh to read from standard input thus eating all remaining lines
+    ret=${PIPESTATUS[0]}
+    if [ "$ret" != 0 ] ; then
+      while IFS= read -r line; do
+        #AssertionError: XXX==VVV .dist-info directory not found
+        if [[ "$line" =~ ^AssertionError:.*  ]]; then
+          if [[ "$line" =~ .*not\ found$ ]]; then
+            tmp=$(echo "$line" | cut -d" " -f2)
             package=$(echo "$tmp" | cut -d"=" -f1)
             version=$(echo "$tmp" | cut -d"=" -f3)
             sed -i "s/$package\=\=$version/$package/g" "$PIP_FILE"
             echo -e "${red} $line ${NC}"
             echo -e "${red} -> $package will be installed with the latest version instead ${NC}"
           fi
-        done <<< "$RESULT"
-      fi
-    done
-  done < "$PIP_FILE"
+        fi
+        #No matching distribution found for XXX==VVV
+        if [[ "$line" =~ ^'No matching distribution found for'.*  ]]; then
+          tmp=$(echo "$line" | awk -F' ' '{print $NF}')
+          package=$(echo "$tmp" | cut -d"=" -f1)
+          version=$(echo "$tmp" | cut -d"=" -f3)
+          sed -i "s/$package\=\=$version/$package/g" "$PIP_FILE"
+          echo -e "${red} $line ${NC}"
+          echo -e "${red} -> $package will be installed with the latest version instead ${NC}"
+        fi
+      done <<< "$RESULT"
+    fi
+  done
 done
 set -e
 
@@ -271,7 +284,7 @@ function sync_client () {
 
 if "$PARALLEL"; then
   pids=""
-  for client in $client_list_hostnames; do
+  for client in $pc_list; do
     ( sync_client "$client" &> /tmp/sync_"$client" ) & #run process in background
     pids+=" $!" # store PID of process
     echo -e "${green}PID for sync_client $client is $!${NC}"
@@ -289,7 +302,7 @@ if "$PARALLEL"; then
   done
 
   # print output of sync process for each client
-  for client in $client_list_hostnames; do
+  for client in $pc_list; do
     echo -e "${green}-------------------------------------------${NC}"
     echo -e "${green}Result for $client${NC}"
     echo -e "${green}-------------------------------------------${NC}"
@@ -303,17 +316,17 @@ if "$PARALLEL"; then
     exit 1
   fi
 else
-  for client in $client_list_hostnames; do
+  for client in $pc_list; do
     sync_client "$client"
   done
 fi
 
 ## clean up
-if [ -f ~/.dpkg_installed_"${ROS_DISTRO}"_updated.txt ]; then
-  rm ~/.dpkg_installed_"${ROS_DISTRO}"_updated.txt
+if [ -f "${HOME}"/.dpkg_installed_"${ROS_DISTRO}"_updated.txt ]; then
+  rm "${HOME}"/.dpkg_installed_"${ROS_DISTRO}"_updated.txt
 fi
-if [ -f ~/.pip_installed_"${ROS_DISTRO}"_updated.txt ]; then
-  rm ~/.pip_installed_"${ROS_DISTRO}"_updated.txt
+if [ -f "${HOME}"/.pip_installed_"${ROS_DISTRO}"_updated.txt ]; then
+  rm "${HOME}"/.pip_installed_"${ROS_DISTRO}"_updated.txt
 fi
 
 
@@ -326,10 +339,10 @@ echo -e "${green}-------------------------------------------${NC}"
 
 ## compare "external" sync - compare installed_${ROS_DISTRO}_b1 vs. installed_${ROS_DISTRO}_setup_cob4
 ## updating the package files - based on what is installed on b1 pc
-DPKG_LATEST="/u/robot/dpkg_installed_${ROS_DISTRO}_sync_$(date '+%Y%m%d_%H%M%S').txt"
-DPKG_SETUPCOB4="/u/robot/git/setup_cob4/cob-pcs/dpkg_installed_${ROS_DISTRO}.txt"
-PIP_LATEST="/u/robot/pip_installed_${ROS_DISTRO}_sync_$(date '+%Y%m%d_%H%M%S').txt"
-PIP_SETUPCOB4="/u/robot/git/setup_cob4/cob-pcs/pip_installed_${ROS_DISTRO}.txt"
+DPKG_LATEST="${HOME}/dpkg_installed_${ROS_DISTRO}_sync_$(date '+%Y%m%d_%H%M%S').txt"
+DPKG_SETUPCOB4="${SCRIPTPATH}/dpkg_installed_${ROS_DISTRO}.txt"
+PIP_LATEST="${HOME}/pip_installed_${ROS_DISTRO}_sync_$(date '+%Y%m%d_%H%M%S').txt"
+PIP_SETUPCOB4="${SCRIPTPATH}/pip_installed_${ROS_DISTRO}.txt"
 dpkg -l | grep '^ii' | awk '{print $2 "\t" $3}' | tr "\t" "=" > "$DPKG_LATEST"
 sudo -H $PIP_CMD freeze | tee "$PIP_LATEST"
 
@@ -346,7 +359,7 @@ for command in "${commands[@]}"; do
     FILE1=$(echo "$command" | cut -d' ' -f4)
     FILE2=$(echo "$command" | cut -d' ' -f5)
     echo -e "${red}Found a difference between $FILE1 and $FILE2.${NC}"
-    echo -e "${red}Please merge/sync/update the install files in '~/git/setup_cob4/cob-pcs' and create a PR!${NC}"
+    echo -e "${red}Please merge/sync/update the install files in '$SCRIPTPATH' and create a PR!${NC}"
     echo -e "\n${yellow}Do you want to see diff (y/n)?${NC}"
     read -r answer
     if echo "$answer" | grep -iq "^y" ;then

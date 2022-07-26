@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 SCRIPT=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "$SCRIPT")
@@ -12,12 +12,6 @@ NC='\e[0m' # No Color
 function get_search_domain () {
 	grep "^search" /etc/resolv.conf | sed -e "s/^search //"
 }
-
-if [ "$2" == "--local" ]; then
-	master_ip="127.0.1.1"
-else
-	master_ip=$(hostname -I | awk '{print $1}')
-fi
 
 function upload_ssh_router () {
 	echo -e "${green}uploading ssh_key to router${NC}"
@@ -44,26 +38,69 @@ function upload_ssh_router () {
 	echo -e "${green}done uploading ssh_key to router${NC}"
 }
 
+show_help(){
+  echo "Usage: $SCRIPTNAME <username> [-h] [--local] [--hostname HOSTNAME]"
+  echo "--help | -h:    show help and exit"
+  echo "--local:        local       (optional)   - add user on local pc (without nfs)       (default: false)"
+  echo "--hostname:     hostname    (optional)   - hostname of the current pc               (default: b1)"
+  echo ""
+}
+
+## default values for commandline arguments
+hostname="b1"
+mode_local=false
+
+# set user_name for better readability
+user_name=$1
+shift
+
+# check if first argument is help option
+if [ "$user_name" == "-h" ] || [ "$user_name" == "--help" ]; then
+    show_help
+    exit 0
+fi
+
+# parse options
+while (( "$#" )); do
+  case $1 in
+  "--hostname") shift
+    hostname=$1
+    shift
+    ;;
+  "--local") shift
+    mode_local=true
+    ;;
+  *)
+    break
+    ;;
+  esac
+done
+
+if [ "$mode_local" == true ]; then
+	master_ip="127.0.1.1"
+else
+	master_ip=$(hostname -I | awk '{print $1}')
+fi
+
 if [ "$USER" != "robot" ]; then
 	echo -e "${red}FATAL: CAN ONLY BE EXECUTED AS 'robot' USER${NC}"
 	exit
 fi
 
-if [ "$HOSTNAME" != "b1" ] && [ "$2" != "--local" ]; then
+if [ "$HOSTNAME" != "$hostname" ]; then
 	echo -e "${red}FATAL: CAN ONLY BE EXECUTED ON BASE PC${NC}"
 	echo -e "use option --local for setting up on local PC"
 	echo -e "(e.g. cob-adduser <username> --local)"
+	echo -e "use option --hostname for setting up on pc with custom hostname"
 	exit
 fi
 
-if [ "$2" == "--local" ]; then
+if [ "$mode_local" == true ]; then
 	home_prefix="/home"
 else
 	home_prefix="/u"
 fi
 
-# set user_name for better readability
-user_name=$1
 
 # shellcheck source=./helper_client_list.sh
 source "$SCRIPTPATH"/helper_client_list.sh
@@ -182,7 +219,7 @@ if [ "$user_name" != "" ]; then
 		echo -e "\n${yellow}Enter a valid Personal Access Token for '$USER':${NC}"
 		read -r TOKEN
 		KEY=$( sudo -u "$user_name" cat "$home_prefix/$user_name/.ssh/id_rsa.pub" )
-		if [ "$2" != "--local" ]; then
+		if [ "$mode_local" == false ]; then
 			TITLE="$user_name"@"$robot_name"
 		else
 			TITLE="$user_name"@$HOSTNAME
@@ -191,7 +228,7 @@ if [ "$user_name" != "" ]; then
 		curl -s -u "$USER":"$TOKEN" -d "$JSON" "https://api.github.com/user/keys"
 	fi
 
-	if [ "$2" != "--local" ]; then
+	if [ "$mode_local" == false ]; then
 		# upload key to router
 		echo -e "\n${yellow}Do you want to upload the ssh key to the router (y/N)?${NC}"
 		read -r answer

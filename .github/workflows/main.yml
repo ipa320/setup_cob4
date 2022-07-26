@@ -18,5 +18,5 @@ jobs:
       - uses: docker://koalaman/shellcheck-alpine
         with:
           # grep for executable files with bash or sh shebang, pipe through directory filter and file filter
-          args: /bin/sh -c "shellcheck -x $(grep -rl '\#\!/bin/[bash,sh]' . | grep -v './manual_administrator\|.git' | grep -v './path/to/ignore\|./scripts/ddwrt/backupvars.sh')"
+          args: /bin/sh -c "shellcheck -x $(grep -rl '\#\!/usr/bin/env [bash,sh]' . | grep -v './manual_administrator\|.git' | grep -v './path/to/ignore\|./scripts/ddwrt/backupvars.sh')"
           # find details on specific errors under https://github.com/koalaman/shellcheck/wiki/<ERRORCODE>

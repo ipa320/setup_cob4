@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e # force the script to exit if any error occurs
 
 function printHeader {
@@ -155,8 +155,8 @@ function AddUsers {
     fi
 }
 
-function InstallROS {
-    printHeader "InstallROS"
+function InstallROS1 {
+    printHeader "InstallROS1"
     if grep -q "deb http://packages.ros.org/ros/ubuntu $OS_VERSION main" /etc/apt/sources.list.d/ros-latest.list ; then
         echo "Ros sources already setup. Skipping setup"
     else
@@ -307,7 +307,6 @@ function InstallCobScripts {
     # prerequisites for robmuxinator
     sudo -H pip3 install argcomplete
     sudo -H pip3 install paramiko
-    sudo activate-global-python-argcomplete
 }
 
 function NetworkSetup {
@@ -365,7 +364,7 @@ function InstallCandumpTools {
 
 function InstallNetData {
     printHeader "InstallNetData"
-    bash <(curl -Ss https://my-netdata.io/kickstart.sh) all --dont-wait
+    curl https://my-netdata.io/kickstart.sh > /tmp/netdata-kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --static-only
 }
 
 function InstallDocker {
@@ -454,8 +453,7 @@ function InstallCareOBot {
     #ToDo: use `--download-only` as long as realsense dependencies try to apply patches to file that do not exist with latest kernel
     apt-get install ros-"$ROS_VERSION"-camera-calibration -y
     apt-get install ros-"$ROS_VERSION"-rqt* -y
-    apt-get install ros-"$ROS_VERSION"-cob* -y  # install some cob-dependencies already
-    #apt-get install ros-$ROS_VERSION-care-o-bot-robot -y --download-only        # not released into noetic
+    apt-get install ros-"$ROS_VERSION"-care-o-bot-simulation -y
 }
 
 function InstallAptCacher {
@@ -540,7 +538,7 @@ UpgradeAptPackages
 NFSSetup
 SetupPowerSettings
 AddUsers
-InstallROS
+InstallROS1
 SetupGrubRecFail
 KeyboardLayout
 ConfigureSSH
@@ -550,7 +548,7 @@ InstallGitLFS
 SetupDefaultBashEnv
 InstallCobScripts
 NetworkSetup
-SetupEtcHosts
+#SetupEtcHosts
 InstallCandumpTools
 InstallNetData
 InstallDocker

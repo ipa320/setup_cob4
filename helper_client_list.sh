@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #outsources retrieval client_list variables
 if [ -z "$client_list_ip" ] || [ -z "$client_list_ip" ]; then

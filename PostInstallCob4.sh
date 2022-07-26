@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e # force the script to exit if any error occurs
 #set -o xtrace # print all commands before executing
@@ -8,6 +8,12 @@ SCRIPTPATH=$(dirname "$SCRIPT")
 
 #### COMMON PARAMETERS
 usage=$(cat <<"EOF"
+Usage: PostInstallCob4.sh [-h] [--local] [--hostname <HOSTNAME>] [--step <STEP>]
+--help | -h:    show help and exit
+--local:        local     (optional)   - add user on local pc (without nfs)     (default: false)
+--hostname:     hostname  (optional)   - hostname of the current pc             (default: b1)
+--step:         step      (optional)   - PostInstall step to be executed
+
 INFO: This script is a helper tool for the setup and installation of Care-O-bot:
 1. Setup root user
 2. Setup robot user
@@ -68,7 +74,7 @@ function query_pc_list {
 
 #### SETUP ROOT USER
 function SetupRootUser {
-  check_hostname "b1"
+  check_hostname "$hostname"
   echo -e "\n${green}=== SETUP ROOT USER ===${NC}\n"
 
   echo -e "\n${yellow}Please confirm CLIENT_LIST for SetupRootUser${NC}\n"
@@ -111,33 +117,33 @@ function SetupRootUser {
 
 #### SETUP ROBOT USER
 function SetupRobotUser {
-  check_hostname "b1"
+  check_hostname "$hostname"
   echo -e "\n${green}=== SETUP ROBOT USER ===${NC}\n"
 
   echo -e "\n${yellow}Please confirm CLIENT_LIST for SetupRobotUser${NC}\n"
   query_pc_list "$client_list_hostnames"
   pc_list=$LIST
 
-  "$SCRIPTPATH"/cob-adduser robot
+  "$SCRIPTPATH"/cob-adduser robot "${cob_add_user_args[@]}"
 
   # shellcheck disable=SC1090
   source /opt/ros/"$ROS_DISTRO"/setup.bash
 
-  if grep "source /u/robot/setup/user.bashrc" /u/robot/.bashrc > /dev/null; then
+  if grep "source $home_prefix/robot/setup/user.bashrc" "$home_prefix"/robot/.bashrc > /dev/null; then
     echo -e "${blue}INFO: .bashrc already configured${NC}"
   else
-    "$SCRIPTPATH"/cob-adduser robot
+    "$SCRIPTPATH"/cob-adduser robot "${cob_add_user_args[@]}"
   fi
 
-  if [ -d /u/robot/git/care-o-bot/src ]; then
+  if [ -d "$home_prefix"/robot/git/care-o-bot/src ]; then
     echo -e "${blue}INFO: robot workspace already exits${NC}"
   else
-    mkdir -p /u/robot/git/care-o-bot/src
+    mkdir -p "$home_prefix"/robot/git/care-o-bot/src
     # shellcheck disable=SC1091
-    source /u/robot/.bashrc
-    cd /u/robot/git/care-o-bot/ && catkin init
-    cd /u/robot/git/care-o-bot/ && catkin config -DCMAKE_BUILD_TYPE=Release
-    cd /u/robot/git/care-o-bot/ && catkin build
+    source "$home_prefix"/robot/.bashrc
+    cd "$home_prefix"/robot/git/care-o-bot/ && catkin init
+    cd "$home_prefix"/robot/git/care-o-bot/ && catkin config -DCMAKE_BUILD_TYPE=Release
+    cd "$home_prefix"/robot/git/care-o-bot/ && catkin build
   fi
 
   for i in $pc_list; do
@@ -149,7 +155,7 @@ function SetupRobotUser {
 
 #### SETUP MIMIC USER
 function SetupMimicUser {
-  check_hostname "b1"
+  check_hostname "$hostname"
   echo -e "${green}=== SETUP MIMIC USER ===${NC}"
 
   echo -e "\n${yellow}Please confirm CLIENT_LIST for SetupMimicUser${NC}\n"
@@ -171,11 +177,11 @@ function SetupMimicUser {
   sudo ssh "$pc_head" "sed -i s/'#  TimedLogin = user1'/'TimedLogin = mimic'/g $GDM_PATH"
   sudo ssh "$pc_head" "sed -i s/'#  TimedLoginDelay = 10'/'TimedLoginDelay = 10'/g $GDM_PATH"
 
-  DESKTOP_PATH=/u/mimic/.config/autostart
-  if sudo test -d $DESKTOP_PATH; then
+  DESKTOP_PATH="$home_prefix"/mimic/.config/autostart
+  if sudo test -d "$DESKTOP_PATH"; then
     echo -e "${blue}Folder $DESKTOP_PATH exists${NC}"
   else
-    sudo su mimic -c "mkdir -p /u/mimic/.config/autostart/"
+    sudo su mimic -c "mkdir -p $home_prefix/mimic/.config/autostart/"
   fi
 
   sudo su mimic -c "cat <<EOF > $DESKTOP_PATH/xhost.desktop
@@ -219,69 +225,86 @@ EOF"
 
 #### SETUP DEVICES
 function SetupDevices {
-  check_hostname "b1"
+  check_hostname "$hostname"
   echo -e "${green}=== SETUP DEVICES ===${NC}"
-  echo -e "\n${green}INFO: Setup cob-devices service and script for scanners and joystick${NC}\n"
+  echo -e "\n${green}INFO: Setup cob-devices services and script for scanners and joystick${NC}\n"
 
-  echo -e "\n${blue}INFO: copy cob-devices.sh to /sbin/cob-devices${NC}"
-  sudo cp -f "$SCRIPTPATH"/scripts/cob-devices.sh /sbin/cob-devices.sh
-  echo -e "\n${blue}INFO: copy cob-devices.service to /etc/systemd/system/cob-devices.service${NC}\n"
-  sudo cp -f "$SCRIPTPATH"/upstart/cob-devices.service /etc/systemd/system/cob-devices.service
+  sudo cp -f "$SCRIPTPATH"/scripts/cob-devices-joypad.sh /sbin/cob-devices-joypad.sh
+  sudo cp -f "$SCRIPTPATH"/scripts/cob-devices-s300.sh /sbin/cob-devices-s300.sh
 
-  for file in /dev/ttyUSB*; do
-    sudo chmod 666 "$file"
-    sudo rm -f /tmp/usb"${file: -1}"
-    sudo udevadm info -a -p "$(udevadm info -q path -n "${file}")" | tee /tmp/usb"${file: -1}" > /dev/null
-    sudo chmod 666 /tmp/usb"${file: -1}"
-  done
-
-  results=()
-  count=0
-
-  for file in /tmp/usb*; do
-    if grep --quiet 'ATTRS{serial}=="F' "$file"; then
-      # shellcheck disable=SC2010
-      result=$(ls -l |grep -R 'ATTRS{serial}=="F' "$file")
-      echo -e "${blue}found scanner with $result ${NC}"
-      results[$count]=$result
-      count=$((count+1))
-    fi
-  done
-
-  echo -e "${blue}found $count scanners: " "${results[@]}" " ${NC}"
-
-  if [[ ${results[0]} == "${results[1]}" ]]; then
-    ATTRSSerialFL=${results[0]}
-    ATTRSSerialR=${results[2]}
-  elif [[ ${results[1]} == "${results[2]}" ]]; then
-    ATTRSSerialFL=${results[1]}
-    ATTRSSerialR=${results[0]}
-  elif [[ ${results[0]} == "${results[2]}" ]]; then
-    ATTRSSerialFL=${results[0]}
-    ATTRSSerialR=${results[1]}
+  echo -e "\n${yellow}Do you want to enable the joystick service (Y/n)?${NC}"
+  read -r enable_joystick
+  if [ "$enable_joystick" == "n" ]; then
+    :
+  else
+    sudo cp -f "$SCRIPTPATH"/upstart/cob-devices-joypad.service /etc/systemd/system/cob-devices-joypad.service
+    sudo systemctl daemon-reload
+    sudo systemctl enable cob-devices-joypad.service
   fi
 
-  # shellcheck disable=SC2001
-  ATTRSSerialFL="$( echo "$ATTRSSerialFL" | sed 's/ //g' )"
-  # shellcheck disable=SC2001
-  ATTRSSerialR="$( echo "$ATTRSSerialR" | sed 's/ //g' )"
-
-  sudo sed -i -re "s/(ScanFrontAttr2=).*/\1'${ATTRSSerialFL}'/g" /sbin/cob-devices.sh
-  sudo sed -i -re "s/(ScanLeftAttr2=).*/\1'${ATTRSSerialFL}'/g" /sbin/cob-devices.sh
-  sudo sed -i -re "s/(ScanRightAttr2=).*/\1'${ATTRSSerialR}'/g" /sbin/cob-devices.sh
-
-  sudo systemctl enable cob-devices.service
-
-  if [ $count -eq 3 ]; then
-    echo -e "${green}=== SETUP DEVICES DONE! ===${NC}"
+  echo -e "\n${yellow}Do you want to enable the S300 scanner service (Y/n)?${NC}"
+  read -r enable_s300_scanner
+  if [ "$enable_s300_scanner" == "n" ]; then
+    :
   else
+    for file in /dev/ttyUSB*; do
+      sudo chmod 666 "$file"
+      sudo rm -f /tmp/usb"${file: -1}"
+      sudo udevadm info -a -p "$(udevadm info -q path -n "${file}")" | tee /tmp/usb"${file: -1}" > /dev/null
+      sudo chmod 666 /tmp/usb"${file: -1}"
+    done
+
+    results=()
+    count=0
+
+    for file in /tmp/usb*; do
+      if grep --quiet 'ATTRS{serial}=="F' "$file"; then
+        # shellcheck disable=SC2010
+        result=$(ls -l |grep -R 'ATTRS{serial}=="F' "$file")
+        echo -e "${blue}found scanner with $result ${NC}"
+        results[$count]=$result
+        count=$((count+1))
+      fi
+    done
+
+    echo -e "${blue}found $count scanners: " "${results[@]}" " ${NC}"
+
+    if [[ ${results[0]} == "${results[1]}" ]]; then
+      ATTRSSerialFL=${results[0]}
+      ATTRSSerialR=${results[2]}
+    elif [[ ${results[1]} == "${results[2]}" ]]; then
+      ATTRSSerialFL=${results[1]}
+      ATTRSSerialR=${results[0]}
+    elif [[ ${results[0]} == "${results[2]}" ]]; then
+      ATTRSSerialFL=${results[0]}
+      ATTRSSerialR=${results[1]}
+    fi
+
+    # shellcheck disable=SC2001
+    ATTRSSerialFL="$( echo "$ATTRSSerialFL" | sed 's/ //g' )"
+    # shellcheck disable=SC2001
+    ATTRSSerialR="$( echo "$ATTRSSerialR" | sed 's/ //g' )"
+
+    sudo sed -i -re "s/(ScanFrontAttr2=).*/\1'${ATTRSSerialFL}'/g" /sbin/cob-devices-s300.sh
+    sudo sed -i -re "s/(ScanLeftAttr2=).*/\1'${ATTRSSerialFL}'/g" /sbin/cob-devices-s300.sh
+    sudo sed -i -re "s/(ScanRightAttr2=).*/\1'${ATTRSSerialR}'/g" /sbin/cob-devices-s300.sh
+
+    sudo cp -f "$SCRIPTPATH"/upstart/cob-devices-s300.service /etc/systemd/system/cob-devices-s300.service
+    sudo systemctl daemon-reload
+    sudo systemctl enable cob-devices-s300.service
+    
+  fi
+
+  if [[ "$enable_s300_scanner"  != "n" && ! $count -eq 3 ]]; then
     echo -e "${yellow}setup devices done, but only found $count scanners instead of 3 (see above)${NC}"
+  else
+    echo -e "${green}=== SETUP DEVICES DONE! ===${NC}"
   fi
 }
 
 #### INSTALL SYSTEM SERVICES
 function InstallSystemServices {
-  check_hostname "b1"
+  check_hostname "$hostname"
   echo -e "${green}=== INSTALL SYSTEM SERVICES ===${NC}"
   echo -e "\n${green}INFO: Install System Services (upstart,...)${NC}\n"
 
@@ -348,7 +371,7 @@ function InstallSystemServices {
 
 #### SETUP WORKSPACES
 function SetupWorkspaces {
-  check_hostname "b1"
+  check_hostname "$hostname"
   echo -e "${green}=== SETUP WORKSPACES ===${NC}"
 
   "$SCRIPTPATH"/workspace_tools/setup_workspaces.sh -m robot
@@ -358,7 +381,7 @@ function SetupWorkspaces {
 
 #### SYNC PACKAGES
 function SyncPackages {
-  check_hostname "b1"
+  check_hostname "$hostname"
   echo -e "${green}=== SYNC PACKAGES ===${NC}"
 
   "$SCRIPTPATH"/cob-pcs/sync_packages.sh -v
@@ -370,9 +393,45 @@ function SyncPackages {
 ############################# INITIAL MENU #############################
 ########################################################################
 
-if [[ "$1" =~ "--help" ]]; then echo -e "$usage"; exit 0; fi
+# default values for commandline arguments
+hostname="b1"
+mode_local=false
+choice=""
+cob_add_user_args=()
+
+while (( "$#" )); do
+  case $1 in
+  "-h" | "--help") shift
+    echo -e "$usage"
+    echo -e "\n"
+    exit 0
+    ;;
+  "--hostname") shift
+    hostname=$1
+    cob_add_user_args+=( "${cob_add_user_args[@]}" "--hostname" "${hostname}" )
+    shift
+    ;;
+  "--local") shift
+    mode_local=true
+    cob_add_user_args+=( "${cob_add_user_args[@]}" "--local" )
+    ;;
+  "--step") shift
+    choice=$1
+    shift
+    ;;
+  *)
+    break
+    ;;
+  esac
+done
 
 #### check prerequisites
+if [ "$mode_local" == true ]; then
+  home_prefix="/home"
+else
+  home_prefix="/u"
+fi
+
 if [ "$USER" != "robot" ]; then
   echo -e "\n${red}FATAL: CAN ONLY BE EXECUTED AS robot USER${NC}"
   exit 1
@@ -420,10 +479,10 @@ else
   fi
 fi
 
-if [ ! -d /u/robot/git/setup_cob4 ]; then
+if [ ! -d $home_prefix/robot/git/setup_cob4 ]; then
   echo -e "${blue} clone ipa320/setup_cob4...${NC}"
-  mkdir /u/robot/git
-  git clone git@github.com/ipa320/setup_cob4 /u/robot/git/setup_cob4
+  mkdir $home_prefix/robot/git
+  git clone git@github.com/ipa320/setup_cob4 $home_prefix/robot/git/setup_cob4
 fi
 
 if [ -z "$ROBOT" ]; then
@@ -443,8 +502,12 @@ echo "                INITIAL MENU"
 echo -e "${green}===========================================${NC}"
 
 echo -e "$usage"
-echo -e "${yellow}Please select an installation option: ${NC}"
-read -r choice
+if [ -z "$choice" ]; then
+  echo -e "${yellow}Please select an installation option: ${NC}"
+  read -r choice
+else
+  echo -e "${blue}Selected option $choice via command line argument${NC}"
+fi
 
 if [[ "$choice" == 1 ]]; then
   SetupRootUser

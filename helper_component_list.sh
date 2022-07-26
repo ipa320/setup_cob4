@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #outsources retrieval component_list variables
 if [ -z "$component_list_ip" ] || [ -z "$component_list_hostnames" ]; then

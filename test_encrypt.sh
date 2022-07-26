@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 TOKEN="secret" # use Personal Access Token here
 echo "TOKEN: $TOKEN"
 ENCRYPT=$(echo "$TOKEN" | openssl enc -aes-256-cbc -salt -a -md md5 -pbkdf2)

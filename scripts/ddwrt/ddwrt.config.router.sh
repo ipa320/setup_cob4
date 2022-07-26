@@ -1,5 +1,4 @@
-#!/bin/sh
-#
+#!/usr/bin/env sh
 echo "Write variables"
 
 nvram set wan_proto="dhcp"

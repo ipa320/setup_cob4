@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if grep -q "X11Forwarding" /etc/ssh/sshd_config; then
     sed -i 's/X11Forwarding.*$/X11Forwarding yes/g' /etc/ssh/sshd_config

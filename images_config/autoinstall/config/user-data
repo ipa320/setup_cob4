@@ -10,12 +10,13 @@ autoinstall:
       uri: http://ports.ubuntu.com/ubuntu-ports
   identity: {hostname: test, password: $6$HJD3u1APwy8Sz9G0$Uq14vllcHngwm5lF/6FRaqssr5JCyKr/ZfAaMXhv2nFq2IZbA5Y2NUTlo006YBbnDfMFMWqDTco8RUT3Z9QOo/,
     realname: robot-local, username: robot-local}
-#  interactive-sections:
-#    - identity
-#    - network
-#    - storage
+  interactive-sections:
+    - network
+#   - identity
+#   - storage
   keyboard: {layout: de, toggle: null, variant: nodeadkeys}
   early-commands:
+    - echo "checking internet conntection" && ping -qc 1 -w 3 google.com || echo "internet connection failed"
     - python3 /cdrom/setup_cob4/images_config/autoinstall/autoinstall_early_command_prompt.py
   late-commands:
     - cp -pr /cdrom/setup_cob4 /target/tmp
@@ -53,7 +54,6 @@ autoinstall:
     - openssh-client
     - openssh-server
     - pulseaudio
-    - python-is-python3
     - python3-software-properties
     - samba-common
     - software-properties-common
