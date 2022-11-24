@@ -6,7 +6,6 @@ alias b1='ssh -XC b1'
 alias t1='ssh -XC t1'
 alias t2='ssh -XC t2'
 alias t3='ssh -XC t3'
-alias s1='ssh -XC s1'
 alias h1='ssh -XC h1'
 
 # use global color settings

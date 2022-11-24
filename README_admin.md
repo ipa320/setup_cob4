@@ -22,7 +22,6 @@ MAC addresses of the pcs that they get a fixed ip address over dhcp.
 | cob4-X-t1     | 10.4.X.21     |
 | cob4-X-t2     | 10.4.X.22     |
 | cob4-X-t3     | 10.4.X.23     |
-| cob4-X-s1     | 10.4.X.31     |
 | cob4-X-h1     | 10.4.X.41     |
 
 Make sure you have name resolution and access to the robot pcs from your external pc. To satisfy the ROS communication you need a full DNS and reverse DNS name lockup for all machines. Check it from your remote pc with

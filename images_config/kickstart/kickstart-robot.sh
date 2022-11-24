@@ -339,7 +339,6 @@ function SetupEtcHosts {
 
     PC_LS=(
     "10.4.${ROBOT_NUM}.41	h1"
-    "10.4.${ROBOT_NUM}.31	s1"
     "10.4.${ROBOT_NUM}.23	t3"
     "10.4.${ROBOT_NUM}.22	t2"
     "10.4.${ROBOT_NUM}.21	t1"

@@ -222,13 +222,11 @@ ssh b1
 ssh t1
 ssh t2
 ssh t3
-ssh s1
 ssh h1
 ssh 10.4.x.11
 ssh 10.4.x.21
 ssh 10.4.x.22
 ssh 10.4.x.23
-ssh 10.4.x.31
 ssh 10.4.x.41
 ```
 

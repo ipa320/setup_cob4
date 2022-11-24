@@ -49,9 +49,6 @@ The hostnames of the pcs should be:
 ** cob4-X-t2
 ** cob4-X-t3
 
-* Sensorring pc:
-** cob4-X-s1
-
 * Head pc:
 ** cob4-X-h1
 
@@ -152,7 +149,6 @@ It is recommendable defined in the router static ip address for the pcs, using t
 * cob4-X-t1 : +10.4.X.21+
 * cob4-X-t2 : +10.4.X.22+
 * cob4-X-t3 : +10.4.X.23+
-* cob4-X-s1 : +10.4.X.31+
 * cob4-X-h1 : +10.4.X.41+
 
 We recommend remove the ubuntu network manager and configure the LAN port using the file +/etc/network/interfaces+
@@ -279,7 +275,6 @@ ssh-copy-id cob4-X-b1
 ssh cob4-X-t1
 ssh cob4-X-t2
 ssh cob4-X-t3
-ssh cob4-X-s1
 ssh cob4-X-h1
 ----
 
@@ -291,7 +286,6 @@ ssh-copy-id cob4-X-b1
 ssh cob4-X-t1
 ssh cob4-X-t2
 ssh cob4-X-t3
-ssh cob4-X-s1
 ssh cob4-X-h1
 ----
 
@@ -438,10 +432,6 @@ udev, pcan
 
 | Touchscreen | cob4-X-b1 | <<Touchscreen , Touchscreen>> | -
 
-| Softkinetic | cob4-X-t3, cob4-X-s1 | <<sofkinetic_camera, sofkinetic_camera>> | -
-
-| Asus Xtion | cob4-X-t3, cob4-X-s1 | <<openni2, openni2>> | -
-
 | Arms | cob4-X-t1 | <<ipa_canopen,ipa_canopen>> | Pcan driver
 
 | Torso | cob4-X-t1 | <<ipa_canopen,ipa_canopen>> | Pcan driver
@@ -566,7 +556,6 @@ For name resolution you will probably have to edit the file /etc/hosts on the ro
 10.4.X.21 cob4-X-t1
 10.4.X.22 cob4-X-t2
 10.4.X.23 cob4-X-t3
-10.4.X.31 cob4-X-s1
 10.4.X.41 cob4-X-h1
 
 ----
