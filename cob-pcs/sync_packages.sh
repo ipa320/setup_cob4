@@ -89,7 +89,6 @@ if [[ "$choice" == 1 ]]; then
   echo -e "${green}-------------------------------------------${NC}"
   echo ""
   declare -a upgradecommands=(
-    "curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash $VERBOSE_OPTIONS" # verify git-lfs signature
     "sudo apt-get update $VERBOSE_OPTIONS"
     "sudo apt-get upgrade -y $VERBOSE_OPTIONS"
     "sudo apt-get dist-upgrade -y $VERBOSE_OPTIONS"
@@ -157,7 +156,6 @@ fi
 
 ### check whether version can be installed
 declare -a testdpkg=(
-"curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash $VERBOSE_OPTIONS" # verify git-lfs signature
 "sudo apt-get update $VERBOSE_OPTIONS"
 "sudo apt-get -qq install -y --allow-downgrades --allow-unauthenticated --simulate DPKG_PKG 2>&1"
 "sudo apt-get autoremove -y $VERBOSE_OPTIONS"
@@ -240,7 +238,6 @@ set -e
 
 ### sync/install packages
 declare -a aptcommands=(
-"curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash $VERBOSE_OPTIONS" # verify git-lfs signature
 "sudo apt-get update $VERBOSE_OPTIONS"
 "sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install -y --allow-downgrades --allow-unauthenticated $(<"$DPKG_FILE") $VERBOSE_OPTIONS"
 "sudo apt-get autoremove -y $VERBOSE_OPTIONS"
