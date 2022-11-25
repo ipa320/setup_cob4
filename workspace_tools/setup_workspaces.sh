@@ -202,9 +202,6 @@ function install_prerequisites {
   # install git-lfs
   if ! command -v git-lfs 1>/dev/null; then
     echo -e "${blue}installing git-lfs ${NC}"
-    if [ "$(lsb_release -sc)" == "xenial" ]; then
-      curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
-    fi
     sudo apt-get install git-lfs -y
   else
     echo -e "${blue}git-lfs already installed ${NC}"

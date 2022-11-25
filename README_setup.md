@@ -197,7 +197,6 @@ In the following, hints are provided for each of the steps:**
      Installing packages on XX
      -------------------------------------------
      
-     ----> executing: curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash > /dev/null
      ----> executing: sudo apt-get update > /dev/null
      ----> executing: sudo apt-get -qq install -y --allow-downgrades --allow-unauthenticated account-plugin-aim=3.12.11-0ubuntu3
      ----> executing: sudo apt-get autoremove -y > /dev/null
