@@ -259,17 +259,37 @@ Comment=
 
 Install xinput-calibrator:
 ```
-sudo apt-get install xinput-calibrator
+sudo apt install xinput-calibrator
+sudo apt install xserver-xorg-input-evdev
+```
+Remove unnecessary package:
+```
+sudo apt remove xserver-xorg-input-libinput
 ```
 Run xinput-calibrator:
 ```
  xinput-calibrator
 ```
-or from a remote PC:
+**OR** from a remote PC:
 ```
 export DISPLAY=:0 && xinput-calibrator
 ```
-once calibration is finished the terminal will show instructions on how to keep the calibration persistent.
+Once calibration is finished the terminal will show the calibration. Copy that calibration into `/usr/share/X11/xorg.conf.d/99-calibration.conf`
+
+:warning: make sure to rename the option `SwapXY` to `SwapAxes` and set `InvertX` and `InvertY` to `1` :warning: e.g.
+```bash
+Section "InputClass"
+        Identifier      "touch_calibration_cob"
+        MatchProduct    "Zytronic Displays Limited Zytronic Touchscreen Controller"
+        Option  "MinX"  "42844"
+        Option  "MaxX"  "43811"
+        Option  "MinY"  "23733"
+        Option  "MaxY"  "24330"
+        Option  "SwapAxes"      "1"
+        Option  "InvertX"       "1"
+        Option  "InvertY"       "1"
+EndSection
+```
 
 #### 2.6. Netdata tool <a id="NetData"/>
 
