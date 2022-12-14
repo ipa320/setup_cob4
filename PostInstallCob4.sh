@@ -231,6 +231,7 @@ function SetupDevices {
 
   sudo cp -f "$SCRIPTPATH"/scripts/cob-devices-joypad.sh /sbin/cob-devices-joypad.sh
   sudo cp -f "$SCRIPTPATH"/scripts/cob-devices-s300.sh /sbin/cob-devices-s300.sh
+  sudo -u root -i ssh robot@h1 "sudo cp -f $SCRIPTPATH/scripts/cob-devices-headcam.sh /sbin/cob-devices-headcam.sh"
 
   echo -e "\n${yellow}Do you want to enable the joystick service (Y/n)?${NC}"
   read -r enable_joystick
@@ -240,6 +241,17 @@ function SetupDevices {
     sudo cp -f "$SCRIPTPATH"/upstart/cob-devices-joypad.service /etc/systemd/system/cob-devices-joypad.service
     sudo systemctl daemon-reload
     sudo systemctl enable cob-devices-joypad.service
+  fi
+
+  # install headcam service on h1 to link usb cam to correct device
+  echo -e "\n${yellow}Do you want to enable the headcam service (Y/n)?${NC}"
+  read -r enable_headcam
+  if [ "$enable_headcam" == "n" ]; then
+    :
+  else
+    sudo -u root -i ssh robot@h1 "sudo cp -f $SCRIPTPATH/upstart/cob-devices-headcam.service /etc/systemd/system/cob-devices-headcam.service"
+    sudo -u root -i ssh robot@h1 "sudo systemctl daemon-reload"
+    sudo -u root -i ssh robot@h1 "sudo systemctl enable cob-devices-headcam.service"
   fi
 
   echo -e "\n${yellow}Do you want to enable the S300 scanner service (Y/n)?${NC}"
@@ -292,7 +304,7 @@ function SetupDevices {
     sudo cp -f "$SCRIPTPATH"/upstart/cob-devices-s300.service /etc/systemd/system/cob-devices-s300.service
     sudo systemctl daemon-reload
     sudo systemctl enable cob-devices-s300.service
-    
+
   fi
 
   if [[ "$enable_s300_scanner"  != "n" && ! $count -eq 3 ]]; then
